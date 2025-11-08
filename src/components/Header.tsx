@@ -11,9 +11,7 @@ export const Header = ({ title, description }: HeaderProps) => {
         <img src={Logo} alt="logo" className="w-14" />
         <div>
           <h1 className="text-xl font-bold">{title}</h1>
-          {description && (
-            <p className="text-sm text-gray-500">{description}</p>
-          )}
+          <p className="text-sm text-gray-500">{description}</p>
         </div>
       </div>
     </header>
