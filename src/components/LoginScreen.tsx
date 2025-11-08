@@ -16,7 +16,6 @@ export function LoginScreen({ onLogin, onNavigateToSignup }: LoginScreenProps) {
         <div className="inline-flex items-center justify-center rounded-2xl mb-4">
           <img src={Logo} alt="logo" />
         </div>
-        <h1 className="text-gray-800 text-2xl font-bold">Login</h1>
       </header>
 
       {/* Formulário */}

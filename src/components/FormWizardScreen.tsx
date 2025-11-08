@@ -108,7 +108,7 @@ function Step1() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2">Informações Básicas</h2>
+        <h2 className="mb-2">Etapa 1</h2>
         <p className="text-gray-500">
           Preencha os dados iniciais do formulário
         </p>
@@ -116,32 +116,26 @@ function Step1() {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="title">Título do formulário</Label>
-          <Input
-            id="title"
-            placeholder="Digite um título"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="category">Categoria</Label>
-          <select
-            id="category"
-            className="w-full h-12 px-3 border-2 border-gray-300 rounded-md bg-white"
-          >
-            <option>Selecione uma categoria</option>
-            <option>Categoria A</option>
-            <option>Categoria B</option>
-            <option>Categoria C</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
+          <Label htmlFor="title">Pergunta 1</Label>
           <Textarea
             id="description"
-            placeholder="Descreva o propósito do formulário"
+            placeholder="Escreva aqui"
+            className="min-h-32 border-2 border-gray-300"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="title">Pergunta 2</Label>
+          <Textarea
+            id="description"
+            placeholder="Escreva aqui"
+            className="min-h-32 border-2 border-gray-300"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="title">Pergunta 3</Label>
+          <Textarea
+            id="description"
+            placeholder="Escreva aqui"
             className="min-h-32 border-2 border-gray-300"
           />
         </div>
@@ -154,61 +148,45 @@ function Step2() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2">Dados Pessoais</h2>
-        <p className="text-gray-500">Forneça suas informações pessoais</p>
+        <h2 className="mb-2">Etapa 2</h2>
+        <p className="text-gray-500">Descrição da segunda etapa</p>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="fullname">Nome completo</Label>
-          <Input
-            id="fullname"
-            placeholder="Seu nome completo"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="category">Categoria</Label>
+        <select
+          id="category"
+          className="w-full h-12 px-3 border-2 border-gray-300 rounded-md bg-white"
+        >
+          <option>Selecione uma categoria</option>
+          <option>Categoria A</option>
+          <option>Categoria B</option>
+          <option>Categoria C</option>
+        </select>
+      </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="cpf">CPF</Label>
-          <Input
-            id="cpf"
-            placeholder="000.000.000-00"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="birthdate">Data de nascimento</Label>
-          <Input
-            id="birthdate"
-            type="date"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Gênero</Label>
-          <RadioGroup defaultValue="not-specified">
-            <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
-              <RadioGroupItem value="male" id="male" />
-              <Label htmlFor="male" className="cursor-pointer flex-1">
-                Masculino
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
-              <RadioGroupItem value="female" id="female" />
-              <Label htmlFor="female" className="cursor-pointer flex-1">
-                Feminino
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
-              <RadioGroupItem value="not-specified" id="not-specified" />
-              <Label htmlFor="not-specified" className="cursor-pointer flex-1">
-                Prefiro não informar
-              </Label>
-            </div>
-          </RadioGroup>
-        </div>
+      <div className="space-y-2">
+        <Label>Multiplas opções</Label>
+        <RadioGroup defaultValue="not-specified">
+          <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
+            <RadioGroupItem value="male" id="male" />
+            <Label htmlFor="male" className="cursor-pointer flex-1">
+              Opção 1
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
+            <RadioGroupItem value="female" id="female" />
+            <Label htmlFor="female" className="cursor-pointer flex-1">
+              Opção 2
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
+            <RadioGroupItem value="not-specified" id="not-specified" />
+            <Label htmlFor="not-specified" className="cursor-pointer flex-1">
+              Opção 3
+            </Label>
+          </div>
+        </RadioGroup>
       </div>
     </div>
   );
@@ -218,77 +196,36 @@ function Step3() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2">Endereço</h2>
-        <p className="text-gray-500">Informe seu endereço completo</p>
+        <h2 className="mb-2">Etapa 3</h2>
+        <p className="text-gray-500">Descrição da terceira etapa</p>
       </div>
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="cep">CEP</Label>
+          <Label htmlFor="cep">Pergunta 1</Label>
           <Input
             id="cep"
-            placeholder="00000-000"
+            placeholder="Responda aqui"
             className="h-12 border-2 border-gray-300"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="street">Rua</Label>
+          <Label htmlFor="street">Pergunta 2</Label>
           <Input
             id="street"
-            placeholder="Nome da rua"
+            placeholder="Responda aqui"
             className="h-12 border-2 border-gray-300"
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="number">Número</Label>
-            <Input
-              id="number"
-              placeholder="123"
-              className="h-12 border-2 border-gray-300"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="complement">Complemento</Label>
-            <Input
-              id="complement"
-              placeholder="Apto 45"
-              className="h-12 border-2 border-gray-300"
-            />
-          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="neighborhood">Bairro</Label>
+          <Label htmlFor="neighborhood">Pergunta 3</Label>
           <Input
             id="neighborhood"
-            placeholder="Nome do bairro"
+            placeholder="Responda aqui"
             className="h-12 border-2 border-gray-300"
           />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="city">Cidade</Label>
-            <Input
-              id="city"
-              placeholder="Cidade"
-              className="h-12 border-2 border-gray-300"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="state">Estado</Label>
-            <select
-              id="state"
-              className="w-full h-12 px-3 border-2 border-gray-300 rounded-md bg-white"
-            >
-              <option>SP</option>
-              <option>RJ</option>
-              <option>MG</option>
-            </select>
-          </div>
         </div>
       </div>
     </div>
@@ -322,16 +259,16 @@ function Step4() {
           <h3 className="mb-3">Dados Pessoais</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Nome:</span>
-              <span>João Pedro Silva</span>
+              <span className="text-gray-600">Pergunta 1</span>
+              <span>Resposta 1</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">CPF:</span>
-              <span>123.456.789-00</span>
+              <span className="text-gray-600">Pergunta 2</span>
+              <span>Resposta 2</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Data nascimento:</span>
-              <span>15/01/1990</span>
+              <span className="text-gray-600">Pergunta 3</span>
+              <span>Resposta 3</span>
             </div>
           </div>
         </div>
@@ -340,16 +277,16 @@ function Step4() {
           <h3 className="mb-3">Endereço</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">CEP:</span>
-              <span>01234-567</span>
+              <span className="text-gray-600">Pergunta 4</span>
+              <span>Resposta 4</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Rua:</span>
-              <span>Rua das Flores, 123</span>
+              <span className="text-gray-600">Pergunta 5</span>
+              <span>Resposta 5</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Cidade/Estado:</span>
-              <span>São Paulo, SP</span>
+              <span className="text-gray-600">Pergunta 6</span>
+              <span>Resposta 6</span>
             </div>
           </div>
         </div>
@@ -357,8 +294,7 @@ function Step4() {
         <div className="flex items-start gap-2 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
           <input type="checkbox" id="confirm" className="mt-1" />
           <label htmlFor="confirm" className="text-sm">
-            Confirmo que todas as informações fornecidas são verdadeiras e estou
-            ciente das responsabilidades
+            Confirmo que as informações fornecidas estão corretas.
           </label>
         </div>
       </div>
