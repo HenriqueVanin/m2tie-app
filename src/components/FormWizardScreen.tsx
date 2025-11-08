@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import type { Screen } from '../App';
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import type { Screen } from "../App";
 
 interface FormWizardScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -20,7 +20,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       setCurrentStep(currentStep + 1);
     } else {
       // Formulário completo
-      onNavigate('home');
+      onNavigate("home");
     }
   };
 
@@ -36,14 +36,18 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       <div className="p-6 border-b-2 border-gray-200">
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() => currentStep === 1 ? onNavigate('home') : prevStep()}
+            onClick={() =>
+              currentStep === 1 ? onNavigate("home") : prevStep()
+            }
             className="p-2 -ml-2 hover:bg-gray-100 rounded-lg"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex-1">
             <h1>Novo Formulário</h1>
-            <p className="text-sm text-gray-500">Passo {currentStep} de {totalSteps}</p>
+            <p className="text-sm text-gray-500">
+              Passo {currentStep} de {totalSteps}
+            </p>
           </div>
         </div>
 
@@ -53,7 +57,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             <div
               key={index}
               className={`h-2 flex-1 rounded-full ${
-                index + 1 <= currentStep ? 'bg-blue-600' : 'bg-gray-200'
+                index + 1 <= currentStep ? "bg-blue-600" : "bg-gray-200"
               }`}
             />
           ))}
@@ -105,7 +109,9 @@ function Step1() {
     <div className="space-y-6">
       <div>
         <h2 className="mb-2">Informações Básicas</h2>
-        <p className="text-gray-500">Preencha os dados iniciais do formulário</p>
+        <p className="text-gray-500">
+          Preencha os dados iniciais do formulário
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -185,15 +191,21 @@ function Step2() {
           <RadioGroup defaultValue="not-specified">
             <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
               <RadioGroupItem value="male" id="male" />
-              <Label htmlFor="male" className="cursor-pointer flex-1">Masculino</Label>
+              <Label htmlFor="male" className="cursor-pointer flex-1">
+                Masculino
+              </Label>
             </div>
             <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
               <RadioGroupItem value="female" id="female" />
-              <Label htmlFor="female" className="cursor-pointer flex-1">Feminino</Label>
+              <Label htmlFor="female" className="cursor-pointer flex-1">
+                Feminino
+              </Label>
             </div>
             <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
               <RadioGroupItem value="not-specified" id="not-specified" />
-              <Label htmlFor="not-specified" className="cursor-pointer flex-1">Prefiro não informar</Label>
+              <Label htmlFor="not-specified" className="cursor-pointer flex-1">
+                Prefiro não informar
+              </Label>
             </div>
           </RadioGroup>
         </div>
@@ -345,7 +357,8 @@ function Step4() {
         <div className="flex items-start gap-2 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
           <input type="checkbox" id="confirm" className="mt-1" />
           <label htmlFor="confirm" className="text-sm">
-            Confirmo que todas as informações fornecidas são verdadeiras e estou ciente das responsabilidades
+            Confirmo que todas as informações fornecidas são verdadeiras e estou
+            ciente das responsabilidades
           </label>
         </div>
       </div>

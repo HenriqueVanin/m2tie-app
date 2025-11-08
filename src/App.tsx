@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { LoginScreen } from "./components/LoginScreen";
-import { SignupScreen } from "./components/SignupScreen";
 import { HomeScreen } from "./components/HomeScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
@@ -41,12 +40,6 @@ export default function App() {
           <LoginScreen
             onLogin={handleLogin}
             onNavigateToSignup={() => navigateTo("signup")}
-          />
-        )}
-        {currentScreen === "signup" && (
-          <SignupScreen
-            onSignup={handleLogin}
-            onNavigateToLogin={() => navigateTo("login")}
           />
         )}
       </div>
