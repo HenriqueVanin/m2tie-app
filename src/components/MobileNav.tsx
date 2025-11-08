@@ -1,5 +1,5 @@
-import { Home, FileText, User, Settings } from 'lucide-react';
-import type { Screen } from '../App';
+import { Home, FileText, User, Settings } from "lucide-react";
+import type { Screen } from "../App";
 
 interface MobileNavProps {
   currentScreen: Screen;
@@ -8,10 +8,15 @@ interface MobileNavProps {
 
 export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
   const navItems = [
-    { id: 'home' as Screen, icon: Home, label: 'Home' },
-    { id: 'form' as Screen, icon: FileText, label: 'Formulário', highlight: true },
-    { id: 'profile' as Screen, icon: User, label: 'Perfil' },
-    { id: 'settings' as Screen, icon: Settings, label: 'Config' },
+    { id: "home" as Screen, icon: Home, label: "Home" },
+    {
+      id: "form" as Screen,
+      icon: FileText,
+      label: "Formulário",
+      highlight: true,
+    },
+    { id: "profile" as Screen, icon: User, label: "Perfil" },
+    { id: "settings" as Screen, icon: Settings, label: "Config" },
   ];
 
   return (
@@ -44,11 +49,11 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
                 onClick={() => onNavigate(item.id)}
                 className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-colors ${
                   isActive
-                    ? 'text-gray-800'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? "text-blue-600"
+                    : "text-gray-400 hover:text-gray-600"
                 }`}
               >
-                <Icon className={`w-6 h-6 ${isActive ? 'stroke-2' : ''}`} />
+                <Icon className={`w-6 h-6 ${isActive ? "stroke-2" : ""}`} />
                 <span className="text-xs">{item.label}</span>
               </button>
             );

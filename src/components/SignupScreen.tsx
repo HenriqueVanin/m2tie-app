@@ -1,26 +1,37 @@
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { ArrowLeft } from 'lucide-react';
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { ArrowLeft } from "lucide-react";
 
 interface SignupScreenProps {
   onSignup: () => void;
   onNavigateToLogin: () => void;
 }
 
-export function SignupScreen({ onSignup, onNavigateToLogin }: SignupScreenProps) {
+export function SignupScreen({
+  onSignup,
+  onNavigateToLogin,
+}: SignupScreenProps) {
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto">
+    <main className="flex flex-col min-h-screen max-w-md mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-4 p-6 border-b-2 border-gray-200">
-        <button onClick={onNavigateToLogin} className="p-2 -ml-2 hover:bg-gray-100 rounded-lg">
+      <header className="flex items-center gap-4 p-6 border-b-2 border-gray-200">
+        <button
+          type="button"
+          onClick={onNavigateToLogin}
+          className="p-2 -ml-2 hover:bg-gray-100 rounded-lg"
+        >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h1>Criar Conta</h1>
-      </div>
+        <h1 className="text-xl font-bold">Criar Conta</h1>
+      </header>
 
       {/* Formulário */}
-      <div className="flex-1 p-6 space-y-6">
+      <form
+        className="flex-1 p-6 space-y-6"
+        autoComplete="off"
+        onSubmit={(e) => e.preventDefault()}
+      >
         <div className="space-y-2">
           <Label htmlFor="name">Nome completo</Label>
           <Input
@@ -79,12 +90,13 @@ export function SignupScreen({ onSignup, onNavigateToLogin }: SignupScreenProps)
         </div>
 
         <Button
+          type="button"
           onClick={onSignup}
           className="w-full h-12 bg-gray-800 hover:bg-gray-700"
         >
           Criar conta
         </Button>
-      </div>
-    </div>
+      </form>
+    </main>
   );
 }
