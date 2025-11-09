@@ -38,7 +38,7 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
               className="text-gray-800 font-medium"
               id="profile-avatar-heading"
             >
-              João Pedro Silva
+              Maria Silva
             </p>
             <p className="text-sm text-gray-500">Membro desde Nov 2025</p>
           </div>
@@ -66,7 +66,7 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
         <section className="space-y-4" aria-label="Informações do perfil">
           <div className="space-y-2">
             <Label htmlFor="name">Nome completo</Label>
-            <p>João Pedro Silva</p>
+            <p>Maria Silva</p>
           </div>
 
           <div className="space-y-2">

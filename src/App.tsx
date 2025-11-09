@@ -5,6 +5,10 @@ import { ProfileScreen } from "./components/ProfileScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { FormWizardScreen } from "./components/FormWizardScreen";
 import { MobileNav } from "./components/MobileNav";
+import { StaffDashboardViewer } from "./components/StaffDashboardViewer";
+import { StaffFormBuilder } from "./components/StaffFormBuilder";
+import { StaffFormResponses } from "./components/StaffFormResponses";
+import { StaffNav } from "./components/StaffNav";
 
 export type Screen =
   | "login"
@@ -12,19 +16,26 @@ export type Screen =
   | "home"
   | "profile"
   | "settings"
-  | "form";
+  | "form"
+  | "staff-dashboards"
+  | "staff-form-builder"
+  | "staff-form-responses";
+export type UserType = "regular" | "staff";
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("login");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userType, setUserType] = useState<UserType>("regular");
 
-  const handleLogin = () => {
+  const handleLogin = (type: UserType = "regular") => {
     setIsAuthenticated(true);
-    setCurrentScreen("home");
+    setUserType(type);
+    setCurrentScreen(type === "staff" ? "staff-dashboards" : "home");
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setUserType("regular");
     setCurrentScreen("login");
   };
 
@@ -46,7 +57,26 @@ export default function App() {
     );
   }
 
-  // Renderiza telas autenticadas com navegação
+  // Renderiza interface Staff (Desktop)
+  if (userType === "staff") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <StaffNav
+          currentScreen={currentScreen}
+          onNavigate={navigateTo}
+          onLogout={handleLogout}
+        />
+
+        <div className="flex-1">
+          {currentScreen === "staff-dashboards" && <StaffDashboardViewer />}
+          {currentScreen === "staff-form-builder" && <StaffFormBuilder />}
+          {currentScreen === "staff-form-responses" && <StaffFormResponses />}
+        </div>
+      </div>
+    );
+  }
+
+  // Renderiza telas autenticadas com navegação (Mobile)
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {currentScreen === "home" && <HomeScreen onNavigate={navigateTo} />}

@@ -35,10 +35,12 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
                   onClick={() => onNavigate(item.id)}
                   className="flex flex-col items-center gap-1 -mt-8"
                 >
-                  <div className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg">
+                  <div className="w-14 h-14 bg-gray-800 cursor-pointer hover:bg-gray-700 text-white rounded-full flex items-center justify-center shadow-lg">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <span className="text-xs text-blue-600">{item.label}</span>
+                  <span className="text-xs text-gray-800 font-medium">
+                    {item.label}
+                  </span>
                 </button>
               );
             }
@@ -47,14 +49,16 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center gap-1 py-2 px-4 rounded-lg transition-colors ${
+                className={`flex flex-col items-center gap-1 w-14 py-2 px-4 rounded-lg transition-colors cursor-pointer ${
                   isActive
-                    ? "text-blue-600"
+                    ? "text-gray-800"
                     : "text-gray-400 hover:text-gray-600"
                 }`}
               >
                 <Icon className={`w-6 h-6 ${isActive ? "stroke-2" : ""}`} />
-                <span className="text-xs">{item.label}</span>
+                <span className={`text-xs ${isActive ? "font-medium" : ""}`}>
+                  {item.label}
+                </span>
               </button>
             );
           })}

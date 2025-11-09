@@ -57,7 +57,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             <div
               key={index}
               className={`h-2 flex-1 rounded-full ${
-                index + 1 <= currentStep ? "bg-blue-600" : "bg-gray-200"
+                index + 1 <= currentStep ? "bg-gray-800 " : "bg-gray-200"
               }`}
             />
           ))}
@@ -76,7 +76,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       <div className="p-6 border-t-2 border-gray-200 space-y-3">
         <Button
           onClick={nextStep}
-          className="w-full h-12 bg-blue-600 hover:bg-blue-700 gap-2"
+          className="w-full h-12 bg-gray-800  hover:bg-blue-700 gap-2"
         >
           {currentStep === totalSteps ? (
             <>
@@ -117,22 +117,6 @@ function Step1() {
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="title">Pergunta 1</Label>
-          <Textarea
-            id="description"
-            placeholder="Escreva aqui"
-            className="min-h-32 border-2 border-gray-300"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="title">Pergunta 2</Label>
-          <Textarea
-            id="description"
-            placeholder="Escreva aqui"
-            className="min-h-32 border-2 border-gray-300"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="title">Pergunta 3</Label>
           <Textarea
             id="description"
             placeholder="Escreva aqui"

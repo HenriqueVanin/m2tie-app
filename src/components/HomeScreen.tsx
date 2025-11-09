@@ -1,5 +1,4 @@
 import { Bell, FileText, Plus } from "lucide-react";
-import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import type { Screen } from "../App";
 import { Header } from "./Header";
@@ -64,8 +63,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
   return (
     <main className="flex flex-col min-h-screen max-w-md mx-auto">
       {/* Header */}
-      <Header description="Bem vindo," title="João Pedro" />
-
+      <Header description="Bem vinda," title="Maria Silva" />
       {/* Content */}
       <section className="flex-1 p-6 space-y-6">
         {/* Notificações */}
@@ -80,10 +78,10 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
             {notifications.map((notification) => (
               <article
                 key={notification.id}
-                className={`p-4 rounded-lg border-2 ${
+                className={`p-4 rounded-lg border-1 ${
                   notification.unread
-                    ? "bg-blue-50 border-blue-200"
-                    : "bg-white border-gray-200"
+                    ? "bg-gray-100"
+                    : "bg-white border-gray-100"
                 }`}
                 aria-live={notification.unread ? "polite" : undefined}
               >
@@ -95,7 +93,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
                       </p>
                       {notification.unread && (
                         <span
-                          className="w-2 h-2 bg-blue-600 rounded-full"
+                          className="w-2 h-2 bg-gray-800 rounded-full"
                           aria-label="Não lida"
                         ></span>
                       )}
@@ -122,7 +120,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
             {recentForms.map((form) => (
               <article
                 key={form.id}
-                className="p-4 bg-white rounded-lg border-2 border-gray-200 flex items-center gap-3"
+                className="p-4 bg-white rounded-lg border-1 border-gray-200 flex items-center gap-3"
               >
                 <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
                   <FileText className="w-5 h-5 text-gray-600" />
