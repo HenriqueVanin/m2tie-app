@@ -2,9 +2,10 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import Logo from "../assets/logo.svg";
+import { UserType } from "../App";
 
 interface LoginScreenProps {
-  onLogin: () => void;
+  onLogin: (type?: UserType) => void;
   onNavigateToSignup: () => void;
 }
 
@@ -13,11 +14,11 @@ export function LoginScreen({ onLogin, onNavigateToSignup }: LoginScreenProps) {
     <main className="flex flex-col items-center justify-center min-h-screen p-6 max-w-md mx-auto">
       {/* Header/Logo */}
       <header className="mb-12 text-center">
-        <div className="inline-flex items-center justify-center rounded-2xl mb-4">
-          <img src={Logo} alt="logo" />
+        <div className="inline-flex items-center justify-center">
+          <img src={Logo} alt="logo" className="w-48" />
+          <h3>App</h3>
         </div>
       </header>
-
       {/* Formulário */}
       <form
         className="w-full space-y-6"
@@ -33,7 +34,6 @@ export function LoginScreen({ onLogin, onNavigateToSignup }: LoginScreenProps) {
             className="h-12 border-2 border-gray-300"
           />
         </div>
-
         <div className="space-y-2">
           <Label htmlFor="password">Senha</Label>
           <Input
@@ -59,6 +59,14 @@ export function LoginScreen({ onLogin, onNavigateToSignup }: LoginScreenProps) {
           className="w-full h-12 bg-gray-800 hover:bg-gray-700"
         >
           Entrar
+        </Button>
+
+        <Button
+          onClick={() => onLogin("staff")}
+          variant="outline"
+          className="w-full h-12 border"
+        >
+          Entrar como Staff
         </Button>
       </form>
     </main>

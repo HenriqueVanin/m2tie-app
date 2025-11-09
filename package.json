@@ -45,7 +45,9 @@
     "recharts": "^2.15.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "*",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "react-dnd": "*",
+    "react-dnd-html5-backend": "*"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
