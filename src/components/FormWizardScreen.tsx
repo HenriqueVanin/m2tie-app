@@ -1,52 +1,270 @@
-import { useState } from "react";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Checkbox } from "./ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import { ErrorState } from "./ui/error-state";
 import type { Screen } from "../App";
+import {
+  getActiveForm,
+  Form,
+  FormQuestion,
+  ActiveFormResponse,
+} from "../services/formService";
+import { submitResponse } from "../services/responseService";
 
 interface FormWizardScreenProps {
   onNavigate: (screen: Screen) => void;
 }
 
 export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 4;
+  const [form, setForm] = useState<Form | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [alreadyAnswered, setAlreadyAnswered] = useState(false);
+  const [responseDate, setResponseDate] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, any>>({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
+  const totalSteps = (form?.questions?.length || 0) + 1; // +1 para a etapa de revisão
+  const isReviewStep = currentStep === (form?.questions?.length || 0);
+  const currentQuestion = isReviewStep ? null : form?.questions?.[currentStep];
+
+  useEffect(() => {
+    fetchActiveForm();
+  }, []);
+
+  const fetchActiveForm = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getActiveForm();
+
+      // Verificar se houve erro ou formulário já respondido
+      if (response.error || response.msg === "Formulário já respondido") {
+        setAlreadyAnswered(true);
+        setResponseDate(new Date().toLocaleDateString("pt-BR"));
+        // Se houver dados do formulário, manté-los para exibir o nome
+        if (response.data) {
+          setForm(response.data);
+        }
+        return;
+      }
+
+      // Se data for null ou undefined, não há formulário ativo
+      if (!response.data) {
+        setError("Nenhum formulário ativo disponível no momento.");
+        return;
+      }
+
+      setForm(response.data);
+    } catch (e: any) {
+      setError(e?.message || "Erro ao carregar formulário");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAnswerChange = (questionId: string, value: any) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+  };
+
+  const nextStep = async () => {
+    if (!form) return;
+
+    // Se estiver na etapa de revisão, submeter
+    if (isReviewStep) {
+      await handleSubmit();
+      return;
+    }
+
+    // Validar resposta obrigatória nas questões
+    if (currentQuestion) {
+      const questionId = currentQuestion.questionId._id;
+      if (currentQuestion.required && !answers[questionId]) {
+        alert("Esta questão é obrigatória");
+        return;
+      }
+    }
+
+    // Avançar para próxima etapa (questão ou revisão)
+    if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
-    } else {
-      // Formulário completo
-      onNavigate("home");
     }
   };
 
   const prevStep = () => {
-    if (currentStep > 1) {
+    if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
 
+  const goToQuestion = (questionIndex: number) => {
+    setCurrentStep(questionIndex);
+  };
+
+  const handleSubmit = async () => {
+    if (!form) return;
+
+    try {
+      setSubmitting(true);
+
+      // Mapear respostas para o formato da API
+      const formattedAnswers = Object.entries(answers).map(
+        ([questionId, answer]) => ({
+          questionId,
+          answer,
+        })
+      );
+
+      const response = await submitResponse({
+        formId: form._id,
+        answers: formattedAnswers,
+      });
+
+      // Verificar se houve erro na resposta
+      if (response.error) {
+        // Caso especial: formulário já respondido
+        if (response.msg === "Formulário já respondido") {
+          setAlreadyAnswered(true);
+          setResponseDate(new Date().toLocaleDateString("pt-BR"));
+          return;
+        }
+        throw new Error(response.error);
+      }
+
+      alert("Formulário enviado com sucesso!");
+      onNavigate("home");
+    } catch (e: any) {
+      alert(e?.message || "Erro ao enviar formulário");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
+          <p className="text-gray-600">Carregando formulário...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Already answered state
+  if (alreadyAnswered) {
+    return (
+      <div className="flex flex-col min-h-screen max-w-md mx-auto relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-600"></div>
+
+        {/* Content */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl">
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+          </div>
+
+          <div className="text-center space-y-3">
+            <h1 className="text-white text-3xl font-bold">
+              Formulário já Respondido!
+            </h1>
+          </div>
+
+          {form && (
+            <div className="w-full max-w-sm p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl space-y-2">
+              <div className="text-center">
+                <p className="text-white text-sm mb-1">Formulário</p>
+                <p className="text-white font-semibold text-base">
+                  {form.formTitle}
+                </p>
+              </div>
+              {responseDate && (
+                <div className="pt-2 border-t border-white/20 text-center">
+                  <p className="text-white text-sm mb-1 mt-2">
+                    Data de resposta
+                  </p>
+                  <p className="text-white font-semibold text-base">
+                    {responseDate}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <Button
+            onClick={() => onNavigate("home")}
+            className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg"
+          >
+            Voltar para Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-6">
+        <ErrorState message={error} onRetry={fetchActiveForm} />
+      </div>
+    );
+  }
+
+  // No form available
+  if (!form || !form.questions || form.questions.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-6">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">
+            Nenhum formulário ativo disponível no momento.
+          </p>
+          <Button onClick={() => onNavigate("home")} variant="outline">
+            Voltar para Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto bg-white">
+    <div className="flex flex-col min-h-screen max-w-md mx-auto bg-gray-50">
       {/* Header */}
-      <div className="p-6 border-b-2 border-gray-200">
+      <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={() =>
               currentStep === 1 ? onNavigate("home") : prevStep()
             }
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-lg"
+            className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors"
           >
-            <ArrowLeft className="w-6 h-6" />
+            <ArrowLeft className="w-6 h-6 text-white" />
           </button>
           <div className="flex-1">
-            <h1>Novo Formulário</h1>
-            <p className="text-sm text-gray-500">
-              Passo {currentStep} de {totalSteps}
+            <h1 className="text-white">{form?.title || "Formulário"}</h1>
+            <p className="text-sm text-indigo-100">
+              {isReviewStep
+                ? "Revisão Final"
+                : `Questão ${currentStep + 1} de ${totalSteps - 1}`}
             </p>
           </div>
         </div>
@@ -56,8 +274,8 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           {Array.from({ length: totalSteps }).map((_, index) => (
             <div
               key={index}
-              className={`h-2 flex-1 rounded-full ${
-                index + 1 <= currentStep ? "bg-gray-800 " : "bg-gray-200"
+              className={`h-2 flex-1 rounded-full transition-all ${
+                index <= currentStep ? "bg-white" : "bg-white/30"
               }`}
             />
           ))}
@@ -65,36 +283,63 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-6">
-        {currentStep === 1 && <Step1 />}
-        {currentStep === 2 && <Step2 />}
-        {currentStep === 3 && <Step3 />}
-        {currentStep === 4 && <Step4 />}
+      <div className="flex-1 p-6 overflow-y-auto">
+        <div className="bg-white rounded-3xl shadow-md p-6">
+          {isReviewStep ? (
+            <ReviewStep
+              form={form}
+              answers={answers}
+              onEditQuestion={goToQuestion}
+            />
+          ) : (
+            currentQuestion && (
+              <QuestionRenderer
+                question={currentQuestion}
+                value={answers[currentQuestion.questionId._id]}
+                onChange={(value) =>
+                  handleAnswerChange(currentQuestion.questionId._id, value)
+                }
+              />
+            )
+          )}
+        </div>
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t-2 border-gray-200 space-y-3">
+      <div className="p-6 space-y-3">
         <Button
           onClick={nextStep}
-          className="w-full h-12 bg-gray-800  hover:bg-blue-700 gap-2"
+          disabled={submitting}
+          className="w-full h-14 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white gap-2 shadow-lg rounded-2xl disabled:opacity-50"
         >
-          {currentStep === totalSteps ? (
+          {submitting ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Enviando...
+            </>
+          ) : isReviewStep ? (
             <>
               <Check className="w-5 h-5" />
-              Finalizar
+              Enviar Formulário
+            </>
+          ) : currentStep === totalSteps - 2 ? (
+            <>
+              <Check className="w-5 h-5" />
+              Revisar Respostas
             </>
           ) : (
             <>
-              Continuar
-              <ArrowRight className="w-5 h-5" />
+              Próximo
+              <ChevronRight className="w-5 h-5" />
             </>
           )}
         </Button>
-        {currentStep > 1 && (
+        {currentStep > 0 && (
           <Button
             onClick={prevStep}
+            disabled={submitting}
             variant="outline"
-            className="w-full h-12 border-2"
+            className="w-full h-12 border-2 border-gray-200 rounded-2xl"
           >
             Voltar
           </Button>
@@ -104,183 +349,237 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   );
 }
 
-function Step1() {
+// Componente para revisão final das respostas
+interface ReviewStepProps {
+  form: Form;
+  answers: Record<string, any>;
+  onEditQuestion: (questionIndex: number) => void;
+}
+
+function ReviewStep({ form, answers, onEditQuestion }: ReviewStepProps) {
+  const formatAnswer = (question: FormQuestion, answer: any): string => {
+    if (!answer) return "Não respondida";
+
+    const questionDetails = question.questionId;
+
+    // Array (checkbox)
+    if (Array.isArray(answer)) {
+      if (answer.length === 0) return "Não respondida";
+      return answer.join(", ");
+    }
+
+    // Options (multiple_choice, dropdown, scale)
+    if (questionDetails.options && questionDetails.options.length > 0) {
+      const option = questionDetails.options.find(
+        (opt) => opt.value === answer || opt.label === answer
+      );
+      return option ? option.label : answer.toString();
+    }
+
+    // Text, date, etc.
+    return answer.toString();
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="mb-2">Etapa 1</h2>
-        <p className="text-gray-500">
-          Preencha os dados iniciais do formulário
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Revisão das Respostas
+        </h2>
+        <p className="text-gray-600">
+          Confira suas respostas antes de enviar o formulário
         </p>
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="title">Pergunta 1</Label>
-          <Textarea
-            id="description"
-            placeholder="Escreva aqui"
-            className="min-h-32 border-2 border-gray-300"
-          />
-        </div>
+        {form.questions.map((question, index) => {
+          const questionId = question.questionId._id;
+          const answer = answers[questionId];
+          const questionDetails = question.questionId;
+
+          return (
+            <div
+              key={questionId}
+              className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-sm transition-all cursor-pointer group"
+              onClick={() => onEditQuestion(index)}
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-semibold text-sm">
+                  {index + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                    {questionDetails.title}
+                    {question.required && (
+                      <span className="text-red-600 ml-1">*</span>
+                    )}
+                  </h3>
+                  <div className="text-sm">
+                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded group-hover:bg-indigo-50 group-hover:text-indigo-700 transition-colors">
+                      {formatAnswer(question, answer)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 text-gray-400 group-hover:text-indigo-600 transition-colors">
+                  <ChevronRight className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+        <p className="text-sm text-indigo-900 text-center">
+          ✓ Ao clicar em "Enviar Formulário", suas respostas serão submetidas
+        </p>
       </div>
     </div>
   );
 }
 
-function Step2() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="mb-2">Etapa 2</h2>
-        <p className="text-gray-500">Descrição da segunda etapa</p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="category">Categoria</Label>
-        <select
-          id="category"
-          className="w-full h-12 px-3 border-2 border-gray-300 rounded-md bg-white"
-        >
-          <option>Selecione uma categoria</option>
-          <option>Categoria A</option>
-          <option>Categoria B</option>
-          <option>Categoria C</option>
-        </select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Multiplas opções</Label>
-        <RadioGroup defaultValue="not-specified">
-          <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
-            <RadioGroupItem value="male" id="male" />
-            <Label htmlFor="male" className="cursor-pointer flex-1">
-              Opção 1
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
-            <RadioGroupItem value="female" id="female" />
-            <Label htmlFor="female" className="cursor-pointer flex-1">
-              Opção 2
-            </Label>
-          </div>
-          <div className="flex items-center space-x-2 p-3 border-2 border-gray-300 rounded-lg">
-            <RadioGroupItem value="not-specified" id="not-specified" />
-            <Label htmlFor="not-specified" className="cursor-pointer flex-1">
-              Opção 3
-            </Label>
-          </div>
-        </RadioGroup>
-      </div>
-    </div>
-  );
+// Componente para renderizar cada tipo de questão
+interface QuestionRendererProps {
+  question: FormQuestion;
+  value: any;
+  onChange: (value: any) => void;
 }
 
-function Step3() {
+function QuestionRenderer({
+  question,
+  value,
+  onChange,
+}: QuestionRendererProps) {
+  const questionDetails = question.questionId;
+  const type = questionDetails.type;
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2">Etapa 3</h2>
-        <p className="text-gray-500">Descrição da terceira etapa</p>
+        <h2 className="mb-2">{questionDetails.title}</h2>
+        {question.required && (
+          <p className="text-sm text-red-600">* Obrigatório</p>
+        )}
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="cep">Pergunta 1</Label>
-          <Input
-            id="cep"
-            placeholder="Responda aqui"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
+        {type === "text" && (
+          <div className="space-y-2">
+            <Input
+              value={value || ""}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder="Digite sua resposta"
+              className="h-12 border"
+            />
+          </div>
+        )}
 
-        <div className="space-y-2">
-          <Label htmlFor="street">Pergunta 2</Label>
-          <Input
-            id="street"
-            placeholder="Responda aqui"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
+        {type === "multiple_choice" && questionDetails.options && (
+          <RadioGroup value={value || ""} onValueChange={onChange}>
+            {questionDetails.options.map((option: any, index: number) => (
+              <div
+                key={index}
+                className="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg hover:border-indigo-300 transition-colors"
+              >
+                <RadioGroupItem
+                  value={option.value || option.label}
+                  id={`option-${index}`}
+                />
+                <Label
+                  htmlFor={`option-${index}`}
+                  className="cursor-pointer flex-1"
+                >
+                  {option.label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        )}
 
-        <div className="space-y-2">
-          <Label htmlFor="neighborhood">Pergunta 3</Label>
-          <Input
-            id="neighborhood"
-            placeholder="Responda aqui"
-            className="h-12 border-2 border-gray-300"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
+        {type === "checkbox" && questionDetails.options && (
+          <div className="space-y-2">
+            {questionDetails.options.map((option: any, index: number) => {
+              const selected = Array.isArray(value) ? value : [];
+              const isChecked = selected.includes(option.value || option.label);
 
-function Step4() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="mb-2">Revisão e Confirmação</h2>
-        <p className="text-gray-500">Revise suas informações antes de enviar</p>
-      </div>
+              return (
+                <div
+                  key={index}
+                  className="flex items-start space-x-2 p-3 border border-gray-300 rounded-lg hover:border-indigo-300 transition-colors"
+                >
+                  <Checkbox
+                    id={`checkbox-${index}`}
+                    checked={isChecked}
+                    onCheckedChange={(checked: boolean) => {
+                      const optionValue = option.value || option.label;
+                      if (checked) {
+                        onChange([...selected, optionValue]);
+                      } else {
+                        onChange(
+                          selected.filter((v: string) => v !== optionValue)
+                        );
+                      }
+                    }}
+                    className="mt-0.5"
+                  />
+                  <label
+                    htmlFor={`checkbox-${index}`}
+                    className="cursor-pointer flex-1 text-sm"
+                  >
+                    <p className="text-gray-900">{option.label}</p>
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-      <div className="space-y-4">
-        <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-          <h3 className="mb-3">Informações Básicas</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Título:</span>
-              <span>Formulário de exemplo</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Categoria:</span>
-              <span>Categoria A</span>
+        {type === "dropdown" && questionDetails.options && (
+          <Select value={value || ""} onValueChange={onChange}>
+            <SelectTrigger className="h-12 border">
+              <SelectValue placeholder="Selecione uma opção" />
+            </SelectTrigger>
+            <SelectContent>
+              {questionDetails.options.map((option: any, index: number) => (
+                <SelectItem key={index} value={option.value || option.label}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {type === "scale" && questionDetails.options && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              {questionDetails.options.map((option: any, index: number) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => onChange(option.value || option.label)}
+                  className={`flex-1 h-12 border-2 rounded-lg transition-all ${
+                    value === (option.value || option.label)
+                      ? "border-indigo-600 bg-indigo-50 text-indigo-600"
+                      : "border-gray-300 hover:border-indigo-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-          <h3 className="mb-3">Dados Pessoais</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pergunta 1</span>
-              <span>Resposta 1</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pergunta 2</span>
-              <span>Resposta 2</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pergunta 3</span>
-              <span>Resposta 3</span>
-            </div>
+        {type === "date" && (
+          <div className="space-y-2">
+            <Input
+              type="date"
+              value={value || ""}
+              onChange={(e) => onChange(e.target.value)}
+              className="h-12 border"
+            />
           </div>
-        </div>
-
-        <div className="p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
-          <h3 className="mb-3">Endereço</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pergunta 4</span>
-              <span>Resposta 4</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pergunta 5</span>
-              <span>Resposta 5</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Pergunta 6</span>
-              <span>Resposta 6</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-start gap-2 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-          <input type="checkbox" id="confirm" className="mt-1" />
-          <label htmlFor="confirm" className="text-sm">
-            Confirmo que as informações fornecidas estão corretas.
-          </label>
-        </div>
+        )}
       </div>
     </div>
   );

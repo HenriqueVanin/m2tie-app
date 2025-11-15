@@ -10,13 +10,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { authService } from "../services/authService";
 
 interface SignupScreenProps {
   onNavigateToLogin: () => void;
   onSignupSuccess: () => void;
 }
 
-export function SignupScreen({ onNavigateToLogin, onSignupSuccess }: SignupScreenProps) {
+export function SignupScreen({
+  onNavigateToLogin,
+  onSignupSuccess,
+}: SignupScreenProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,30 +53,20 @@ export function SignupScreen({ onNavigateToLogin, onSignupSuccess }: SignupScree
     }
 
     try {
-      const response = await fetch("http://localhost:8000/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          confirmPassword,
-          role
-        }),
+      await authService.register({
+        name,
+        email,
+        password,
+        confirmPassword,
+        role,
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao criar conta");
-      }
 
       // Cadastro bem-sucedido
       onSignupSuccess();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar conta");
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error || err.message || "Erro ao criar conta";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

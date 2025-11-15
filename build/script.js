@@ -43,7 +43,6 @@ function renderHome() {
   app.innerHTML = `
       <header>
         <h1>M2Tie App</h1>
-        <p>Bem-vindo!</p>
       </header>
       <main style="padding:2rem;max-width:500px;margin:auto;">
         <section style="margin-bottom:2rem;">

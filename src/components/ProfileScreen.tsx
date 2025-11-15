@@ -1,92 +1,90 @@
-import { Camera, Mail, Phone, MapPin, Calendar } from "lucide-react";
-import { Button } from "./ui/button";
+import { Mail } from "lucide-react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import type { Screen } from "../App";
-import { Header } from "./Header";
+import { useEffect, useState } from "react";
+import { getUserCookie, getUserInitials } from "../utils/userCookie";
+import { ScreenHeader } from "./ui/screen-header";
 
 interface ProfileScreenProps {
   onNavigate: (screen: Screen) => void;
 }
 
 export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [institution, setInstitution] = useState("Universidade"); // placeholder sem backend
+  useEffect(() => {
+    const user = getUserCookie();
+    if (user) {
+      setName(user.name || "Usuário");
+      setEmail(user.email || "");
+    }
+  }, []);
+  const initials = getUserInitials(name);
   return (
-    <main className="flex flex-col min-h-screen max-w-md mx-auto">
-      {/* Header */}
-      <Header title="Meu Perfil" />
+    <div className="flex flex-col min-h-screen max-w-md mx-auto relative">
+      <ScreenHeader title="Meu Perfil" subtitle="Gerencie suas informações" />
 
       {/* Content */}
-      <section className="flex-1 p-6 space-y-6">
-        {/* Avatar */}
-        <section
-          aria-labelledby="profile-avatar-heading"
-          className="flex flex-col items-center gap-4"
-        >
-          <div className="relative">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-gray-600">JP</span>
+      <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4">
+        <div className="mt-4 space-y-6">
+          {/* Avatar */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="relative">
+              <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-3xl flex items-center justify-center shadow-xl">
+                <span className="text-white text-2xl">{initials}</span>
+              </div>
             </div>
-            <button
-              type="button"
-              className="absolute bottom-0 right-0 p-2 bg-gray-800 text-white rounded-full hover:bg-gray-700"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="text-center">
-            <p
-              className="text-gray-800 font-medium"
-              id="profile-avatar-heading"
-            >
-              Maria Silva
-            </p>
-            <p className="text-sm text-gray-500">Membro desde Nov 2025</p>
-          </div>
-        </section>
-        {/* Stats */}
-        <section
-          className="grid grid-cols-3 gap-4 p-4 bg-gray-100 rounded-lg"
-          aria-label="Estatísticas"
-        >
-          <div className="text-center">
-            <p className="text-gray-800 font-bold">12</p>
-            <p className="text-xs text-gray-500">Formulários</p>
-          </div>
-          <div className="text-center">
-            <p className="text-gray-800 font-bold">8</p>
-            <p className="text-xs text-gray-500">Completos</p>
-          </div>
-          <div className="text-center">
-            <p className="text-gray-800 font-bold">4</p>
-            <p className="text-xs text-gray-500">Pendentes</p>
-          </div>
-        </section>
-
-        {/* Informações */}
-        <section className="space-y-4" aria-label="Informações do perfil">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome completo</Label>
-            <p>Maria Silva</p>
+            <div className="text-center">
+              <p className="text-gray-900">{name || "Usuário"}</p>
+              <p className="text-sm text-gray-500">{institution}</p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <p>seu@email.com</p>
-          </div>
+          {/* Informações */}
+          <div className="space-y-4 bg-gray-50 p-6 rounded-3xl border border-gray-200">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-gray-700 text-sm">
+                Nome completo
+              </Label>
+              <Input
+                id="name"
+                value={name}
+                readOnly
+                className="h-12 border-gray-200 bg-white rounded-xl"
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="birth">Faculdade</Label>
-            <p>Universidade de São Paulo</p>
-          </div>
-        </section>
+            <div className="space-y-2">
+              <Label htmlFor="institution" className="text-gray-700 text-sm">
+                Instituição
+              </Label>
+              <Input
+                id="institution"
+                value={institution}
+                readOnly
+                className="h-12 border-gray-200 bg-white rounded-xl"
+              />
+            </div>
 
-        <Button
-          type="button"
-          className="w-full h-12 bg-gray-800 hover:bg-gray-700"
-        >
-          Salvar alterações
-        </Button>
-      </section>
-    </main>
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-700 text-sm">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input
+                  id="email"
+                  value={email}
+                  readOnly
+                  className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

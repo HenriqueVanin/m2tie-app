@@ -1,17 +1,17 @@
 import {
   Bell,
   Lock,
-  Globe,
   Moon,
+  Globe,
   HelpCircle,
-  FileText,
   LogOut,
   ChevronRight,
 } from "lucide-react";
-import { Switch } from "./ui/switch";
 import { Button } from "./ui/button";
+import { Switch } from "./ui/switch";
 import type { Screen } from "../App";
-import { Header } from "./Header";
+import { useState } from "react";
+import { ScreenHeader } from "./ui/screen-header";
 
 interface SettingsScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -19,91 +19,101 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ onNavigate, onLogout }: SettingsScreenProps) {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+
   return (
-    <main className="flex flex-col min-h-screen max-w-md mx-auto">
-      {/* Header */}
-      <Header title="Configurações" />
+    <div className="flex flex-col min-h-screen max-w-md mx-auto relative">
+      <ScreenHeader
+        title="Configurações"
+        subtitle="Personalize sua experiência"
+      />
 
       {/* Content */}
-      <section className="flex-1 p-6 space-y-6">
-        {/* Conta */}
-        <section aria-labelledby="conta-heading">
-          <h3 id="conta-heading" className="mb-3 text-sm text-gray-500">
-            CONTA
-          </h3>
-          <div className="bg-white rounded-lg border-2 border-gray-200 divide-y-2 divide-gray-200">
-            <button
-              type="button"
-              className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-gray-600" />
-                <span>Alterar senha</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
-          </div>
-        </section>
+      <div className="relative z-10 flex-1 bg-white p-6 space-y-4 rounded-[32px] mx-[10px] my-[0px] mb-4">
+        <div className="mt-4 space-y-4">
+          {/* Preferências */}
+          <div className="bg-gray-50 rounded-3xl border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <p className="text-gray-900">Preferências</p>
+            </div>
 
-        {/* Aparência */}
-        <section aria-labelledby="aparencia-heading">
-          <h3 id="aparencia-heading" className="mb-3 text-sm text-gray-500">
-            APARÊNCIA
-          </h3>
-          <div className="bg-white rounded-lg border-2 border-gray-200">
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-gray-600" />
-                <span>Modo escuro</span>
+            <div className="divide-y divide-gray-100">
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center">
+                    <Moon className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-gray-900 text-sm">Modo escuro</p>
+                    <p className="text-xs text-gray-500">Ativar tema escuro</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={darkModeEnabled}
+                  onCheckedChange={setDarkModeEnabled}
+                />
               </div>
-              <Switch />
             </div>
           </div>
-        </section>
 
-        {/* Suporte */}
-        <section aria-labelledby="suporte-heading">
-          <h3 id="suporte-heading" className="mb-3 text-sm text-gray-500">
-            SUPORTE
-          </h3>
-          <div className="bg-white rounded-lg border-2 border-gray-200 divide-y-2 divide-gray-200">
-            <button
-              type="button"
-              className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-5 h-5 text-gray-600" />
-                <span>Central de ajuda</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
-            <button
-              type="button"
-              className="w-full flex items-center justify-between p-4 hover:bg-gray-50"
-            >
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-gray-600" />
-                <span>Política de privacidade</span>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
-            </button>
+          {/* Segurança */}
+          <div className="bg-gray-50 rounded-3xl border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <p className="text-gray-900">Segurança</p>
+            </div>
+
+            <div className="divide-y divide-gray-100">
+              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-gray-900 text-sm">Alterar senha</p>
+                    <p className="text-xs text-gray-500">
+                      Atualizar senha de acesso
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
           </div>
-        </section>
 
-        {/* Versão */}
-        <div className="text-center text-sm text-gray-500">Versão 1.0.0</div>
+          {/* Suporte */}
+          <div className="bg-gray-50 rounded-3xl border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-100">
+              <p className="text-gray-900">Suporte</p>
+            </div>
 
-        {/* Logout */}
-        <Button
-          type="button"
-          onClick={onLogout}
-          variant="outline"
-          className="w-full h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2"
-        >
-          <LogOut className="w-5 h-5" />
-          Sair da conta
-        </Button>
-      </section>
-    </main>
+            <div className="divide-y divide-gray-100">
+              <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-gray-900 text-sm">Central de ajuda</p>
+                    <p className="text-xs text-gray-500">Tire suas dúvidas</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Logout */}
+          <Button
+            onClick={onLogout}
+            variant="outline"
+            className="w-full h-14 border-2 border-red-200 text-red-600 hover:bg-red-50 gap-2 rounded-2xl"
+          >
+            <LogOut className="w-5 h-5" />
+            Sair da conta
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

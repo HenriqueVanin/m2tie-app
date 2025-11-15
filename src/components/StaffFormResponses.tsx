@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Search,
   Filter,
   Eye,
   Download,
@@ -13,8 +12,12 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Loader2,
 } from "lucide-react";
+import { getAllResponses, ResponseData } from "../services/responseService";
 import { Button } from "./ui/button";
+import { ErrorState } from "./ui/error-state";
+import { SearchBar } from "./ui/search-bar";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -29,101 +32,68 @@ import {
 interface FormResponse {
   id: string;
   formTitle: string;
+  formDescription?: string;
   userName: string;
   userEmail: string;
-  userPhone: string;
   submittedAt: string;
-  status: "completed" | "pending" | "rejected";
-  answers: Record<string, any>;
+  answers: {
+    questionId: string;
+    questionTitle: string;
+    questionType: string;
+    questionOptions?: string[];
+    answer: string | string[] | number;
+  }[];
 }
 
-const MOCK_RESPONSES: FormResponse[] = [
-  {
-    id: "resp-001",
-    formTitle: "Formulário de Cadastro",
-    userName: "Maria Silva",
-    userEmail: "joao@email.com",
-    userPhone: "(11) 98765-4321",
-    submittedAt: "2025-11-09T14:30:00",
-    status: "completed",
-    answers: {
-      "Nome completo": "Maria Silva",
-      CPF: "123.456.789-00",
-      "Data de nascimento": "15/01/1990",
-      Gênero: "Masculino",
-      CEP: "01234-567",
-      Rua: "Rua das Flores, 123",
-      Cidade: "São Paulo",
-      Estado: "SP",
-    },
-  },
-  {
-    id: "resp-002",
-    formTitle: "Solicitação de Serviço",
-    userName: "Maria Oliveira",
-    userEmail: "maria@email.com",
-    userPhone: "(11) 91234-5678",
-    submittedAt: "2025-11-09T13:15:00",
-    status: "pending",
-    answers: {
-      "Tipo de serviço": "Consultoria",
-      Descrição: "Preciso de ajuda com implementação de sistema",
-      Urgência: "Alta",
-      "Data preferencial": "15/11/2025",
-    },
-  },
-  {
-    id: "resp-003",
-    formTitle: "Atualização de Dados",
-    userName: "Carlos Santos",
-    userEmail: "carlos@email.com",
-    userPhone: "(21) 99876-5432",
-    submittedAt: "2025-11-08T16:45:00",
-    status: "completed",
-    answers: {
-      "Novo telefone": "(21) 99876-5432",
-      "Novo endereço": "Av. Paulista, 1000",
-      Cidade: "São Paulo",
-    },
-  },
-  {
-    id: "resp-004",
-    formTitle: "Formulário de Cadastro",
-    userName: "Ana Costa",
-    userEmail: "ana@email.com",
-    userPhone: "(11) 95555-1234",
-    submittedAt: "2025-11-08T10:20:00",
-    status: "rejected",
-    answers: {
-      "Nome completo": "Ana Costa",
-      CPF: "987.654.321-00",
-      "Data de nascimento": "20/05/1995",
-    },
-  },
-  {
-    id: "resp-005",
-    formTitle: "Solicitação de Serviço",
-    userName: "Pedro Almeida",
-    userEmail: "pedro@email.com",
-    userPhone: "(11) 94444-3333",
-    submittedAt: "2025-11-07T09:00:00",
-    status: "completed",
-    answers: {
-      "Tipo de serviço": "Suporte Técnico",
-      Descrição: "Problema com acesso ao sistema",
-      Urgência: "Média",
-    },
-  },
-];
-
 export function StaffFormResponses() {
-  const [responses, setResponses] = useState<FormResponse[]>(MOCK_RESPONSES);
+  const [responses, setResponses] = useState<FormResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterForm, setFilterForm] = useState<string>("all");
   const [selectedResponse, setSelectedResponse] = useState<FormResponse | null>(
     null
   );
+
+  // Fetch responses on mount
+  useEffect(() => {
+    fetchResponses();
+  }, []);
+
+  const fetchResponses = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await getAllResponses();
+      if (result.error) {
+        setError(result.error);
+      } else if (result.data) {
+        // Map backend data to UI format
+        const mappedResponses: FormResponse[] = result.data.map(
+          (r: ResponseData) => ({
+            id: r._id,
+            formTitle: r.formId.title,
+            formDescription: r.formId.description,
+            userName: r.userId.name,
+            userEmail: r.userId.email,
+            submittedAt: r.submittedAt,
+            answers: r.answers.map((a) => ({
+              questionId: a.questionId._id,
+              questionTitle: a.questionId.title,
+              questionType: a.questionId.type,
+              questionOptions: a.questionId.options,
+              answer: a.answer,
+            })),
+          })
+        );
+        setResponses(mappedResponses);
+      }
+    } catch (err) {
+      setError("Erro ao carregar respostas");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtrar respostas
   const filteredResponses = responses.filter((response) => {
@@ -132,42 +102,14 @@ export function StaffFormResponses() {
       response.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       response.formTitle.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      filterStatus === "all" || response.status === filterStatus;
     const matchesForm =
       filterForm === "all" || response.formTitle === filterForm;
 
-    return matchesSearch && matchesStatus && matchesForm;
+    return matchesSearch && matchesForm;
   });
 
   // Obter lista única de formulários
   const uniqueForms = Array.from(new Set(responses.map((r) => r.formTitle)));
-
-  const getStatusBadge = (status: FormResponse["status"]) => {
-    switch (status) {
-      case "completed":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Completo
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-            <Clock className="w-3 h-3 mr-1" />
-            Pendente
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-            <XCircle className="w-3 h-3 mr-1" />
-            Rejeitado
-          </Badge>
-        );
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -192,7 +134,7 @@ export function StaffFormResponses() {
             </p>
           </div>
 
-          <Button className="bg-gray-800  hover:bg-blue-700 gap-2">
+          <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
             <Download className="w-5 h-5" />
             Exportar
           </Button>
@@ -200,28 +142,12 @@ export function StaffFormResponses() {
 
         {/* Filters */}
         <div className="flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              placeholder="Buscar por nome, email ou formulário..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-12 border-2"
-            />
-          </div>
-
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-48 h-12 border-2">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="completed">Completo</SelectItem>
-              <SelectItem value="pending">Pendente</SelectItem>
-              <SelectItem value="rejected">Rejeitado</SelectItem>
-            </SelectContent>
-          </Select>
+          <SearchBar
+            placeholder="Buscar por nome, email ou formulário..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+            className="flex-1"
+          />
 
           <Select value={filterForm} onValueChange={setFilterForm}>
             <SelectTrigger className="w-64 h-12 border">
@@ -241,27 +167,19 @@ export function StaffFormResponses() {
 
       {/* Stats */}
       <div className="px-6 py-4 bg-gray-50 border-b-2 border-gray-200">
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
             <p className="text-sm text-gray-500">Total de Respostas</p>
             <p className="text-gray-800">{responses.length}</p>
           </div>
           <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <p className="text-sm text-gray-500">Completas</p>
-            <p className="text-gray-800">
-              {responses.filter((r) => r.status === "completed").length}
-            </p>
+            <p className="text-sm text-gray-500">Formulários Únicos</p>
+            <p className="text-gray-800">{uniqueForms.length}</p>
           </div>
           <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <p className="text-sm text-gray-500">Pendentes</p>
+            <p className="text-sm text-gray-500">Usuários Únicos</p>
             <p className="text-gray-800">
-              {responses.filter((r) => r.status === "pending").length}
-            </p>
-          </div>
-          <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <p className="text-sm text-gray-500">Rejeitadas</p>
-            <p className="text-gray-800">
-              {responses.filter((r) => r.status === "rejected").length}
+              {new Set(responses.map((r) => r.userEmail)).size}
             </p>
           </div>
         </div>
@@ -269,83 +187,96 @@ export function StaffFormResponses() {
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-            <tr>
-              <th className="text-left px-6 py-4 text-sm text-gray-500">
-                Usuário
-              </th>
-              <th className="text-left px-6 py-4 text-sm text-gray-500">
-                Formulário
-              </th>
-              <th className="text-left px-6 py-4 text-sm text-gray-500">
-                Data de Envio
-              </th>
-              <th className="text-left px-6 py-4 text-sm text-gray-500">
-                Status
-              </th>
-              <th className="text-left px-6 py-4 text-sm text-gray-500">
-                Ações
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white">
-            {filteredResponses.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          </div>
+        ) : error ? (
+          <ErrorState message={error} onRetry={fetchResponses} />
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
               <tr>
-                <td
-                  colSpan={5}
-                  className="px-6 py-12 text-center text-gray-500"
-                >
-                  Nenhuma resposta encontrada
-                </td>
+                <th className="text-left px-6 py-4 text-sm text-gray-500">
+                  Usuário
+                </th>
+                <th className="text-left px-6 py-4 text-sm text-gray-500">
+                  Formulário
+                </th>
+                <th className="text-left px-6 py-4 text-sm text-gray-500">
+                  Data de Envio
+                </th>
+                <th className="text-left px-6 py-4 text-sm text-gray-500">
+                  Respostas
+                </th>
+                <th className="text-left px-6 py-4 text-sm text-gray-500">
+                  Ações
+                </th>
               </tr>
-            ) : (
-              filteredResponses.map((response) => (
-                <tr
-                  key={response.id}
-                  className="border-b border-gray-200 hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-gray-600" />
-                      </div>
-                      <div>
-                        <p className="text-gray-800">{response.userName}</p>
-                        <p className="text-sm text-gray-500">
-                          {response.userEmail}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="text-gray-800">{response.formTitle}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      {formatDate(response.submittedAt)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getStatusBadge(response.status)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Button
-                      onClick={() => setSelectedResponse(response)}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Ver Detalhes
-                    </Button>
+            </thead>
+            <tbody className="bg-white">
+              {filteredResponses.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    Nenhuma resposta encontrada
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                filteredResponses.map((response) => (
+                  <tr
+                    key={response.id}
+                    className="border-b border-gray-200 hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-gray-600" />
+                        </div>
+                        <div>
+                          <p className="text-gray-800">{response.userName}</p>
+                          <p className="text-sm text-gray-500">
+                            {response.userEmail}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-gray-800">{response.formTitle}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        {formatDate(response.submittedAt)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                        {response.answers.length}{" "}
+                        {response.answers.length === 1
+                          ? "resposta"
+                          : "respostas"}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Button
+                        onClick={() => setSelectedResponse(response)}
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Ver Detalhes
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Modal de Detalhes */}
@@ -376,30 +307,11 @@ function ResponseDetailModal({ response, onClose }: ResponseDetailModalProps) {
     }).format(date);
   };
 
-  const getStatusBadge = (status: FormResponse["status"]) => {
-    switch (status) {
-      case "completed":
-        return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Completo
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
-            <Clock className="w-3 h-3 mr-1" />
-            Pendente
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-            <XCircle className="w-3 h-3 mr-1" />
-            Rejeitado
-          </Badge>
-        );
+  const formatAnswer = (answer: string | string[] | number): string => {
+    if (Array.isArray(answer)) {
+      return answer.join(", ");
     }
+    return String(answer);
   };
 
   return (
@@ -410,7 +322,10 @@ function ResponseDetailModal({ response, onClose }: ResponseDetailModalProps) {
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h2>{response.formTitle}</h2>
-              {getStatusBadge(response.status)}
+              <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+                {response.answers.length}{" "}
+                {response.answers.length === 1 ? "resposta" : "respostas"}
+              </Badge>
             </div>
             <p className="text-sm text-gray-500">
               Enviado em {formatDate(response.submittedAt)}
@@ -446,10 +361,6 @@ function ResponseDetailModal({ response, onClose }: ResponseDetailModalProps) {
                       <Mail className="w-4 h-4" />
                       {response.userEmail}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      {response.userPhone}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -462,13 +373,20 @@ function ResponseDetailModal({ response, onClose }: ResponseDetailModalProps) {
               <CardTitle>Respostas do Formulário</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.entries(response.answers).map(([question, answer]) => (
+              {response.answers.map((answer) => (
                 <div
-                  key={question}
+                  key={answer.questionId}
                   className="pb-4 border-b border-gray-200 last:border-0 last:pb-0"
                 >
-                  <p className="text-sm text-gray-500 mb-2">{question}</p>
-                  <p className="text-gray-800">{answer}</p>
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="text-sm text-gray-500 flex-1">
+                      {answer.questionTitle}
+                    </p>
+                    <Badge variant="outline" className="text-xs">
+                      {answer.questionType}
+                    </Badge>
+                  </div>
+                  <p className="text-gray-800">{formatAnswer(answer.answer)}</p>
                 </div>
               ))}
             </CardContent>
@@ -480,7 +398,7 @@ function ResponseDetailModal({ response, onClose }: ResponseDetailModalProps) {
           <Button onClick={onClose} variant="outline" className="flex-1 border">
             Fechar
           </Button>
-          <Button className="flex-1 bg-gray-800  hover:bg-blue-700 gap-2">
+          <Button className="flex-1 bg-blue-900 hover:bg-blue-800 text-white gap-2">
             <Download className="w-4 h-4" />
             Exportar PDF
           </Button>

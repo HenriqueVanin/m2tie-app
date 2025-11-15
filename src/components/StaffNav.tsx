@@ -1,5 +1,16 @@
-import { LayoutDashboard, FileEdit, LogOut, ClipboardList } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileEdit,
+  LogOut,
+  ClipboardList,
+  Users,
+  FolderOpen,
+  HelpCircle,
+} from "lucide-react";
 import { Button } from "./ui/button";
+import logoImage from "../assets/logo.svg";
+import { useEffect, useState } from "react";
+import { getUserCookie } from "../utils/userCookie";
 import type { Screen } from "../App";
 
 interface StaffNavProps {
@@ -13,6 +24,11 @@ export function StaffNav({
   onNavigate,
   onLogout,
 }: StaffNavProps) {
+  const [name, setName] = useState("");
+  useEffect(() => {
+    const user = getUserCookie();
+    if (user?.name) setName(user.name);
+  }, []);
   const navItems = [
     {
       id: "staff-dashboards" as Screen,
@@ -20,27 +36,49 @@ export function StaffNav({
       label: "Dashboards",
     },
     {
+      id: "staff-user-management" as Screen,
+      icon: Users,
+      label: "Gerenciar Usuários",
+    },
+    {
+      id: "staff-question-bank" as Screen,
+      icon: HelpCircle,
+      label: "Banco de Questões",
+    },
+    {
       id: "staff-form-builder" as Screen,
       icon: FileEdit,
-      label: "Editor de Formulários",
+      label: "Criador de Formulários",
+    },
+    {
+      id: "staff-form-responses-by-form" as Screen,
+      icon: FolderOpen,
+      label: "Respostas por Formulário",
     },
     {
       id: "staff-form-responses" as Screen,
       icon: ClipboardList,
-      label: "Respostas de Formulários",
+      label: "Todas as Respostas",
     },
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+    <aside className="w-72 bg-white border-r border-gray-200 flex flex-col shadow-lg">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200">
-        <h2 className="text-gray-800">Painel Staff</h2>
-        <p className="text-sm text-gray-500">Administração</p>
+      <div className="p-6 bg-[#003087]">
+        {/* <div className="flex items-center gap-3 mb-4">
+          <img
+            src={logoImage}
+            alt="M2TIC"
+            className="h-12 bg-white rounded-[40px] py-[1px] px-[31px] py-[7px]"
+          />
+        </div> */}
+        <h2 className="text-white">{name ? name.split(" ")[0] : "Painel"}</h2>
+        <p className="text-blue-200 text-sm mt-1">Painel de Administração</p>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 ">
+      <nav className="flex-1 p-4 space-y-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentScreen === item.id;
@@ -49,25 +87,31 @@ export function StaffNav({
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center text-sm gap-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
                 isActive
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-[#003087] text-white shadow-lg"
+                  : "text-gray-700 hover:bg-gray-50"
               }`}
             >
-              <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  isActive ? "bg-white/20" : "bg-gray-100"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+              </div>
+              <span className="text-sm">{item.label}</span>
             </button>
           );
         })}
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4">
         <Button
           onClick={onLogout}
           variant="outline"
-          className="w-full border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2"
+          className="w-full h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2 rounded-2xl"
         >
           <LogOut className="w-5 h-5" />
           Sair

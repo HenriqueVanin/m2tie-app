@@ -1,150 +1,179 @@
-import { Bell, FileText, Plus } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Plus, Bell, AlertCircle, CheckCircle, Info } from "lucide-react";
 import type { Screen } from "../App";
-import { Header } from "./Header";
+import { useEffect, useState } from "react";
+import { getUserCookie } from "../utils/userCookie";
+import { ScreenHeader } from "./ui/screen-header";
 
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void;
 }
 
 export function HomeScreen({ onNavigate }: HomeScreenProps) {
+  const [userName, setUserName] = useState("");
+  useEffect(() => {
+    const user = getUserCookie();
+    if (user?.name) setUserName(user.name);
+  }, []);
   const notifications = [
     {
       id: 1,
-      title: "Formulário aprovado",
-      message: "Seu formulário #1234 foi aprovado",
-      time: "2h",
-      unread: true,
+      title: "Novo formulário disponível",
+      message: "Questionário Socioeconômico - UNIFESP",
+      date: "05/11/2025",
+      time: "Há 2 horas",
+      type: "info",
+      color: "from-emerald-500 to-emerald-600",
+      icon: "info",
     },
     {
       id: 2,
-      title: "Nova atualização",
-      message: "Confira as novidades da plataforma",
-      time: "5h",
-      unread: true,
+      title: "Formulário em análise",
+      message: "Avaliação de Curso - USP",
+      date: "04/11/2025",
+      time: "Há 1 dia",
+      type: "warning",
+      color: "from-indigo-500 to-indigo-600",
+      icon: "alert",
     },
     {
       id: 3,
-      title: "Lembrete",
-      message: "Complete seu perfil para melhor experiência",
-      time: "1d",
-      unread: false,
-    },
-    {
-      id: 4,
-      title: "Sistema",
-      message: "Manutenção programada para amanhã",
-      time: "2d",
-      unread: false,
+      title: "Formulário pendente",
+      message: "Pesquisa de Infraestrutura - UNESP",
+      date: "03/11/2025",
+      time: "Há 2 dias",
+      type: "alert",
+      color: "from-purple-500 to-purple-600",
+      icon: "alert",
     },
   ];
 
   const recentForms = [
     {
       id: 1,
-      title: "Formulário de Cadastro",
+      title: "Questionário Socioeconômico",
       status: "Completo",
       date: "05/11/2025",
+      institution: "UNIFESP",
+      color: "from-emerald-500 to-emerald-600",
     },
     {
       id: 2,
-      title: "Solicitação de Serviço",
+      title: "Avaliação de Curso",
       status: "Em análise",
       date: "04/11/2025",
+      institution: "USP",
+      color: "from-indigo-500 to-indigo-600",
     },
     {
       id: 3,
-      title: "Atualização de Dados",
+      title: "Pesquisa de Infraestrutura",
       status: "Pendente",
       date: "03/11/2025",
+      institution: "UNESP",
+      color: "from-purple-500 to-purple-600",
+    },
+  ];
+
+  const subjects = [
+    {
+      id: 1,
+      name: "Formulários Ativos",
+      count: "5",
+      color: "from-orange-400 to-orange-500",
+    },
+    {
+      id: 2,
+      name: "Completos",
+      count: "15",
+      color: "from-indigo-400 to-indigo-500",
+    },
+    {
+      id: 3,
+      name: "Pendentes",
+      count: "3",
+      color: "from-purple-400 to-purple-500",
+    },
+    {
+      id: 4,
+      name: "Em Análise",
+      count: "2",
+      color: "from-pink-400 to-pink-500",
     },
   ];
 
   return (
-    <main className="flex flex-col min-h-screen max-w-md mx-auto">
-      {/* Header */}
-      <Header description="Bem vinda," title="Maria Silva" />
+    <div className="flex flex-col min-h-screen max-w-md mx-auto relative">
+      <ScreenHeader
+        title={`Olá${userName ? `, ${userName.split(" ")[0]}!` : "!"}`}
+        subtitle="Navegue pelos seus formulários"
+      />
+
       {/* Content */}
-      <section className="flex-1 p-6 space-y-6">
-        {/* Notificações */}
-        <section aria-labelledby="notificacoes-heading">
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="notificacoes-heading">Notificações</h2>
-            <Badge variant="secondary">
-              {notifications.filter((n) => n.unread).length} novas
-            </Badge>
+      <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4">
+        <div className="mt-4 space-y-6">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
+              <p className="text-emerald-600 text-xl font-bold text-[24px]">
+                18
+              </p>
+              <p className="text-xs text-gray-500 mt-1 font-bold">
+                Formulários
+              </p>
+            </div>
+            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
+              <p className="text-emerald-600 text-xl font-bold text-[24px]">
+                15
+              </p>
+              <p className="text-xs text-gray-500 mt-1 font-bold">Completos</p>
+            </div>
+            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
+              <p className="text-emerald-600 text-xl font-bold text-[24px]">
+                3
+              </p>
+              <p className="text-xs text-gray-500 mt-1 font-bold">Pendentes</p>
+            </div>
           </div>
-          <div className="space-y-3">
-            {notifications.map((notification) => (
-              <article
-                key={notification.id}
-                className={`p-4 rounded-lg border-1 ${
-                  notification.unread
-                    ? "bg-gray-100"
-                    : "bg-white border-gray-100"
-                }`}
-                aria-live={notification.unread ? "polite" : undefined}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-gray-800 font-medium">
-                        {notification.title}
-                      </p>
-                      {notification.unread && (
-                        <span
-                          className="w-2 h-2 bg-gray-800 rounded-full"
-                          aria-label="Não lida"
-                        ></span>
+
+          {/* Your Schedule */}
+          <div>
+            <h2 className="mb-4 text-gray-900">Notificações</h2>
+            <div className="space-y-3">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`w-10 h-10 bg-gradient-to-br ${notification.color} rounded-xl flex items-center justify-center flex-shrink-0`}
+                    >
+                      {notification.icon === "info" && (
+                        <Info className="w-5 h-5 text-white" />
+                      )}
+                      {notification.icon === "alert" && (
+                        <AlertCircle className="w-5 h-5 text-white" />
+                      )}
+                      {notification.icon === "success" && (
+                        <CheckCircle className="w-5 h-5 text-white" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {notification.message}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 mb-1">{notification.title}</p>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {notification.message}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {notification.time}
+                      </p>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {notification.time}
-                  </span>
                 </div>
-              </article>
-            ))}
+              ))}
+            </div>
           </div>
-        </section>
-
-        {/* Formulários Recentes */}
-        <section aria-labelledby="recent-forms-heading">
-          <h2 id="recent-forms-heading" className="mb-4">
-            Formulários Recentes
-          </h2>
-          <div className="space-y-3">
-            {recentForms.map((form) => (
-              <article
-                key={form.id}
-                className="p-4 bg-white rounded-lg border-1 border-gray-200 flex items-center gap-3"
-              >
-                <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg">
-                  <FileText className="w-5 h-5 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-800 font-medium">{form.title}</p>
-                  <p className="text-sm text-gray-500">{form.date}</p>
-                </div>
-                <Badge
-                  variant={
-                    form.status === "Completo"
-                      ? "default"
-                      : form.status === "Em análise"
-                      ? "secondary"
-                      : "outline"
-                  }
-                >
-                  {form.status}
-                </Badge>
-              </article>
-            ))}
-          </div>
-        </section>
-      </section>
-    </main>
+        </div>
+      </div>
+    </div>
   );
 }
