@@ -5,6 +5,7 @@ import type { Screen } from "../App";
 import { useEffect, useState } from "react";
 import { getUserCookie, getUserInitials } from "../utils/userCookie";
 import { ScreenHeader } from "./ui/screen-header";
+import { UserBackgroundLayout } from "./UserBackgroundLayout";
 
 interface ProfileScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -23,11 +24,9 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
   }, []);
   const initials = getUserInitials(name);
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto relative">
+    <UserBackgroundLayout>
       <ScreenHeader title="Meu Perfil" subtitle="Gerencie suas informações" />
-
-      {/* Content */}
-      <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4">
+      <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
         <div className="mt-4 space-y-6">
           {/* Avatar */}
           <div className="flex flex-col items-center gap-4">
@@ -85,6 +84,6 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
           </div>
         </div>
       </div>
-    </div>
+    </UserBackgroundLayout>
   );
 }

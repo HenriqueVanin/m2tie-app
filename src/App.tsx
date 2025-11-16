@@ -22,7 +22,6 @@ import { StaffNav } from "./components/StaffNav";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthFallback } from "./components/AuthFallback";
 import { getUserFromToken } from "./utils/auth";
-import { removeTokenCookie } from "./utils/auth";
 import { StaffQuestionManager } from "./components/StaffQuestionManager";
 import { AboutScreen } from "./components/AboutScreen";
 import { StaffUserManagement } from "./components/StaffUserManagement";
@@ -121,7 +120,6 @@ function AppContent() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    removeTokenCookie();
     setIsAuthenticated(false);
     setUserType("user");
     navigate(routeMap.login, { replace: true });
@@ -148,7 +146,7 @@ function AppContent() {
         path="/home"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-gray-50">
               <HomeScreen onNavigate={navigateTo} />
               <MobileNav
                 currentScreen={currentScreen}
@@ -162,7 +160,7 @@ function AppContent() {
         path="/profile"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-gray-50">
               <ProfileScreen onNavigate={navigateTo} />
               <MobileNav
                 currentScreen={currentScreen}
@@ -176,7 +174,7 @@ function AppContent() {
         path="/settings"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-gray-50">
               <SettingsScreen onNavigate={navigateTo} onLogout={handleLogout} />
               <MobileNav
                 currentScreen={currentScreen}
@@ -190,7 +188,7 @@ function AppContent() {
         path="/about"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-gray-50">
               <AboutScreen onNavigate={navigateTo} />
               <MobileNav
                 currentScreen={currentScreen}
@@ -204,7 +202,7 @@ function AppContent() {
         path="/form"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-gray-50">
               <FormWizardScreen onNavigate={navigateTo} />
               <MobileNav
                 currentScreen={currentScreen}

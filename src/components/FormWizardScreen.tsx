@@ -27,6 +27,7 @@ import {
   ActiveFormResponse,
 } from "../services/formService";
 import { submitResponse } from "../services/responseService";
+import { UserBackgroundLayout } from "./UserBackgroundLayout";
 
 interface FormWizardScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -41,6 +42,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
   const totalSteps = (form?.questions?.length || 0) + 1; // +1 para a etapa de revisão
   const isReviewStep = currentStep === (form?.questions?.length || 0);
@@ -149,8 +151,8 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
         throw new Error(response.error);
       }
 
-      alert("Formulário enviado com sucesso!");
-      onNavigate("home");
+      // Marcar submissão como bem-sucedida
+      setSubmissionSuccess(true);
     } catch (e: any) {
       alert(e?.message || "Erro ao enviar formulário");
     } finally {
@@ -161,24 +163,68 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">Carregando formulário...</p>
+      <UserBackgroundLayout centered>
+        <div className="flex items-center justify-center flex-1 bg-gray-50 p-6">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
+            <p className="text-gray-600">Carregando formulário...</p>
+          </div>
         </div>
-      </div>
+      </UserBackgroundLayout>
+    );
+  }
+
+  // Submission success state
+  if (submissionSuccess) {
+    return (
+      <UserBackgroundLayout centered>
+        <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-6">
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl animate-in zoom-in duration-500">
+            <CheckCircle2 className="w-12 h-12 text-emerald-600" />
+          </div>
+
+          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <h1 className="text-white text-3xl font-bold">
+              Formulário Enviado!
+            </h1>
+            <p className="text-white text-md">
+              Suas respostas foram registradas com sucesso.
+            </p>
+          </div>
+
+          {form && (
+            <div className="w-full max-w-sm p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150">
+              <div className="pt-2 border-t border-white/20 text-center">
+                <p className="text-white text-sm mb-1 mt-2">Data de envio</p>
+                <p className="text-white font-semibold text-base">
+                  {new Date().toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <Button
+            onClick={() => onNavigate("home")}
+            className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
+          >
+            Voltar para Home
+          </Button>
+        </div>
+      </UserBackgroundLayout>
     );
   }
 
   // Already answered state
   if (alreadyAnswered) {
     return (
-      <div className="flex flex-col min-h-screen max-w-md mx-auto relative">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-600"></div>
-
-        {/* Content */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+      <UserBackgroundLayout centered>
+        <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-6">
           <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-xl">
             <CheckCircle2 className="w-12 h-12 text-emerald-600" />
           </div>
@@ -217,38 +263,41 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             Voltar para Home
           </Button>
         </div>
-      </div>
+      </UserBackgroundLayout>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-6">
-        <ErrorState message={error} onRetry={fetchActiveForm} />
-      </div>
+      <UserBackgroundLayout centered>
+        <div className="flex items-center justify-center flex-1 bg-gray-50 p-6">
+          <ErrorState message={error} onRetry={fetchActiveForm} />
+        </div>
+      </UserBackgroundLayout>
     );
   }
 
   // No form available
   if (!form || !form.questions || form.questions.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-6">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">
-            Nenhum formulário ativo disponível no momento.
-          </p>
-          <Button onClick={() => onNavigate("home")} variant="outline">
-            Voltar para Home
-          </Button>
+      <UserBackgroundLayout centered>
+        <div className="flex items-center justify-center flex-1 bg-gray-50 p-6">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">
+              Nenhum formulário ativo disponível no momento.
+            </p>
+            <Button onClick={() => onNavigate("home")} variant="outline">
+              Voltar para Home
+            </Button>
+          </div>
         </div>
-      </div>
+      </UserBackgroundLayout>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto bg-gray-50">
-      {/* Header */}
+    <UserBackgroundLayout>
       <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
         <div className="flex items-center gap-4 mb-6">
           <button
@@ -282,7 +331,6 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="bg-white rounded-3xl shadow-md p-6">
           {isReviewStep ? (
@@ -305,7 +353,6 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
         </div>
       </div>
 
-      {/* Footer */}
       <div className="p-6 space-y-3">
         <Button
           onClick={nextStep}
@@ -345,7 +392,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           </Button>
         )}
       </div>
-    </div>
+    </UserBackgroundLayout>
   );
 }
 
@@ -550,34 +597,116 @@ function QuestionRenderer({
         )}
 
         {type === "scale" && questionDetails.options && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              {questionDetails.options.map((option: any, index: number) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => onChange(option.value || option.label)}
-                  className={`flex-1 h-12 border-2 rounded-lg transition-all ${
-                    value === (option.value || option.label)
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-600"
-                      : "border-gray-300 hover:border-indigo-300"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between text-xs font-semibold text-gray-500 uppercase tracking-wide px-2">
+              <span className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                Mínimo
+              </span>
+              <span className="flex items-center gap-2">
+                Máximo
+                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              </span>
+            </div>
+
+            <div className="relative">
+              {/* Barra de progresso de fundo */}
+              <div className="absolute top-1/2 left-0 right-0 h-2 -translate-y-1/2 bg-gradient-to-r from-red-100 via-yellow-100 to-green-100 rounded-full"></div>
+
+              {/* Grid de botões */}
+              <div
+                className="relative grid gap-3"
+                style={{
+                  gridTemplateColumns: `repeat(${questionDetails.options.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {questionDetails.options.map((option: any, index: number) => {
+                  const isSelected = value === (option.value || option.label);
+                  const totalOptions = questionDetails.options?.length || 0;
+                  const percentage =
+                    totalOptions > 1 ? (index / (totalOptions - 1)) * 100 : 0;
+
+                  // Determina a cor baseada na posição
+                  let colorClass = "from-red-500 to-red-600";
+                  if (percentage > 66) {
+                    colorClass = "from-green-500 to-green-600";
+                  } else if (percentage > 33) {
+                    colorClass = "from-yellow-500 to-yellow-600";
+                  }
+
+                  return (
+                    <div
+                      key={index}
+                      className="flex flex-col items-center gap-2"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onChange(option.value || option.label)}
+                        className={`relative w-full aspect-square flex items-center justify-center text-2xl font-bold rounded-2xl transition-all duration-300 ${
+                          isSelected
+                            ? `bg-gradient-to-br ${colorClass} text-white shadow-2xl transform scale-110 ring-4 ring-offset-2 ring-${
+                                percentage > 66
+                                  ? "green"
+                                  : percentage > 33
+                                  ? "yellow"
+                                  : "red"
+                              }-300`
+                            : "bg-white border-3 border-gray-200 text-gray-700 hover:border-gray-400 hover:shadow-lg hover:scale-105"
+                        }`}
+                      >
+                        <span className={isSelected ? "animate-pulse" : ""}>
+                          {option.label}
+                        </span>
+                        {isSelected && (
+                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+                            <Check className="w-4 h-4 text-green-600" />
+                          </div>
+                        )}
+                      </button>
+                      <span
+                        className={`text-xs font-medium transition-colors ${
+                          isSelected ? "text-gray-900" : "text-gray-400"
+                        }`}
+                      >
+                        {option.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
 
         {type === "date" && (
           <div className="space-y-2">
+            <Label
+              htmlFor="date-input"
+              className="text-sm font-medium text-gray-700"
+            >
+              Selecione a data
+            </Label>
             <Input
+              id="date-input"
               type="date"
               value={value || ""}
               onChange={(e) => onChange(e.target.value)}
-              className="h-12 border"
+              className="h-14 border-2 border-gray-300 rounded-xl text-lg focus:border-indigo-500"
             />
+            {value && (
+              <div className="mt-3 p-3 bg-indigo-50 rounded-xl">
+                <p className="text-sm text-indigo-600 text-center">
+                  Data selecionada:{" "}
+                  <span className="font-semibold">
+                    {new Date(value + "T00:00:00").toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

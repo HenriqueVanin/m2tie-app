@@ -9,6 +9,7 @@ import { authService } from "../services/authService";
 import { decodeToken, setTokenCookie } from "../utils/auth";
 import { getUserById } from "../services/userService";
 import { setUserCookie } from "../utils/userCookie";
+import { UserBackgroundLayout } from "./UserBackgroundLayout";
 
 interface LoginScreenProps {
   onLogin: (type: UserType) => void;
@@ -83,103 +84,98 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-gradient-to-br from-emerald-600 to-emerald-700">
-      <div className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]">
-        <div className="">
-          <h1 className="text-white text-3xl mb-2">Olá,</h1>
-          <p className="text-emerald-100">
-            Entre para acessar seus formulários
-          </p>
-        </div>
-      </div>
-      <div className="flex-1 bg-gray-50 space-y-6 rounded-[32px] mx-[10px] mb-4 px-[30px] py-[24px]">
-        {error && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-2xl">
-            {error}
-          </div>
-        )}
-        <div className="space-y-4 mt-6">
-          <div className="flex items-center justify-center">
+    <UserBackgroundLayout centered>
+      <div className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]" />
+      <div className="flex justify-center items-center">
+        <div className="flex-2 bg-gray-50 space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] py-12 mb-8">
+          <div className="flex items-center justify-center py-4">
             <img
               src={Logo}
-              alt="M2TIC"
-              className="h-[60px] bg-white rounded-[50px] px-[38px] py-[8px]"
+              alt="M2TIE Logo"
+              className="h-[70px] px-[38px] py-[8px]"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-700 text-sm">
-              Email
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu.email@exemplo.com"
-                value={email}
-                onBlur={() => setEmailTouched(true)}
-                onChange={(e) => setEmail(e.target.value)}
-                className={`h-14 border pl-12 bg-white rounded-2xl ${
-                  emailTouched && !emailValid
-                    ? "border-red-300"
-                    : "border-gray-200"
-                }`}
-                aria-invalid={emailTouched && !emailValid}
-              />
+          {error && (
+            <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-2xl">
+              {error}
             </div>
-            {emailTouched && !emailValid && (
-              <p className="mt-2 text-xs text-red-600">
-                Formato de email inválido
-              </p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-700 text-sm">
-              Senha
-            </Label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={password}
-                onBlur={() => setPasswordTouched(true)}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`h-14 border pl-12 pr-12 bg-white rounded-2xl ${
-                  passwordTouched && !passwordValid
-                    ? "border-red-300"
-                    : "border-gray-200"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
+          )}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-700 text-sm">
+                Email
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu.email@exemplo.com"
+                  value={email}
+                  onBlur={() => setEmailTouched(true)}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`h-14 border pl-12 bg-white rounded-2xl ${
+                    emailTouched && !emailValid
+                      ? "border-red-300"
+                      : "border-gray-200"
+                  }`}
+                  aria-invalid={emailTouched && !emailValid}
+                />
+              </div>
+              {emailTouched && !emailValid && (
+                <p className="mt-2 text-xs text-red-600">
+                  Formato de email inválido
+                </p>
+              )}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-gray-700 text-sm">
+                Senha
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onBlur={() => setPasswordTouched(true)}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`h-14 border pl-12 pr-12 bg-white rounded-2xl ${
+                    passwordTouched && !passwordValid
+                      ? "border-red-300"
+                      : "border-gray-200"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <button
+              className="text-emerald-600 text-sm hover:text-emerald-700"
+              type="button"
+              onClick={() => setShowForgot(true)}
+            >
+              Esqueceu a senha?
+            </button>
           </div>
-          <button
-            className="text-emerald-600 text-sm hover:text-emerald-700"
-            type="button"
-            onClick={() => setShowForgot(true)}
+          <Button
+            onClick={handleLogin}
+            disabled={isLoading || !emailValid || !passwordValid}
+            className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg rounded-2xl"
           >
-            Esqueceu a senha?
-          </button>
+            {isLoading ? "Entrando..." : "Entrar"}
+          </Button>
         </div>
-        <Button
-          onClick={handleLogin}
-          disabled={isLoading || !emailValid || !passwordValid}
-          className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg rounded-2xl"
-        >
-          {isLoading ? "Entrando..." : "Entrar"}
-        </Button>
       </div>
       {showForgot && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
@@ -245,6 +241,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </div>
         </div>
       )}
-    </div>
+    </UserBackgroundLayout>
   );
 }

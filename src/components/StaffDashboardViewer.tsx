@@ -151,10 +151,10 @@ export function StaffDashboardViewer() {
         <Button
           onClick={handleExportData}
           disabled={!selectedFormId || loading}
-          className="gap-2 h-12 bg-emerald-600 hover:bg-emerald-700 text-emerald shadow-lg rounded-2xl disabled:opacity-50"
+          className="gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-2xl disabled:opacity-50"
         >
-          <Download className="w-4 h-4" />
-          Exportar CSV
+          <Download className="w-5 h-5" />
+          Exportar Dados
         </Button>
       </PageHeaderWithSearch>
 
@@ -169,7 +169,7 @@ export function StaffDashboardViewer() {
         {loading && (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-gray-600 dark:text-gray-400">
                 Carregando dados...
               </p>

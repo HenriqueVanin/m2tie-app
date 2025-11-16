@@ -8,7 +8,6 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Button } from "./ui/button";
-import logoImage from "../assets/logo.svg";
 import { useEffect, useState } from "react";
 import { getUserCookie } from "../utils/userCookie";
 import { canAccessScreen, type UserRole } from "../utils/permissions";
@@ -94,7 +93,7 @@ export function StaffNav({
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all cursor-pointer ${
                   isActive
                     ? "bg-[#003087] text-white shadow-lg"
                     : "text-gray-700 hover:bg-gray-50"
@@ -118,7 +117,7 @@ export function StaffNav({
         <Button
           onClick={onLogout}
           variant="outline"
-          className="w-full h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2 rounded-2xl"
+          className="w-full h-12 border-2 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 gap-2 rounded-2xl cursor-pointer"
         >
           <LogOut className="w-5 h-5" />
           Sair

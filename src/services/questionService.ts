@@ -16,6 +16,7 @@ export interface QuestionValidation {
 export interface Question {
   _id: string;
   title: string;
+  description?: string;
   type: string;
 
   options: QuestionOption[];
@@ -32,6 +33,7 @@ export interface Question {
 
 export interface CreateQuestionDto {
   title: string;
+  description?: string;
   type: string;
   options?: QuestionOption[];
   validation?: QuestionValidation;
@@ -39,6 +41,7 @@ export interface CreateQuestionDto {
 
 export interface UpdateQuestionDto {
   title?: string;
+  description?: string;
   type?: string;
   options?: QuestionOption[];
   validation?: QuestionValidation;

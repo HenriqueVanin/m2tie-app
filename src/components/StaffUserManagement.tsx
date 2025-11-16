@@ -9,6 +9,7 @@ import { PageHeaderWithSearch } from "./ui/page-header";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 import {
   getAllUsers,
   deleteUser as deleteUserAPI,
@@ -32,6 +33,7 @@ export function StaffUserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole>("user");
+  const [activeTab, setActiveTab] = useState<"all" | "user" | "staff">("all");
 
   useEffect(() => {
     const user = getUserCookie();
@@ -58,11 +60,19 @@ export function StaffUserManagement() {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch =
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesTab =
+      activeTab === "all" ||
+      (activeTab === "user" && user.role === "user") ||
+      (activeTab === "staff" &&
+        (user.role === "admin" || user.role === "staff"));
+
+    return matchesSearch && matchesTab;
+  });
 
   const handleDeleteUser = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
@@ -108,7 +118,7 @@ export function StaffUserManagement() {
       >
         <Button
           onClick={() => setShowAddModal(true)}
-          className="h-12 bg-emerald-600 hover:bg-emerald-700 text-emerald gap-2 shadow-lg rounded-2xl"
+          className="h-12 bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg rounded-2xl"
         >
           <Plus className="w-5 h-5" />
           Adicionar Usuário
@@ -137,13 +147,40 @@ export function StaffUserManagement() {
         </div>
       </div> */}
 
+      {/* Tabs */}
+      <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v: string) =>
+            setActiveTab(v as "all" | "user" | "staff")
+          }
+        >
+          <TabsList>
+            <TabsTrigger value="all">Todos ({users.length})</TabsTrigger>
+            <TabsTrigger value="user">
+              Usuários ({users.filter((u) => u.role === "user").length})
+            </TabsTrigger>
+            <TabsTrigger value="staff">
+              Admin/Staff (
+              {
+                users.filter((u) => u.role === "admin" || u.role === "staff")
+                  .length
+              }
+              )
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#003087] mx-auto mb-4"></div>
-              <p className="text-gray-600">Carregando usuários...</p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Carregando usuários...
+              </p>
             </div>
           </div>
         ) : error ? (

@@ -43,8 +43,8 @@ import {
 interface UIQuestion {
   _id: string;
   title: string;
+  description?: string;
   type: UIQuestionType;
-  category: string; // derived / placeholder until backend supports
   options?: string[];
   required: boolean;
   createdBy: {
@@ -59,8 +59,8 @@ interface UIQuestion {
 
 interface FormState {
   title: string;
+  description: string;
   type: UIQuestionType;
-  category: string;
   options: string; // linha por opção (para múltipla escolha / checkbox)
   required: boolean;
   minLength?: number;
@@ -88,11 +88,11 @@ function mapBackendToUI(q: BackendQuestion): UIQuestion {
   return {
     _id: q._id,
     title: q.title,
+    description: q.description,
     type: uiType,
-    category: "Geral", // fallback until categories are in backend
     options: q.options?.map((o) => o.label) || undefined,
     required: !!q.validation?.required,
-    createdBy: (q as any).createdBy || {
+    createdBy: q.createdBy || {
       _id: "",
       name: "Desconhecido",
       email: "",
@@ -121,7 +121,6 @@ export function StaffQuestionManager() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterRequired, setFilterRequired] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -141,8 +140,8 @@ export function StaffQuestionManager() {
   );
   const [formData, setFormData] = useState<FormState>({
     title: "",
+    description: "",
     type: "text",
-    category: "",
     options: "",
     required: true,
     minLength: undefined,
@@ -161,6 +160,7 @@ export function StaffQuestionManager() {
     setError(null);
     try {
       const data = await getAllQuestions();
+      console.log("Questions from backend:", data);
       setQuestions(Array.isArray(data) ? data.map(mapBackendToUI) : []);
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar questões");
@@ -169,37 +169,25 @@ export function StaffQuestionManager() {
     }
   };
 
-  const getCategoryColor = (_category: string) => {
-    return "bg-[#003087]";
-  };
-
   const filteredQuestions = questions.filter((q) => {
-    const matchesSearch =
-      q.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      q.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = q.title
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
 
     const matchesType = filterType === "all" || q.type === filterType;
-    const matchesCategory =
-      filterCategory === "all" || q.category === filterCategory;
     const matchesRequired =
       filterRequired === "all" ||
       (filterRequired === "required" && q.required) ||
       (filterRequired === "optional" && !q.required);
 
-    return matchesSearch && matchesType && matchesCategory && matchesRequired;
+    return matchesSearch && matchesType && matchesRequired;
   });
-
-  const questionsByCategory = filteredQuestions.reduce((acc, q) => {
-    if (!acc[q.category]) acc[q.category] = [];
-    acc[q.category].push(q);
-    return acc;
-  }, {} as Record<string, UIQuestion[]>);
 
   const resetForm = () => {
     setFormData({
       title: "",
+      description: "",
       type: "text",
-      category: "",
       options: "",
       required: true,
       minLength: undefined,
@@ -235,6 +223,7 @@ export function StaffQuestionManager() {
       }
       const created = await createQuestion({
         title: formData.title,
+        description: formData.description || undefined,
         type: uiToBackendType(formData.type),
         options,
         validation,
@@ -272,12 +261,29 @@ export function StaffQuestionManager() {
       }
       const updated = await updateQuestion(currentQuestion._id, {
         title: formData.title,
+        description: formData.description || undefined,
         type: uiToBackendType(formData.type),
         options,
         validation,
       });
+
+      console.log("Updated question from backend:", updated);
+
+      // Mapeia a questão atualizada preservando createdBy e description originais se necessário
+      const updatedUI = mapBackendToUI(updated);
+      if (
+        !updatedUI.createdBy.name ||
+        updatedUI.createdBy.name === "Desconhecido"
+      ) {
+        updatedUI.createdBy = currentQuestion.createdBy;
+      }
+      // Preserva a descrição do formulário se o backend não retornou
+      if (!updatedUI.description && formData.description) {
+        updatedUI.description = formData.description;
+      }
+
       setQuestions((prev) =>
-        prev.map((q) => (q._id === updated._id ? mapBackendToUI(updated) : q))
+        prev.map((q) => (q._id === updated._id ? updatedUI : q))
       );
       setIsEditDialogOpen(false);
       resetForm();
@@ -311,8 +317,8 @@ export function StaffQuestionManager() {
     setCurrentQuestion(q);
     setFormData({
       title: q.title,
+      description: q.description || "",
       type: q.type,
-      category: q.category,
       options:
         q.type === "multiple_choice" ||
         q.type === "checkbox" ||
@@ -376,21 +382,6 @@ export function StaffQuestionManager() {
                 <SelectItem value="date">Data</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas categorias</SelectItem>
-                {Array.from(new Set(questions.map((q) => q.category))).map(
-                  (cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
             <Select value={filterRequired} onValueChange={setFilterRequired}>
               <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
                 <SelectValue placeholder="Obrigatória" />
@@ -406,7 +397,7 @@ export function StaffQuestionManager() {
       >
         <Button
           onClick={() => setIsCreateDialogOpen(true)}
-          className="gap-2 h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-2xl"
+          className="gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-2xl"
         >
           <Plus className="w-5 h-5" />
           Nova Questão
@@ -437,9 +428,6 @@ export function StaffQuestionManager() {
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                   Tipo
                 </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Categoria
-                </th>
                 <th className="text-center px-6 py-4 text-sm font-medium text-gray-500">
                   Obrigatória
                 </th>
@@ -464,15 +452,16 @@ export function StaffQuestionManager() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 bg-gradient-to-br ${getCategoryColor(
-                            q.category
-                          )} rounded-xl flex items-center justify-center flex-shrink-0`}
-                        >
+                        <div className="w-10 h-10 bg-gradient-to-br bg-[#003087] rounded-xl flex items-center justify-center flex-shrink-0">
                           {Icon && <Icon className="w-5 h-5 text-white" />}
                         </div>
                         <div className="flex-1">
                           <p className="text-gray-800 font-medium">{q.title}</p>
+                          {q.description && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              {q.description}
+                            </p>
+                          )}
                           {q.options && q.options.length > 0 && (
                             <p className="text-xs text-gray-500 mt-1">
                               {q.options.length}{" "}
@@ -489,15 +478,6 @@ export function StaffQuestionManager() {
                       >
                         {getQuestionTypeLabel(q.type)}
                       </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div
-                        className={`inline-block px-3 py-1 bg-gradient-to-r ${getCategoryColor(
-                          q.category
-                        )} text-white rounded-lg text-sm`}
-                      >
-                        {q.category}
-                      </div>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {q.required ? (
@@ -579,6 +559,19 @@ export function StaffQuestionManager() {
                 className="h-12 rounded-2xl"
               />
             </div>
+            <div>
+              <Label htmlFor="description">Descrição (opcional)</Label>
+              <Textarea
+                id="description"
+                placeholder="Adicione instruções ou detalhes sobre a questão"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="rounded-2xl"
+                rows={3}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="type">Tipo de Questão</Label>
@@ -603,18 +596,6 @@ export function StaffQuestionManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="category">Categoria</Label>
-                <Input
-                  id="category"
-                  placeholder="Ex: Socioeconômico"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className="h-12 rounded-2xl"
-                />
-              </div>
             </div>
             {(formData.type === "multiple_choice" ||
               formData.type === "checkbox" ||
@@ -633,7 +614,7 @@ export function StaffQuestionManager() {
               </div>
             )}
             {formData.type === "text" && (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="minLength">Mín. Caracteres</Label>
                   <Input
@@ -666,18 +647,6 @@ export function StaffQuestionManager() {
                           ? parseInt(e.target.value, 10)
                           : undefined,
                       })
-                    }
-                    className="h-12 rounded-2xl"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <Label htmlFor="pattern">Regex (opcional)</Label>
-                  <Input
-                    id="pattern"
-                    placeholder="Ex: ^[a-zA-Z]+$"
-                    value={formData.pattern}
-                    onChange={(e) =>
-                      setFormData({ ...formData, pattern: e.target.value })
                     }
                     className="h-12 rounded-2xl"
                   />
@@ -779,6 +748,19 @@ export function StaffQuestionManager() {
                 className="h-12 rounded-2xl"
               />
             </div>
+            <div>
+              <Label htmlFor="edit-description">Descrição (opcional)</Label>
+              <Textarea
+                id="edit-description"
+                placeholder="Adicione instruções ou detalhes sobre a questão"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="rounded-2xl"
+                rows={3}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-type">Tipo de Questão</Label>
@@ -803,18 +785,6 @@ export function StaffQuestionManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="edit-category">Categoria</Label>
-                <Input
-                  id="edit-category"
-                  placeholder="Ex: Socioeconômico"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className="h-12 rounded-2xl"
-                />
-              </div>
             </div>
             {(formData.type === "multiple_choice" ||
               formData.type === "checkbox" ||
@@ -833,7 +803,7 @@ export function StaffQuestionManager() {
               </div>
             )}
             {formData.type === "text" && (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-minLength">Mín. Caracteres</Label>
                   <Input
@@ -866,18 +836,6 @@ export function StaffQuestionManager() {
                           ? parseInt(e.target.value, 10)
                           : undefined,
                       })
-                    }
-                    className="h-12 rounded-2xl"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <Label htmlFor="edit-pattern">Regex (opcional)</Label>
-                  <Input
-                    id="edit-pattern"
-                    placeholder="Ex: ^[a-zA-Z]+$"
-                    value={formData.pattern}
-                    onChange={(e) =>
-                      setFormData({ ...formData, pattern: e.target.value })
                     }
                     className="h-12 rounded-2xl"
                   />

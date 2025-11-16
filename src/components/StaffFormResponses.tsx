@@ -52,6 +52,7 @@ export function StaffFormResponses() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterForm, setFilterForm] = useState<string>("all");
+  const [filterUser, setFilterUser] = useState<string>("all");
   const [selectedResponse, setSelectedResponse] = useState<FormResponse | null>(
     null
   );
@@ -106,11 +107,17 @@ export function StaffFormResponses() {
     const matchesForm =
       filterForm === "all" || response.formTitle === filterForm;
 
-    return matchesSearch && matchesForm;
+    const matchesUser =
+      filterUser === "all" || response.userName === filterUser;
+
+    return matchesSearch && matchesForm && matchesUser;
   });
 
-  // Obter lista única de formulários
+  // Obter lista única de formulários e usuários
   const uniqueForms = Array.from(new Set(responses.map((r) => r.formTitle)));
+  const uniqueUsers = Array.from(
+    new Set(responses.map((r) => r.userName))
+  ).sort();
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -149,10 +156,23 @@ export function StaffFormResponses() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={filterUser} onValueChange={setFilterUser}>
+              <SelectTrigger className="w-64 h-12 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-2xl">
+                <SelectValue placeholder="Usuário" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os usuários</SelectItem>
+                {uniqueUsers.map((user) => (
+                  <SelectItem key={user} value={user}>
+                    {user}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         }
       >
-        <Button className="h-12 bg-emerald-600 hover:bg-emerald-700 text-emerald gap-2 shadow-lg rounded-2xl">
+        <Button className="h-12 bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg rounded-2xl">
           <Download className="w-5 h-5" />
           Exportar
         </Button>

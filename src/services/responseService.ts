@@ -43,6 +43,24 @@ export interface ApiResponse<T> {
   data?: T;
 }
 
+export interface Respondent {
+  _id: string | null;
+  name: string;
+  email: string;
+  role: string;
+  submittedAt: string;
+  responseId: string;
+}
+
+export interface GetFormRespondentsResponse {
+  error: string | null;
+  msg?: string;
+  formTitle: string;
+  formDescription?: string;
+  totalRespondents: number;
+  respondents: Respondent[];
+}
+
 // Submit a form response
 export const submitResponse = async (
   data: SubmitResponseRequest
@@ -102,6 +120,33 @@ export const getResponseById = async (
     return {
       error: "Erro ao buscar resposta",
       data: undefined,
+    };
+  }
+};
+
+// Get respondents of a form (admin/staff only)
+export const getFormRespondents = async (
+  formId: string
+): Promise<GetFormRespondentsResponse> => {
+  try {
+    const response = await api.get(`/responses/${formId}/respondents`);
+    return response.data as GetFormRespondentsResponse;
+  } catch (error: any) {
+    if (error.response?.data) {
+      return {
+        error: error.response.data.error || "Erro ao buscar respondentes",
+        formTitle: "",
+        formDescription: "",
+        totalRespondents: 0,
+        respondents: [],
+      };
+    }
+    return {
+      error: "Erro ao buscar respondentes",
+      formTitle: "",
+      formDescription: "",
+      totalRespondents: 0,
+      respondents: [],
     };
   }
 };
