@@ -4,7 +4,6 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/m2tie-app/",
   resolve: {
     extensions: [".js", ".jsx", ".ts", ".tsx", ".json"],
     alias: {

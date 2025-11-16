@@ -18,11 +18,11 @@ import { StaffDashboardViewer } from "./components/StaffDashboardViewer";
 import { StaffFormBuilder } from "./components/StaffFormBuilder";
 import { StaffFormResponses } from "./components/StaffFormResponses";
 import { StaffFormResponsesByForm } from "./components/StaffFormResponsesByForm";
-import { StaffQuestionBank } from "./components/StaffQuestionBank";
 import { StaffNav } from "./components/StaffNav";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AuthFallback } from "./components/AuthFallback";
 import { getUserFromToken } from "./utils/auth";
+import { removeTokenCookie } from "./utils/auth";
 import { StaffQuestionManager } from "./components/StaffQuestionManager";
 import { AboutScreen } from "./components/AboutScreen";
 import { StaffUserManagement } from "./components/StaffUserManagement";
@@ -121,6 +121,7 @@ function AppContent() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    removeTokenCookie();
     setIsAuthenticated(false);
     setUserType("user");
     navigate(routeMap.login, { replace: true });

@@ -24,6 +24,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { SearchBar } from "./ui/search-bar";
 import {
   Select,
   SelectContent,
@@ -36,6 +37,8 @@ import {
   updateQuestion as updateQuestionAPI,
   QuestionOption,
   getQuestion,
+  getAllQuestions,
+  Question as QuestionFromService,
 } from "../services/questionService";
 import {
   UIQuestionType,
@@ -90,6 +93,14 @@ function FormBuilderContent() {
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showExistingQuestionsModal, setShowExistingQuestionsModal] =
+    useState(false);
+  const [existingQuestions, setExistingQuestions] = useState<
+    QuestionFromService[]
+  >([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<UIQuestionType | "all">("all");
 
   // Carregar formulário ao montar componente ou quando formIdFromUrl mudar
   useEffect(() => {
@@ -103,6 +114,40 @@ function FormBuilderContent() {
       loadForm(formIdFromUrl);
     }
   }, [formIdFromUrl]);
+
+  const loadExistingQuestions = async () => {
+    try {
+      setIsLoadingQuestions(true);
+      const allQuestions = await getAllQuestions();
+      setExistingQuestions(allQuestions);
+      setShowExistingQuestionsModal(true);
+    } catch (e: any) {
+      alert(e?.message || "Erro ao carregar questões");
+    } finally {
+      setIsLoadingQuestions(false);
+    }
+  };
+
+  const addExistingQuestion = (existingQ: QuestionFromService) => {
+    const newQuestion: Question = {
+      id: existingQ._id,
+      type: existingQ.type as UIQuestionType,
+      title: existingQ.title,
+      required: existingQ.validation?.required || false,
+      options: existingQ.options?.map((o) => o.label),
+    };
+    setQuestions([...questions, newQuestion]);
+    setShowExistingQuestionsModal(false);
+  };
+
+  // Filtrar questões baseado na pesquisa e tipo
+  const filteredQuestions = existingQuestions.filter((q) => {
+    const matchesSearch = q.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || q.type === filterType;
+    return matchesSearch && matchesType;
+  });
 
   const addQuestion = (type: UIQuestionType) => {
     const options: string[] | undefined =
@@ -306,7 +351,7 @@ function FormBuilderContent() {
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="p-6 bg-white border-b border-gray-200">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between">
             <div className="flex-1 mr-6">
               <h1>{formId ? "Editar Formulário" : "Criar Formulário"}</h1>
               <p className="text-gray-500">
@@ -328,21 +373,6 @@ function FormBuilderContent() {
                   : "Salvar Formulário"}
               </Button>
             </div>
-          </div>
-
-          <div className="space-y-4">
-            <Input
-              value={formTitle}
-              onChange={(e) => setFormTitle(e.target.value)}
-              placeholder="Título do formulário"
-              className="text-2xl border-0 p-0 focus-visible:ring-0"
-            />
-            <Input
-              value={formDescription}
-              onChange={(e) => setFormDescription(e.target.value)}
-              placeholder="Adicione uma descrição..."
-              className="border-0 p-0 text-gray-500 focus-visible:ring-0"
-            />
           </div>
         </div>
 
@@ -387,7 +417,58 @@ function FormBuilderContent() {
         {/* Question Types */}
         {!selectedQuestion ? (
           <div className="flex-1 overflow-auto p-4">
+            {/* Informações do Formulário */}
+            <div className="mb-6 pb-6 border-b border-gray-200">
+              <h3 className="mb-4">Informações do Formulário</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="form-title">Título</Label>
+                  <Input
+                    id="form-title"
+                    value={formTitle}
+                    onChange={(e) => setFormTitle(e.target.value)}
+                    placeholder="Título do formulário"
+                    className="border-2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="form-description">Descrição (opcional)</Label>
+                  <Textarea
+                    id="form-description"
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                    placeholder="Adicione uma descrição..."
+                    className="border-2"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
             <h3 className="mb-4">Adicionar Pergunta</h3>
+
+            {/* Botão para adicionar questão existente */}
+            <Button
+              onClick={loadExistingQuestions}
+              disabled={isLoadingQuestions}
+              variant="outline"
+              className="w-full mb-4 border-2 border-[#003087] text-[#003087] hover:bg-[#003087] hover:text-white"
+            >
+              <ListChecks className="w-4 h-4 mr-2" />
+              {isLoadingQuestions ? "Carregando..." : "Banco de Questões"}
+            </Button>
+
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">
+                  Ou criar nova
+                </span>
+              </div>
+            </div>
+
             <div className="space-y-2">
               {QUESTION_TYPES.map((type) => {
                 const Icon = type.icon;
@@ -414,6 +495,169 @@ function FormBuilderContent() {
           />
         )}
       </div>
+
+      {/* Modal de Questões Existentes */}
+      {showExistingQuestionsModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setShowExistingQuestionsModal(false);
+            setSearchQuery("");
+            setFilterType("all");
+          }}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl overflow-auto flex flex-col h-full max-w-3xl w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+              <div>
+                <h2 className="text-xl font-semibold">Banco de Questões</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Selecione uma questão existente para adicionar ao formulário
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowExistingQuestionsModal(false);
+                  setSearchQuery("");
+                  setFilterType("all");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Filters and Search */}
+            <div className="p-4 border-b border-gray-200 space-y-3 flex-shrink-0">
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Buscar questões..."
+              />
+
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setFilterType("all")}
+                  className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                    filterType === "all"
+                      ? "bg-[#003087] text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  Todas
+                </button>
+                {QUESTION_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <button
+                      key={type.type}
+                      onClick={() => setFilterType(type.type)}
+                      className={`px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-1.5 ${
+                        filterType === type.type
+                          ? "bg-[#003087] text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {type.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {filteredQuestions.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <FileText className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p>
+                    {searchQuery || filterType !== "all"
+                      ? "Nenhuma questão encontrada com os filtros aplicados"
+                      : "Nenhuma questão encontrada no banco de questões"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredQuestions.map((q) => {
+                    const Icon =
+                      QUESTION_TYPE_ICONS[q.type as UIQuestionType] || Type;
+                    const isAlreadyAdded = questions.some(
+                      (existingQ) => existingQ.id === q._id
+                    );
+
+                    return (
+                      <Card
+                        key={q._id}
+                        className={`border cursor-pointer transition-all hover:shadow-md ${
+                          isAlreadyAdded
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:border-blue-500"
+                        }`}
+                        onClick={() =>
+                          !isAlreadyAdded && addExistingQuestion(q)
+                        }
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1">
+                              <Icon className="w-5 h-5 text-gray-600" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-900">
+                                    {q.title}
+                                    {q.validation?.required && (
+                                      <span className="text-red-500 ml-1">
+                                        *
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {getQuestionTypeLabel(
+                                      q.type as UIQuestionType
+                                    )}
+                                  </p>
+                                  {q.options && q.options.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1">
+                                      {q.options.slice(0, 3).map((opt, idx) => (
+                                        <span
+                                          key={idx}
+                                          className="px-2 py-1 bg-gray-100 text-xs rounded"
+                                        >
+                                          {opt.label}
+                                        </span>
+                                      ))}
+                                      {q.options.length > 3 && (
+                                        <span className="px-2 py-1 bg-gray-100 text-xs rounded">
+                                          +{q.options.length - 3} mais
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                {isAlreadyAdded && (
+                                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-xs rounded">
+                                    Adicionada
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

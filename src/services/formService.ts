@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { UIQuestionType } from "../utils/questionTypes";
 import api from "./api";
 
@@ -28,6 +29,7 @@ export interface FormQuestion {
 }
 
 export interface Form {
+  formTitle: ReactNode;
   _id: string;
   title: string;
   description: string;

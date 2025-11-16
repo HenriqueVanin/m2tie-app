@@ -6,7 +6,7 @@ import { Label } from "./ui/label";
 import Logo from "../assets/logo.svg";
 import type { UserType } from "../App";
 import { authService } from "../services/authService";
-import { decodeToken } from "../utils/auth";
+import { decodeToken, setTokenCookie } from "../utils/auth";
 import { getUserById } from "../services/userService";
 import { setUserCookie } from "../utils/userCookie";
 
@@ -36,6 +36,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     try {
       const data = await authService.login({ email, password });
       if (!data.token) throw new Error("Token não recebido");
+      // Salvar em cookie e localStorage (fallback)
+      setTokenCookie(data.token);
       localStorage.setItem("token", data.token);
       const decoded = decodeToken(data.token);
       if (!decoded) throw new Error("Erro ao processar token");
@@ -46,7 +48,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       } catch {
         // fallback: construir objeto mínimo do token
         setUserCookie({
-          id: decoded.userId,
+          _id: decoded.userId,
           name: decoded.name,
           email: email,
           role: decoded.role as any,
@@ -83,7 +85,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-gradient-to-br from-emerald-600 to-emerald-700">
       <div className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]">
-        <div className="mb-[-6px]">
+        <div className="">
           <h1 className="text-white text-3xl mb-2">Olá,</h1>
           <p className="text-emerald-100">
             Entre para acessar seus formulários
