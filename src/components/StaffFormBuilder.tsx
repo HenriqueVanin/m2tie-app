@@ -3,6 +3,8 @@ import { useSearchParams } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ErrorState } from "./ui/error-state";
+import { getUserCookie } from "../utils/userCookie";
+import { hasPermission, type UserRole } from "../utils/permissions";
 import {
   Plus,
   GripVertical,
@@ -18,6 +20,7 @@ import {
   ChevronDown,
   CheckSquare,
   BarChart3,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -101,6 +104,16 @@ function FormBuilderContent() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<UIQuestionType | "all">("all");
+  const [userRole, setUserRole] = useState<UserRole>("user");
+
+  useEffect(() => {
+    const user = getUserCookie();
+    if (user?.role) setUserRole(user.role as UserRole);
+  }, []);
+
+  const canManage = hasPermission(userRole, "canManageForms");
+  const canCreate = hasPermission(userRole, "canCreateForms");
+  const canEdit = hasPermission(userRole, "canEditForms");
 
   // Carregar formulário ao montar componente ou quando formIdFromUrl mudar
   useEffect(() => {
@@ -333,6 +346,22 @@ function FormBuilderContent() {
   };
 
   const selectedQuestionData = questions.find((q) => q.id === selectedQuestion);
+
+  if (!canManage) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center p-8">
+          <ShieldAlert className="w-16 h-16 mx-auto mb-4 text-red-500" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Acesso Negado
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Você não tem permissão para criar ou editar formulários.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

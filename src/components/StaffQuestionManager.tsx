@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, ShieldAlert } from "lucide-react";
+import { getUserCookie } from "../utils/userCookie";
+import { hasPermission, type UserRole } from "../utils/permissions";
 import { Button } from "./ui/button";
 import { ErrorState } from "./ui/error-state";
 import { SearchBar } from "./ui/search-bar";
+import { PageHeaderWithSearch } from "./ui/page-header";
 import { Input } from "./ui/input";
 import {
   Dialog,
@@ -122,6 +125,17 @@ export function StaffQuestionManager() {
   const [filterRequired, setFilterRequired] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>("user");
+
+  useEffect(() => {
+    const user = getUserCookie();
+    if (user?.role) setUserRole(user.role as UserRole);
+  }, []);
+
+  const canManage = hasPermission(userRole, "canManageQuestions");
+  const canCreate = hasPermission(userRole, "canCreateQuestions");
+  const canEdit = hasPermission(userRole, "canEditQuestions");
+  const canDelete = hasPermission(userRole, "canDeleteQuestions");
   const [currentQuestion, setCurrentQuestion] = useState<UIQuestion | null>(
     null
   );
@@ -315,73 +329,89 @@ export function StaffQuestionManager() {
     setIsEditDialogOpen(true);
   }
 
-  return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      <div className="p-6 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-gray-900 text-2xl">Banco de Questões</h1>
-            <p className="text-gray-500">
-              Gerencie todas as questões disponíveis
+  if (!canManage) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-8">
+            <ShieldAlert className="w-16 h-16 mx-auto mb-4 text-red-500" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Acesso Negado
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Você não tem permissão para gerenciar questões.
             </p>
           </div>
-
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="gap-2 h-12 bg-[#003087] hover:bg-[#002070] text-white shadow-lg rounded-3xl px-6"
-          >
-            <Plus className="w-5 h-5" />
-            Nova Questão
-          </Button>
-        </div>
-        <div className="flex gap-3 mt-4">
-          <SearchBar
-            placeholder="Buscar questões por título ou categoria..."
-            value={searchTerm}
-            onChange={setSearchTerm}
-            className="flex-1"
-          />
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-48 h-12 rounded-3xl">
-              <SelectValue placeholder="Tipo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os tipos</SelectItem>
-              <SelectItem value="text">Texto</SelectItem>
-              <SelectItem value="multiple_choice">Múltipla Escolha</SelectItem>
-              <SelectItem value="checkbox">Caixas de Seleção</SelectItem>
-              <SelectItem value="dropdown">Lista Suspensa</SelectItem>
-              <SelectItem value="scale">Escala Linear</SelectItem>
-              <SelectItem value="date">Data</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-48 h-12 rounded-3xl">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas categorias</SelectItem>
-              {Array.from(new Set(questions.map((q) => q.category))).map(
-                (cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                )
-              )}
-            </SelectContent>
-          </Select>
-          <Select value={filterRequired} onValueChange={setFilterRequired}>
-            <SelectTrigger className="w-48 h-12 rounded-3xl">
-              <SelectValue placeholder="Obrigatória" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="required">Obrigatórias</SelectItem>
-              <SelectItem value="optional">Opcionais</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      <PageHeaderWithSearch
+        title="Banco de Questões"
+        description="Gerencie todas as questões disponíveis"
+        searchComponent={
+          <div className="flex gap-3">
+            <SearchBar
+              placeholder="Buscar questões por título ou categoria..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="flex-1"
+            />
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="text">Texto</SelectItem>
+                <SelectItem value="multiple_choice">
+                  Múltipla Escolha
+                </SelectItem>
+                <SelectItem value="checkbox">Caixas de Seleção</SelectItem>
+                <SelectItem value="dropdown">Lista Suspensa</SelectItem>
+                <SelectItem value="scale">Escala Linear</SelectItem>
+                <SelectItem value="date">Data</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
+                <SelectValue placeholder="Categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas categorias</SelectItem>
+                {Array.from(new Set(questions.map((q) => q.category))).map(
+                  (cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+            <Select value={filterRequired} onValueChange={setFilterRequired}>
+              <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
+                <SelectValue placeholder="Obrigatória" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="required">Obrigatórias</SelectItem>
+                <SelectItem value="optional">Opcionais</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        }
+      >
+        <Button
+          onClick={() => setIsCreateDialogOpen(true)}
+          className="gap-2 h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg rounded-2xl"
+        >
+          <Plus className="w-5 h-5" />
+          Nova Questão
+        </Button>
+      </PageHeaderWithSearch>
 
       <div className="flex-1 overflow-auto">
         {loading ? (

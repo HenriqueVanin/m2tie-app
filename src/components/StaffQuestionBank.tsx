@@ -293,7 +293,7 @@ export function StaffQuestionBank() {
             </Button>
             <Button
               onClick={() => setIsCreateDialogOpen(true)}
-              className="gap-2 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg rounded-3xl px-6"
+              className="gap-2 h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-emerald-500 shadow-lg rounded-3xl px-6"
             >
               <Plus className="w-5 h-5" />
               Nova Questão

@@ -11,6 +11,7 @@ import { Button } from "./ui/button";
 import logoImage from "../assets/logo.svg";
 import { useEffect, useState } from "react";
 import { getUserCookie } from "../utils/userCookie";
+import { canAccessScreen, type UserRole } from "../utils/permissions";
 import type { Screen } from "../App";
 
 interface StaffNavProps {
@@ -25,15 +26,19 @@ export function StaffNav({
   onLogout,
 }: StaffNavProps) {
   const [name, setName] = useState("");
+  const [userRole, setUserRole] = useState<UserRole>("user");
+
   useEffect(() => {
     const user = getUserCookie();
     if (user?.name) setName(user.name);
+    if (user?.role) setUserRole(user.role as UserRole);
   }, []);
+
   const navItems = [
     {
       id: "staff-dashboards" as Screen,
       icon: LayoutDashboard,
-      label: "Dashboards",
+      label: "Gráficos e Análises",
     },
     {
       id: "staff-user-management" as Screen,
@@ -79,31 +84,33 @@ export function StaffNav({
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentScreen === item.id;
+        {navItems
+          .filter((item) => canAccessScreen(userRole, item.id))
+          .map((item) => {
+            const Icon = item.icon;
+            const isActive = currentScreen === item.id;
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                isActive
-                  ? "bg-[#003087] text-white shadow-lg"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                  isActive ? "bg-white/20" : "bg-gray-100"
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
+                  isActive
+                    ? "bg-[#003087] text-white shadow-lg"
+                    : "text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                <Icon className="w-5 h-5" />
-              </div>
-              <span className="text-sm">{item.label}</span>
-            </button>
-          );
-        })}
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isActive ? "bg-white/20" : "bg-gray-100"
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-sm">{item.label}</span>
+              </button>
+            );
+          })}
       </nav>
 
       {/* Logout */}

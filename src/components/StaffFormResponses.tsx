@@ -18,6 +18,7 @@ import { getAllResponses, ResponseData } from "../services/responseService";
 import { Button } from "./ui/button";
 import { ErrorState } from "./ui/error-state";
 import { SearchBar } from "./ui/search-bar";
+import { PageHeaderWithSearch } from "./ui/page-header";
 import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -123,47 +124,39 @@ export function StaffFormResponses() {
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
-      <div className="p-6 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1>Respostas de Formulários</h1>
-            <p className="text-gray-500">
-              Visualize e gerencie as respostas dos usuários
-            </p>
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      <PageHeaderWithSearch
+        title="Respostas de Formulários"
+        description="Visualize e gerencie as respostas dos usuários"
+        searchComponent={
+          <div className="flex gap-4">
+            <SearchBar
+              placeholder="Buscar por nome, email ou formulário..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="flex-1"
+            />
+            <Select value={filterForm} onValueChange={setFilterForm}>
+              <SelectTrigger className="w-64 h-12 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-2xl">
+                <SelectValue placeholder="Formulário" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os formulários</SelectItem>
+                {uniqueForms.map((form) => (
+                  <SelectItem key={form} value={form}>
+                    {form}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
-            <Download className="w-5 h-5" />
-            Exportar
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-4">
-          <SearchBar
-            placeholder="Buscar por nome, email ou formulário..."
-            value={searchTerm}
-            onChange={setSearchTerm}
-            className="flex-1"
-          />
-
-          <Select value={filterForm} onValueChange={setFilterForm}>
-            <SelectTrigger className="w-64 h-12 border">
-              <SelectValue placeholder="Formulário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os formulários</SelectItem>
-              {uniqueForms.map((form) => (
-                <SelectItem key={form} value={form}>
-                  {form}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+        }
+      >
+        <Button className="h-12 bg-emerald-600 hover:bg-emerald-700 text-emerald gap-2 shadow-lg rounded-2xl">
+          <Download className="w-5 h-5" />
+          Exportar
+        </Button>
+      </PageHeaderWithSearch>
 
       {/* Stats */}
       <div className="px-6 py-4 bg-gray-50 border-b-2 border-gray-200">

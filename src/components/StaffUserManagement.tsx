@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Mail, X, Check } from "lucide-react";
+import { Plus, Edit, Trash2, Mail, X, Check, ShieldAlert } from "lucide-react";
+import { getUserCookie } from "../utils/userCookie";
+import { hasPermission, type UserRole } from "../utils/permissions";
 import { Button } from "./ui/button";
 import { ErrorState } from "./ui/error-state";
 import { SearchBar } from "./ui/search-bar";
+import { PageHeaderWithSearch } from "./ui/page-header";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
@@ -28,6 +31,14 @@ export function StaffUserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>("user");
+
+  useEffect(() => {
+    const user = getUserCookie();
+    if (user?.role) setUserRole(user.role as UserRole);
+  }, []);
+
+  const canManage = hasPermission(userRole, "canManageUsers");
 
   useEffect(() => {
     fetchUsers();
@@ -64,34 +75,45 @@ export function StaffUserManagement() {
     }
   };
 
-  return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <div className="p-6 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-gray-900 text-2xl">Gerenciar Usuários</h1>
-            <p className="text-gray-500">
-              Cadastre e gerencie os usuários da plataforma
+  if (!canManage) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-8">
+            <ShieldAlert className="w-16 h-16 mx-auto mb-4 text-red-500" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Acesso Negado
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Você não tem permissão para gerenciar usuários.
             </p>
           </div>
-
-          <Button
-            onClick={() => setShowAddModal(true)}
-            className="h-12 bg-[#003087] hover:bg-[#002070] text-white gap-2 shadow-lg rounded-2xl"
-          >
-            <Plus className="w-5 h-5" />
-            Adicionar Usuário
-          </Button>
         </div>
-
-        {/* Search */}
-        <SearchBar
-          placeholder="Buscar por nome ou email..."
-          value={searchTerm}
-          onChange={setSearchTerm}
-        />
       </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      <PageHeaderWithSearch
+        title="Gerenciar Usuários"
+        description="Cadastre e gerencie os usuários da plataforma"
+        searchComponent={
+          <SearchBar
+            placeholder="Buscar por nome ou email..."
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+        }
+      >
+        <Button
+          onClick={() => setShowAddModal(true)}
+          className="h-12 bg-emerald-600 hover:bg-emerald-700 text-emerald gap-2 shadow-lg rounded-2xl"
+        >
+          <Plus className="w-5 h-5" />
+          Adicionar Usuário
+        </Button>
+      </PageHeaderWithSearch>
 
       {/* Stats */}
       {/* <div className="px-6 py-4 bg-white border-b border-gray-200">

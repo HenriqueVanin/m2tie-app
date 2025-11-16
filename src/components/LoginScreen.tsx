@@ -98,8 +98,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             {error}
           </div>
         )}
-        <div className="space-y-4 mt-4">
-          <div className="flex items-center justify-center gap-3 mb-8">
+        <div className="space-y-4 mt-6">
+          <div className="flex items-center justify-center">
             <img
               src={Logo}
               alt="M2TIC"
@@ -111,7 +111,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               Email
             </Label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               <Input
                 id="email"
                 type="email"
@@ -124,20 +124,21 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     ? "border-red-300"
                     : "border-gray-200"
                 }`}
+                aria-invalid={emailTouched && !emailValid}
               />
-              {emailTouched && !emailValid && (
-                <p className="mt-2 text-xs text-red-600">
-                  Formato de email inválido
-                </p>
-              )}
             </div>
+            {emailTouched && !emailValid && (
+              <p className="mt-2 text-xs text-red-600">
+                Formato de email inválido
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password" className="text-gray-700 text-sm">
               Senha
             </Label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
