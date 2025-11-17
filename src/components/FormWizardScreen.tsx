@@ -353,7 +353,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
         </div>
       </div>
 
-      <div className="p-6 space-y-3">
+      <div className="p-6 space-y-3 pb-30">
         <Button
           onClick={nextStep}
           disabled={submitting}
