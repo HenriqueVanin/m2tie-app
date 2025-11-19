@@ -29,7 +29,7 @@ import {
   updateForm,
   type Form,
 } from "../services/formService";
-import { getAllUsers, type User } from "../services/userService";
+import { getAllAssignables, type User } from "../services/userService";
 import {
   getFormRespondents,
   type Respondent,
@@ -160,7 +160,7 @@ export function StaffFormResponsesByForm() {
       try {
         const [apiForms, users] = await Promise.all([
           getAllForms(),
-          getAllUsers(),
+          getAllAssignables(),
         ]);
 
         if (!isMounted) return;

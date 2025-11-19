@@ -42,6 +42,11 @@ export async function getUserById(userId: string): Promise<User> {
   return res.data.data!;
 }
 
+export async function getAllAssignables(): Promise<User[]> {
+  const res = await api.get<ApiResponse<User[]>>(`/users/assignable`);
+  return res.data.data!;
+}
+
 export async function updateUser(payload: UpdateUserPayload): Promise<User> {
   const { id, ...body } = payload;
   const res = await api.put<ApiResponse<User>>(`/users/${id}`, body);
