@@ -13,8 +13,13 @@ import {
   Clock,
   XCircle,
   Loader2,
+  Trash2,
 } from "lucide-react";
-import { getAllResponses, ResponseData } from "../services/responseService";
+import {
+  getAllResponses,
+  ResponseData,
+  deleteResponse,
+} from "../services/responseService";
 import { Button } from "./ui/button";
 import { ErrorState } from "./ui/error-state";
 import { SearchBar } from "./ui/search-bar";
@@ -29,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
 
 interface FormResponse {
   id: string;
@@ -56,6 +62,11 @@ export function StaffFormResponses() {
   const [selectedResponse, setSelectedResponse] = useState<FormResponse | null>(
     null
   );
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [responseToDelete, setResponseToDelete] = useState<FormResponse | null>(
+    null
+  );
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch responses on mount
   useEffect(() => {
@@ -94,6 +105,34 @@ export function StaffFormResponses() {
       setError("Erro ao carregar respostas");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (response: FormResponse) => {
+    setResponseToDelete(response);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!responseToDelete) return;
+
+    setDeleting(true);
+    try {
+      const result = await deleteResponse(responseToDelete.id);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        // Remove da lista local
+        setResponses((prev) =>
+          prev.filter((r) => r.id !== responseToDelete.id)
+        );
+        setDeleteDialogOpen(false);
+        setResponseToDelete(null);
+      }
+    } catch (err) {
+      setError("Erro ao deletar resposta");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -274,15 +313,26 @@ export function StaffFormResponses() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
-                      <Button
-                        onClick={() => setSelectedResponse(response)}
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        Ver Detalhes
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setSelectedResponse(response)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          Ver Detalhes
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteClick(response)}
+                          variant="outline"
+                          size="sm"
+                          className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Excluir
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -299,6 +349,22 @@ export function StaffFormResponses() {
           onClose={() => setSelectedResponse(null)}
         />
       )}
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleting}
+        description={
+          <>
+            Tem certeza que deseja excluir a resposta de{" "}
+            <strong>{responseToDelete?.userName}</strong> para o formulário{" "}
+            <strong>{responseToDelete?.formTitle}</strong>?
+          </>
+        }
+        countdownSeconds={3}
+      />
     </div>
   );
 }

@@ -57,25 +57,37 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       setLoading(true);
       setError(null);
       const response = await getActiveForm();
-
+      console.log(response);
       // Verificar se houve erro ou formulário já respondido
-      if (response.error || response.msg === "Formulário já respondido") {
+      if (
+        response.error ||
+        response.msg === "Nenhum formulário ativo encontrado para este usuário"
+      ) {
         setAlreadyAnswered(true);
         setResponseDate(new Date().toLocaleDateString("pt-BR"));
         // Se houver dados do formulário, manté-los para exibir o nome
         if (response.data) {
-          setForm(response.data);
+          // Se a API retornar um array, usar o primeiro formulário
+          setForm(
+            Array.isArray(response.data) ? response.data[0] : response.data
+          );
         }
         return;
       }
-
       // Se data for null ou undefined, não há formulário ativo
       if (!response.data) {
         setError("Nenhum formulário ativo disponível no momento.");
         return;
       }
 
-      setForm(response.data);
+      // Se vier um array vazio
+      if (Array.isArray(response.data) && response.data.length === 0) {
+        setError("Nenhum formulário ativo disponível no momento.");
+        return;
+      }
+
+      // Aceitar tanto objeto único quanto array
+      setForm(Array.isArray(response.data) ? response.data[0] : response.data);
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar formulário");
     } finally {
@@ -164,7 +176,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   if (loading) {
     return (
       <UserBackgroundLayout centered>
-        <div className="flex items-center justify-center flex-1 bg-gray-50 p-6">
+        <div className="flex items-center justify-center flex-1 p-6">
           <div className="text-center">
             <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
             <p className="text-gray-600">Carregando formulário...</p>
@@ -352,7 +364,6 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           )}
         </div>
       </div>
-
       <div className="p-6 space-y-3 pb-30">
         <Button
           onClick={nextStep}

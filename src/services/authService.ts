@@ -7,31 +7,29 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+  error: string | null;
+  msg: string;
   token: string;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
+  userId: string;
 }
 
 export interface RegisterRequest {
   name: string;
+  anonymous: boolean;
   email: string;
   password: string;
   confirmPassword: string;
   role: string;
+  city: string;
+  state: string;
+  institution: string;
 }
 
 export interface RegisterResponse {
-  message: string;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-  };
+  error: string | null;
+  msg: string;
+  token: string;
+  userId: string;
 }
 
 export interface ForgotPasswordRequest {

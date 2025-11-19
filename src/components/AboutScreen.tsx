@@ -1,21 +1,31 @@
 import { Info, Heart, Mail, Users } from "lucide-react";
 import type { Screen } from "../App";
+
+import Logo from "../assets/logo.svg";
 import { ScreenHeader } from "./ui/screen-header";
 import { UserBackgroundLayout } from "./UserBackgroundLayout";
 
 interface AboutScreenProps {
   onNavigate: (screen: Screen) => void;
+  onLogout: () => void;
 }
 
-export function AboutScreen({ onNavigate }: AboutScreenProps) {
+export function AboutScreen({ onNavigate, onLogout }: AboutScreenProps) {
   return (
     <UserBackgroundLayout>
       <ScreenHeader
         title="Sobre"
         subtitle="Conheça nossa plataforma educacional"
       />
-      <div className="relative z-10 flex-1 bg-white  p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4 pb-20">
+      <div className="relative z-10 flex-1 bg-white  p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4 pb-30">
         <div className="space-y-6 mt-4">
+          <div className="flex items-center justify-center border-b pb-4">
+            <img
+              src={Logo}
+              alt="M2TIE Logo"
+              className="h-12 px-[38px] py-[4px]"
+            />
+          </div>
           {/* Mission */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">

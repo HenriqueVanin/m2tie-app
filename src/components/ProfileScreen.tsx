@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { Mail, Lock, HelpCircle, ChevronRight } from "lucide-react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import type { Screen } from "../App";
@@ -9,9 +9,10 @@ import { UserBackgroundLayout } from "./UserBackgroundLayout";
 
 interface ProfileScreenProps {
   onNavigate: (screen: Screen) => void;
+  onLogout: () => void;
 }
 
-export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
+export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [institution, setInstitution] = useState("Universidade"); // placeholder sem backend
@@ -25,7 +26,11 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
   const initials = getUserInitials(name);
   return (
     <UserBackgroundLayout>
-      <ScreenHeader title="Meu Perfil" subtitle="Gerencie suas informações" />
+      <ScreenHeader
+        title="Meu Perfil"
+        subtitle="Gerencie suas informações"
+        onLogout={onLogout}
+      />
       <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
         <div className="mt-4 space-y-6">
           {/* Avatar */}
@@ -79,6 +84,37 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
                   readOnly
                   className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
                 />
+              </div>
+            </div>
+            {/* Ações movidas de Configurações */}
+            <div className="pt-4 mt-2 border-t border-gray-200 space-y-2 pt-6">
+              <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100 overflow-hidden">
+                <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-gray-900 text-sm">Alterar senha</p>
+                      <p className="text-xs text-gray-500">
+                        Atualizar senha de acesso
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </button>
+                <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center">
+                      <HelpCircle className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-gray-900 text-sm">Central de ajuda</p>
+                      <p className="text-xs text-gray-500">Tire suas dúvidas</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                </button>
               </div>
             </div>
           </div>

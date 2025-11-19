@@ -1434,6 +1434,14 @@
     background-color: var(--color-blue-900);
   }
 
+  .bg-red-600 {
+    background-color: var(--color-red-600);
+  }
+
+  .bg-red-700 {
+    background-color: var(--color-red-700);
+  }
+
   .bg-border {
     background-color: var(--border);
   }
@@ -1528,6 +1536,18 @@
     .bg-white\/80 {
       background-color: color-mix(in oklab, var(--color-white) 80%, transparent);
     }
+  }
+
+  .bg-emerald-500 {
+    background-color: var(--color-emerald-500);
+  }
+
+  .bg-emerald-600 {
+    background-color: var(--color-emerald-600);
+  }
+
+  .bg-emerald-700 {
+    background-color: var(--color-emerald-700);
   }
 
   .bg-yellow-100 {

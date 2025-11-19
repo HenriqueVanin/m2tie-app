@@ -104,7 +104,7 @@ function FormBuilderContent() {
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<UIQuestionType | "all">("all");
-  const [userRole, setUserRole] = useState<UserRole>("user");
+  const [userRole, setUserRole] = useState<UserRole>("student");
 
   useEffect(() => {
     const user = getUserCookie();
@@ -287,6 +287,7 @@ function FormBuilderContent() {
           order: index + 1,
           required: q.required,
         })),
+        assignedUsers: [], // necessário para CreateFormPayload; preencher conforme lógica futura
         isActive: true,
       };
 

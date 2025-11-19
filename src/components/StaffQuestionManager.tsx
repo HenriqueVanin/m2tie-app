@@ -24,6 +24,7 @@ import {
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
+import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
 import {
   createQuestion,
   deleteQuestion,
@@ -125,6 +126,11 @@ export function StaffQuestionManager() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>("user");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState<UIQuestion | null>(
+    null
+  );
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const user = getUserCookie();
@@ -293,12 +299,26 @@ export function StaffQuestionManager() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Tem certeza que deseja excluir esta questão?")) return;
+    const question = questions.find((q) => q._id === id);
+    if (!question) return;
+    setQuestionToDelete(question);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!questionToDelete) return;
+    setDeleting(true);
     try {
-      await deleteQuestion(id);
-      setQuestions((prev) => prev.filter((q) => q._id !== id));
+      await deleteQuestion(questionToDelete._id);
+      setQuestions((prev) =>
+        prev.filter((q) => q._id !== questionToDelete._id)
+      );
+      setDeleteDialogOpen(false);
+      setQuestionToDelete(null);
     } catch (e: any) {
-      alert(e?.message || "Erro ao excluir questão");
+      setError(e?.message || "Erro ao excluir quest\u00e3o");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -918,6 +938,21 @@ export function StaffQuestionManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleting}
+        description={
+          <>
+            Tem certeza que deseja excluir a questão{" "}
+            <strong>{questionToDelete?.title}</strong>?
+          </>
+        }
+        countdownSeconds={3}
+      />
     </div>
   );
 }

@@ -18,14 +18,16 @@ export interface Question {
   title: string;
   description?: string;
   type: string;
-
   options: QuestionOption[];
   validation: QuestionValidation;
   createdBy: {
     _id: string;
     name: string;
     email: string;
-    role: string;
+    role: "admin" | "teacher_analyst" | "teacher_respondent" | "student";
+    city?: string;
+    state?: string;
+    institution?: string;
   };
   createdAt?: string;
   updatedAt?: string;

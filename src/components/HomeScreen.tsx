@@ -1,4 +1,11 @@
-import { Plus, Bell, AlertCircle, CheckCircle, Info } from "lucide-react";
+import {
+  Plus,
+  Bell,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  BookOpen,
+} from "lucide-react";
 import type { Screen } from "../App";
 import { useEffect, useState } from "react";
 import { getUserCookie } from "../utils/userCookie";
@@ -7,13 +14,37 @@ import { UserBackgroundLayout } from "./UserBackgroundLayout";
 
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void;
+  onLogout: () => void;
 }
 
-export function HomeScreen({ onNavigate }: HomeScreenProps) {
+export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
   const [userName, setUserName] = useState("");
+  const [lastDiaryEntry, setLastDiaryEntry] = useState<{
+    date: string;
+    text: string;
+  } | null>(null);
+
   useEffect(() => {
     const user = getUserCookie();
     if (user?.name) setUserName(user.name);
+
+    // Buscar última anotação do diário
+    try {
+      const diaryEntries = localStorage.getItem("diaryEntries");
+      if (diaryEntries) {
+        const entries = JSON.parse(diaryEntries);
+        const dates = Object.keys(entries).sort().reverse();
+        if (dates.length > 0) {
+          const lastDate = dates[0];
+          const text = entries[lastDate];
+          if (text && text.trim()) {
+            setLastDiaryEntry({ date: lastDate, text });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao carregar última anotação do diário:", error);
+    }
   }, []);
   const notifications = [
     {
@@ -107,6 +138,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
       <ScreenHeader
         title={`Olá${userName ? `, ${userName.split(" ")[0]}!` : "!"}`}
         subtitle="Navegue pelos seus formulários"
+        onLogout={onLogout}
       />
       <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
         <div className="mt-4 space-y-6">
@@ -134,8 +166,55 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
             </div>
           </div>
 
+          {/* Última Anotação do Diário */}
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-5 shadow-sm">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-gray-900 font-semibold mb-1">
+                  Última Anotação do Diário
+                </h3>
+                {lastDiaryEntry ? (
+                  <p className="text-xs text-gray-500">
+                    {new Date(lastDiaryEntry.date).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500">
+                    Nenhuma anotação ainda
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="bg-white/50 rounded-xl p-4 border border-indigo-100">
+              {lastDiaryEntry ? (
+                <p className="text-sm text-gray-700 line-clamp-4 whitespace-pre-wrap">
+                  {lastDiaryEntry.text}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-400 italic">
+                  Comece a escrever suas anotações diárias para acompanhar seu
+                  progresso e reflexões.
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => onNavigate("diary")}
+              className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              {lastDiaryEntry
+                ? "Ver diário completo →"
+                : "Começar a escrever →"}
+            </button>
+          </div>
+
           {/* Your Schedule */}
-          <div>
+          {/* <div>
             <h2 className="mb-4 text-gray-900">Notificações</h2>
             <div className="space-y-3">
               {notifications.map((notification) => (
@@ -170,7 +249,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </UserBackgroundLayout>

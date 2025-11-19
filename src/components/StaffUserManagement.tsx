@@ -10,6 +10,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Badge } from "./ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
+import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
 import {
   getAllUsers,
   deleteUser as deleteUserAPI,
@@ -17,12 +18,19 @@ import {
   User as APIUser,
 } from "../services/userService";
 import { authService } from "../services/authService";
+import { getRoleLabel, getRoleColor } from "../utils/roleLabels";
 
 interface User {
   _id: string;
   name: string;
   email: string;
-  role: "admin" | "staff" | "user";
+  role: "admin" | "teacher_analyst" | "teacher_respondent" | "student";
+  anonymous?: boolean;
+  city?: string;
+  state?: string;
+  institution?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export function StaffUserManagement() {
@@ -32,8 +40,13 @@ export function StaffUserManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>("user");
-  const [activeTab, setActiveTab] = useState<"all" | "user" | "staff">("all");
+  const [userRole, setUserRole] = useState<UserRole>("student");
+  const [activeTab, setActiveTab] = useState<
+    "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
+  >("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const user = getUserCookie();
@@ -67,21 +80,34 @@ export function StaffUserManagement() {
 
     const matchesTab =
       activeTab === "all" ||
-      (activeTab === "user" && user.role === "user") ||
-      (activeTab === "staff" &&
-        (user.role === "admin" || user.role === "staff"));
+      (activeTab === "student" && user.role === "student") ||
+      (activeTab === "teacher_respondent" &&
+        user.role === "teacher_respondent") ||
+      (activeTab === "teacher_analyst" && user.role === "teacher_analyst") ||
+      (activeTab === "admin" && user.role === "admin");
 
     return matchesSearch && matchesTab;
   });
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir este usuário?")) return;
+    const user = users.find((u) => u._id === id);
+    if (!user) return;
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
     try {
-      await deleteUserAPI(id);
-      setUsers(users.filter((u) => u._id !== id));
+      await deleteUserAPI(userToDelete._id);
+      setUsers(users.filter((u) => u._id !== userToDelete._id));
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     } catch (e: any) {
-      alert(e?.message || "Erro ao excluir usuário");
+      setError(e?.message || "Erro ao excluir usu\u00e1rio");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -152,21 +178,31 @@ export function StaffUserManagement() {
         <Tabs
           value={activeTab}
           onValueChange={(v: string) =>
-            setActiveTab(v as "all" | "user" | "staff")
+            setActiveTab(
+              v as
+                | "all"
+                | "student"
+                | "teacher_respondent"
+                | "teacher_analyst"
+                | "admin"
+            )
           }
         >
           <TabsList>
             <TabsTrigger value="all">Todos ({users.length})</TabsTrigger>
-            <TabsTrigger value="user">
-              Usuários ({users.filter((u) => u.role === "user").length})
+            <TabsTrigger value="student">
+              Estudantes ({users.filter((u) => u.role === "student").length})
             </TabsTrigger>
-            <TabsTrigger value="staff">
-              Admin/Staff (
-              {
-                users.filter((u) => u.role === "admin" || u.role === "staff")
-                  .length
-              }
-              )
+            <TabsTrigger value="teacher_respondent">
+              Prof. Respondentes (
+              {users.filter((u) => u.role === "teacher_respondent").length})
+            </TabsTrigger>
+            <TabsTrigger value="teacher_analyst">
+              Prof. Analistas (
+              {users.filter((u) => u.role === "teacher_analyst").length})
+            </TabsTrigger>
+            <TabsTrigger value="admin">
+              Administradores ({users.filter((u) => u.role === "admin").length})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -196,6 +232,9 @@ export function StaffUserManagement() {
                   Email
                 </th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
+                  Instituição / Localização
+                </th>
+                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
                   Função
                 </th>
                 <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
@@ -207,7 +246,7 @@ export function StaffUserManagement() {
               {filteredUsers.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     Nenhum usuário encontrado
@@ -221,6 +260,11 @@ export function StaffUserManagement() {
                   >
                     <td className="px-6 py-4">
                       <p className="text-gray-800 font-medium">{user.name}</p>
+                      {user.anonymous && (
+                        <span className="text-xs text-gray-500 italic">
+                          (Anônimo)
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -229,20 +273,27 @@ export function StaffUserManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge
-                        className={
-                          user.role === "admin"
-                            ? "bg-purple-100 text-purple-800 hover:bg-purple-100"
-                            : user.role === "staff"
-                            ? "bg-blue-100 text-blue-800 hover:bg-blue-100"
-                            : "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                        }
-                      >
-                        {user.role === "admin"
-                          ? "Administrador"
-                          : user.role === "staff"
-                          ? "Staff"
-                          : "Usuário"}
+                      <div className="text-sm text-gray-600">
+                        {user.institution && (
+                          <p className="font-medium text-gray-800">
+                            {user.institution}
+                          </p>
+                        )}
+                        {(user.city || user.state) && (
+                          <p className="text-xs text-gray-500">
+                            {[user.city, user.state]
+                              .filter(Boolean)
+                              .join(" - ")}
+                          </p>
+                        )}
+                        {!user.institution && !user.city && !user.state && (
+                          <span className="text-gray-400 italic">-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge className={getRoleColor(user.role)}>
+                        {getRoleLabel(user.role)}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
@@ -291,6 +342,10 @@ export function StaffUserManagement() {
                   name: user.name,
                   email: user.email,
                   role: user.role,
+                  anonymous: user.anonymous,
+                  city: user.city,
+                  state: user.state,
+                  institution: user.institution,
                 });
                 setUsers(users.map((u) => (u._id === user._id ? user : u)));
               } else {
@@ -306,9 +361,13 @@ export function StaffUserManagement() {
                   password,
                   confirmPassword,
                   role: user.role,
+                  anonymous: user.anonymous || false,
+                  city: user.city || "",
+                  state: user.state || "",
+                  institution: user.institution || "",
                 });
 
-                alert(response.message || "Usuário criado com sucesso!");
+                alert("Usuário criado com sucesso!");
               }
               setShowAddModal(false);
               setEditingUser(null);
@@ -319,6 +378,21 @@ export function StaffUserManagement() {
           }}
         />
       )}
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleting}
+        description={
+          <>
+            Tem certeza que deseja excluir o usuário{" "}
+            <strong>{userToDelete?.name}</strong> ({userToDelete?.email})?
+          </>
+        }
+        countdownSeconds={3}
+      />
     </div>
   );
 }
@@ -334,7 +408,11 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
     user || {
       name: "",
       email: "",
-      role: "user",
+      role: "student",
+      anonymous: false,
+      city: "",
+      state: "",
+      institution: "",
     }
   );
   const [password, setPassword] = useState("");
@@ -407,6 +485,47 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="institution">Instituição</Label>
+              <Input
+                id="institution"
+                value={formData.institution || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, institution: e.target.value })
+                }
+                className="border"
+                placeholder="Ex: Universidade Federal do Paraná"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  value={formData.city || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, city: e.target.value })
+                  }
+                  className="border"
+                  placeholder="Ex: Curitiba"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="state">Estado</Label>
+                <Input
+                  id="state"
+                  value={formData.state || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, state: e.target.value })
+                  }
+                  className="border"
+                  placeholder="Ex: PR"
+                />
+              </div>
+            </div>
+
             {!user && (
               <>
                 <div className="space-y-2">
@@ -445,15 +564,37 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    role: e.target.value as "admin" | "staff" | "user",
+                    role: e.target.value as
+                      | "admin"
+                      | "teacher_analyst"
+                      | "teacher_respondent"
+                      | "student",
                   })
                 }
                 className="w-full h-12 px-3 border border-gray-300 rounded-md bg-white"
               >
-                <option value="user">Usuário</option>
-                <option value="staff">Staff</option>
+                <option value="student">Estudante</option>
+                <option value="teacher_respondent">
+                  Professor Respondente
+                </option>
+                <option value="teacher_analyst">Professor Analista</option>
                 <option value="admin">Administrador</option>
               </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="anonymous"
+                checked={formData.anonymous || false}
+                onChange={(e) =>
+                  setFormData({ ...formData, anonymous: e.target.checked })
+                }
+                className="w-4 h-4 border border-gray-300 rounded"
+              />
+              <Label htmlFor="anonymous" className="cursor-pointer">
+                Resposta anônima (oculta identidade nas respostas)
+              </Label>
             </div>
           </div>
 

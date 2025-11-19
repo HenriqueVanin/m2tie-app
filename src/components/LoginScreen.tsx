@@ -87,12 +87,20 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     <UserBackgroundLayout centered>
       <div className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]" />
       <div className="flex justify-center items-center">
-        <div className="flex-2 bg-gray-50 space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] py-12 mb-8">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!isLoading && emailValid && passwordValid) {
+              handleLogin();
+            }
+          }}
+          className="flex-1 bg-gray-50 space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] py-12 mb-8"
+        >
           <div className="flex items-center justify-center py-4">
             <img
               src={Logo}
               alt="M2TIE Logo"
-              className="h-[70px] px-[38px] py-[8px]"
+              className="h-24 px-[38px] py-[8px]"
             />
           </div>
           {error && (
@@ -169,13 +177,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             </button>
           </div>
           <Button
-            onClick={handleLogin}
+            type="submit"
             disabled={isLoading || !emailValid || !passwordValid}
             className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg rounded-2xl"
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
-        </div>
+        </form>
       </div>
       {showForgot && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">

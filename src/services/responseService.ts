@@ -1,3 +1,4 @@
+// /src/services/responseService.ts
 import api from "./api";
 
 // Types
@@ -19,9 +20,12 @@ export interface ResponseData {
     description?: string;
   };
   userId: {
-    _id: string;
+    _id?: string; // pode não existir quando usuário foi deletado
     name: string;
     email: string;
+    city?: string;
+    state?: string;
+    institution?: string;
   };
   answers: {
     questionId: {
@@ -47,7 +51,7 @@ export interface Respondent {
   _id: string | null;
   name: string;
   email: string;
-  role: string;
+  role: "admin" | "teacher_analyst" | "teacher_respondent" | "student" | "N/A";
   submittedAt: string;
   responseId: string;
 }
@@ -61,7 +65,14 @@ export interface GetFormRespondentsResponse {
   respondents: Respondent[];
 }
 
-// Submit a form response
+// Helpers
+const extractError = (error: any, fallback: string) => {
+  if (error?.response?.data?.error) return error.response.data.error;
+  if (error?.response?.data?.message) return error.response.data.message;
+  return fallback;
+};
+
+// Submit a form response (POST /responses)
 export const submitResponse = async (
   data: SubmitResponseRequest
 ): Promise<ApiResponse<ResponseData>> => {
@@ -69,20 +80,11 @@ export const submitResponse = async (
     const response = await api.post("/responses", data);
     return response.data;
   } catch (error: any) {
-    if (error.response?.data) {
-      return {
-        error: error.response.data.error || "Erro ao enviar resposta",
-        data: undefined,
-      };
-    }
-    return {
-      error: "Erro ao enviar resposta",
-      data: undefined,
-    };
+    return { error: extractError(error, "Erro ao enviar resposta") };
   }
 };
 
-// Get all responses (admin/staff only)
+// Get all responses (GET /responses/all)
 export const getAllResponses = async (): Promise<
   ApiResponse<ResponseData[]>
 > => {
@@ -90,20 +92,11 @@ export const getAllResponses = async (): Promise<
     const response = await api.get("/responses/all");
     return response.data;
   } catch (error: any) {
-    if (error.response?.data) {
-      return {
-        error: error.response.data.error || "Erro ao buscar respostas",
-        data: undefined,
-      };
-    }
-    return {
-      error: "Erro ao buscar respostas",
-      data: undefined,
-    };
+    return { error: extractError(error, "Erro ao buscar respostas") };
   }
 };
 
-// Get response by ID (admin/staff only)
+// Get response by ID (GET /responses/:id)
 export const getResponseById = async (
   id: string
 ): Promise<ApiResponse<ResponseData>> => {
@@ -111,20 +104,23 @@ export const getResponseById = async (
     const response = await api.get(`/responses/${id}`);
     return response.data;
   } catch (error: any) {
-    if (error.response?.data) {
-      return {
-        error: error.response.data.error || "Erro ao buscar resposta",
-        data: undefined,
-      };
-    }
-    return {
-      error: "Erro ao buscar resposta",
-      data: undefined,
-    };
+    return { error: extractError(error, "Erro ao buscar resposta") };
   }
 };
 
-// Get respondents of a form (admin/staff only)
+// Delete response by ID (DELETE /responses/:id) - faltava integrar
+export const deleteResponse = async (
+  id: string
+): Promise<ApiResponse<null>> => {
+  try {
+    const response = await api.delete(`/responses/${id}`);
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao deletar resposta") };
+  }
+};
+
+// Get respondents of a form (GET /responses/:formId/respondents)
 export const getFormRespondents = async (
   formId: string
 ): Promise<GetFormRespondentsResponse> => {
@@ -132,17 +128,8 @@ export const getFormRespondents = async (
     const response = await api.get(`/responses/${formId}/respondents`);
     return response.data as GetFormRespondentsResponse;
   } catch (error: any) {
-    if (error.response?.data) {
-      return {
-        error: error.response.data.error || "Erro ao buscar respondentes",
-        formTitle: "",
-        formDescription: "",
-        totalRespondents: 0,
-        respondents: [],
-      };
-    }
     return {
-      error: "Erro ao buscar respondentes",
+      error: extractError(error, "Erro ao buscar respondentes"),
       formTitle: "",
       formDescription: "",
       totalRespondents: 0,

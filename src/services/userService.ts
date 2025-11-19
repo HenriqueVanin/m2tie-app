@@ -3,8 +3,14 @@ import api from "./api";
 export interface User {
   _id: string;
   name: string;
+  anonymous?: boolean;
   email: string;
-  role: "admin" | "staff" | "user";
+  role: "admin" | "teacher_analyst" | "teacher_respondent" | "student";
+  city?: string;
+  state?: string;
+  institution?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ApiResponse<T> {
@@ -16,10 +22,14 @@ export interface ApiResponse<T> {
 export interface UpdateUserPayload {
   id: string;
   name?: string;
+  anonymous?: boolean;
   email?: string;
   password?: string;
   confirmPassword?: string;
   role?: User["role"];
+  city?: string;
+  state?: string;
+  institution?: string;
 }
 
 export async function getAllUsers(): Promise<User[]> {

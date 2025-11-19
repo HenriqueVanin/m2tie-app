@@ -1,4 +1,4 @@
-import { Home, FileText, User, Settings, Info } from "lucide-react";
+import { Home, FileText, User, BookOpen, Info } from "lucide-react";
 import type { Screen } from "../App";
 
 interface MobileNavProps {
@@ -22,6 +22,26 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
             <Home className="w-6 h-6" />
             <span className="text-xs">Início</span>
           </button>
+          <button
+            onClick={() => onNavigate("diary")}
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+              currentScreen === "diary"
+                ? "text-[#003087] bg-white/80 shadow-sm"
+                : "text-gray-600 hover:bg-white/50"
+            }`}
+            aria-label="Diário"
+          >
+            <BookOpen className="w-6 h-6" />
+            <span className="text-xs">Diário</span>
+          </button>
+
+          {/* FAB - Form Button */}
+          <button
+            onClick={() => onNavigate("form")}
+            className="flex items-center justify-center w-16 h-16 -mt-8 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
+          >
+            <FileText className="w-7 h-7" />
+          </button>
 
           <button
             onClick={() => onNavigate("profile")}
@@ -34,27 +54,6 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
             <User className="w-6 h-6" />
             <span className="text-xs">Perfil</span>
           </button>
-
-          {/* FAB - Form Button */}
-          <button
-            onClick={() => onNavigate("form")}
-            className="flex items-center justify-center w-16 h-16 -mt-8 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
-          >
-            <FileText className="w-7 h-7" />
-          </button>
-
-          <button
-            onClick={() => onNavigate("settings")}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
-              currentScreen === "settings"
-                ? "text-[#003087] bg-white/80 shadow-sm"
-                : "text-gray-600 hover:bg-white/50"
-            }`}
-          >
-            <Settings className="w-6 h-6" />
-            <span className="text-xs">Ajustes</span>
-          </button>
-
           <button
             onClick={() => onNavigate("about")}
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${

@@ -10,8 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Checkbox } from "./ui/checkbox";
 import { authService } from "../services/authService";
 import { UserBackgroundLayout } from "./UserBackgroundLayout";
+import { ROLE_LABELS } from "../utils/roleLabels";
 
 interface SignupScreenProps {
   onNavigateToLogin: () => void;
@@ -23,10 +25,14 @@ export function SignupScreen({
   onSignupSuccess,
 }: SignupScreenProps) {
   const [name, setName] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState<string>("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [institution, setInstitution] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,7 +41,16 @@ export function SignupScreen({
     setError("");
 
     // Validações
-    if (!name || !email || !password || !confirmPassword || !role) {
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !role ||
+      !city ||
+      !state ||
+      !institution
+    ) {
       setError("Todos os campos são obrigatórios");
       setIsLoading(false);
       return;
@@ -56,10 +71,14 @@ export function SignupScreen({
     try {
       await authService.register({
         name,
+        anonymous,
         email,
         password,
         confirmPassword,
         role,
+        city,
+        state,
+        institution,
       });
 
       // Cadastro bem-sucedido
@@ -152,11 +171,66 @@ export function SignupScreen({
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user">Usuário</SelectItem>
-                <SelectItem value="staff">Funcionário</SelectItem>
-                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="student">{ROLE_LABELS.student}</SelectItem>
+                <SelectItem value="teacher_respondent">
+                  {ROLE_LABELS.teacher_respondent}
+                </SelectItem>
+                <SelectItem value="teacher_analyst">
+                  {ROLE_LABELS.teacher_analyst}
+                </SelectItem>
+                <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">Cidade</Label>
+            <Input
+              id="city"
+              type="text"
+              placeholder="Sua cidade"
+              className="h-12 border-2 border-gray-300"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="state">Estado</Label>
+            <Input
+              id="state"
+              type="text"
+              placeholder="Seu estado"
+              className="h-12 border-2 border-gray-300"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="institution">Instituição</Label>
+            <Input
+              id="institution"
+              type="text"
+              placeholder="Nome da instituição"
+              className="h-12 border-2 border-gray-300"
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2 py-2">
+            <Checkbox
+              id="anonymous"
+              checked={anonymous}
+              onCheckedChange={(checked) => setAnonymous(checked === true)}
+            />
+            <label
+              htmlFor="anonymous"
+              className="text-sm text-gray-600 cursor-pointer"
+            >
+              Desejo permanecer anônimo nas pesquisas
+            </label>
           </div>
 
           <Button

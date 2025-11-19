@@ -11,7 +11,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { SignupScreen } from "./components/SignupScreen";
 import { HomeScreen } from "./components/HomeScreen";
 import { ProfileScreen } from "./components/ProfileScreen";
-import { SettingsScreen } from "./components/SettingsScreen";
+import { DiaryScreen } from "./components/DiaryScreen";
 import { FormWizardScreen } from "./components/FormWizardScreen";
 import { MobileNav } from "./components/MobileNav";
 import { StaffDashboardViewer } from "./components/StaffDashboardViewer";
@@ -31,7 +31,7 @@ export type Screen =
   | "signup"
   | "home"
   | "profile"
-  | "settings"
+  | "diary"
   | "form"
   | "about"
   | "staff-dashboards"
@@ -54,7 +54,7 @@ function AppContent() {
     signup: "/signup",
     home: "/home",
     profile: "/profile",
-    settings: "/settings",
+    diary: "/diary",
     form: "/form",
     about: "/about",
     "staff-dashboards": "/staff/dashboards",
@@ -147,7 +147,7 @@ function AppContent() {
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
             <div className="min-h-screen bg-gray-50">
-              <HomeScreen onNavigate={navigateTo} />
+              <HomeScreen onNavigate={navigateTo} onLogout={handleLogout} />
               <MobileNav
                 currentScreen={currentScreen}
                 onNavigate={navigateTo}
@@ -161,7 +161,7 @@ function AppContent() {
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
             <div className="min-h-screen bg-gray-50">
-              <ProfileScreen onNavigate={navigateTo} />
+              <ProfileScreen onNavigate={navigateTo} onLogout={handleLogout} />
               <MobileNav
                 currentScreen={currentScreen}
                 onNavigate={navigateTo}
@@ -171,11 +171,11 @@ function AppContent() {
         }
       />
       <Route
-        path="/settings"
+        path="/diary"
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
             <div className="min-h-screen bg-gray-50">
-              <SettingsScreen onNavigate={navigateTo} onLogout={handleLogout} />
+              <DiaryScreen onNavigate={navigateTo} onLogout={handleLogout} />
               <MobileNav
                 currentScreen={currentScreen}
                 onNavigate={navigateTo}
@@ -189,7 +189,7 @@ function AppContent() {
         element={
           <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
             <div className="min-h-screen bg-gray-50">
-              <AboutScreen onNavigate={navigateTo} />
+              <AboutScreen onNavigate={navigateTo} onLogout={handleLogout} />
               <MobileNav
                 currentScreen={currentScreen}
                 onNavigate={navigateTo}

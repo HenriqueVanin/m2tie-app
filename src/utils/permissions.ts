@@ -1,6 +1,10 @@
 // Sistema de permissões por role
 
-export type UserRole = "admin" | "staff" | "user";
+export type UserRole =
+  | "admin"
+  | "teacher_analyst"
+  | "teacher_respondent"
+  | "student";
 
 export interface Permission {
   canViewDashboards: boolean;
@@ -32,9 +36,23 @@ const PERMISSIONS: Record<UserRole, Permission> = {
     canDeleteQuestions: true,
     canDeleteUsers: true,
   },
-  staff: {
+  teacher_analyst: {
     canViewDashboards: true,
     canViewResponses: true,
+    canManageUsers: false,
+    canManageQuestions: true,
+    canManageForms: true,
+    canCreateForms: true,
+    canCreateQuestions: true,
+    canEditForms: true,
+    canEditQuestions: true,
+    canDeleteForms: false,
+    canDeleteQuestions: false,
+    canDeleteUsers: false,
+  },
+  teacher_respondent: {
+    canViewDashboards: false,
+    canViewResponses: false,
     canManageUsers: false,
     canManageQuestions: false,
     canManageForms: false,
@@ -46,7 +64,7 @@ const PERMISSIONS: Record<UserRole, Permission> = {
     canDeleteQuestions: false,
     canDeleteUsers: false,
   },
-  user: {
+  student: {
     canViewDashboards: false,
     canViewResponses: false,
     canManageUsers: false,
@@ -63,7 +81,7 @@ const PERMISSIONS: Record<UserRole, Permission> = {
 };
 
 export function getPermissions(role: UserRole): Permission {
-  return PERMISSIONS[role] || PERMISSIONS.user;
+  return PERMISSIONS[role] || PERMISSIONS.student;
 }
 
 export function hasPermission(

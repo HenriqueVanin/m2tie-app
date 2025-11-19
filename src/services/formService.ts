@@ -28,16 +28,32 @@ export interface FormQuestion {
   required: boolean;
 }
 
+export interface UserBasic {
+  _id: string;
+  name: string;
+  email: string;
+  role: "admin" | "teacher_analyst" | "teacher_respondent" | "student";
+  city?: string;
+  state?: string;
+  institution?: string;
+}
+
 export interface Form {
   formTitle: ReactNode;
   _id: string;
   title: string;
   description: string;
   questions: FormQuestion[];
+  assignedUsers: UserBasic[];
   isActive: boolean;
-  createdBy: string;
+  createdBy: UserBasic | string;
   createdAt?: string;
   updatedAt?: string;
+  totalResponses?: number;
+  totalAssigned?: number;
+  hasResponded?: boolean;
+  responseId?: string;
+  submittedAt?: string;
 }
 
 export interface CreateFormPayload {
@@ -48,6 +64,7 @@ export interface CreateFormPayload {
     order?: number;
     required?: boolean;
   }>;
+  assignedUsers: string[];
   isActive?: boolean;
 }
 
@@ -59,13 +76,14 @@ export interface UpdateFormPayload {
     order?: number;
     required?: boolean;
   }>;
+  assignedUsers?: string[];
   isActive?: boolean;
 }
 
 export interface ActiveFormResponse {
   error: string | null;
-  msg?: string;
-  data?: Form | null;
+  msg: string;
+  data: Form[];
 }
 
 export async function getActiveForm(): Promise<ActiveFormResponse> {
@@ -75,14 +93,15 @@ export async function getActiveForm(): Promise<ActiveFormResponse> {
   } catch (error: any) {
     if (error.response?.data) {
       return {
-        error: error.response.data.error || "Erro ao buscar formulário",
-        msg: error.response.data.msg,
-        data: null,
+        error: error.response.data.error || "Erro ao buscar formulários",
+        msg: error.response.data.msg || "",
+        data: [],
       };
     }
     return {
-      error: "Erro ao buscar formulário",
-      data: null,
+      error: "Erro ao buscar formulários",
+      msg: "",
+      data: [],
     };
   }
 }

@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Textarea } from "./ui/textarea";
+import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
 import {
   getAllQuestions,
   createQuestion,
@@ -78,6 +79,10 @@ export function StaffQuestionBank() {
     options: "",
     required: true,
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [questionToDelete, setQuestionToDelete] =
+    useState<UIQuestionLocal | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadQuestions = async () => {
     setLoading(true);
@@ -151,12 +156,24 @@ export function StaffQuestionBank() {
   }, {} as Record<string, UIQuestionLocal[]>);
 
   const handleDelete = async (_id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta questão?")) return;
+    const question = questions.find((q) => q._id === _id);
+    if (!question) return;
+    setQuestionToDelete(question);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!questionToDelete) return;
+    setDeleting(true);
     try {
-      await deleteQuestion(_id);
-      setQuestions((qs) => qs.filter((q) => q._id !== _id));
+      await deleteQuestion(questionToDelete._id);
+      setQuestions((qs) => qs.filter((q) => q._id !== questionToDelete._id));
+      setDeleteDialogOpen(false);
+      setQuestionToDelete(null);
     } catch (e: any) {
       setError(e?.message || "Erro ao excluir");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -715,6 +732,21 @@ export function StaffQuestionBank() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleting}
+        description={
+          <>
+            Tem certeza que deseja excluir a questão{" "}
+            <strong>{questionToDelete?.title}</strong>?
+          </>
+        }
+        countdownSeconds={3}
+      />
     </div>
   );
 }
