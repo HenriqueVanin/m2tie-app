@@ -12,7 +12,7 @@ import type { Screen } from "../../../App";
 import { ScreenHeader } from "../../../components/ui/screen-header";
 import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
 import { ForgotPasswordModal } from "../../../components/ForgotPasswordModal";
-import { useProfileScreen } from "./hooks/useProfileScreen";
+import { useProfileScreen } from "./useProfileScreen";
 
 interface ProfileScreenProps {
   onNavigate: (screen: Screen) => void;
