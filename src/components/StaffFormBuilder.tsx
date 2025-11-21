@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -106,6 +107,7 @@ function FormBuilderContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<UIQuestionType | "all">("all");
   const [userRole, setUserRole] = useState<UserRole>("student");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const user = getUserCookie();
@@ -302,6 +304,8 @@ function FormBuilderContent() {
         savedForm = await createForm(payload);
         setFormId(savedForm._id);
         toast.success("Formulário criado com sucesso!");
+        // Navegar para a tela de respostas por formulário, indicando o formId
+        navigate(`/staff/forms/responses/by-form?formId=${savedForm._id}`);
       }
     } catch (e: any) {
       toast.error(e?.message || "Erro ao salvar formulário");
