@@ -15,7 +15,7 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
             onClick={() => onNavigate("home")}
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "home"
-                ? "text-[#003087] bg-white/80 shadow-sm"
+                ? "text-emerald-600 bg-white/80 shadow-sm"
                 : "text-gray-600 hover:bg-white/60"
             }`}
           >
@@ -26,7 +26,7 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
             onClick={() => onNavigate("diary")}
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "diary"
-                ? "text-[#003087] bg-white/80 shadow-sm"
+                ? "text-emerald-600 bg-white/80 shadow-sm"
                 : "text-gray-600 hover:bg-white/60"
             }`}
             aria-label="Diário"
@@ -47,7 +47,7 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
             onClick={() => onNavigate("profile")}
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "profile"
-                ? "text-[#003087] bg-white/80 shadow-sm"
+                ? "text-emerald-600 bg-white/80 shadow-sm"
                 : "text-gray-600 hover:bg-white/60"
             }`}
           >
@@ -58,7 +58,7 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
             onClick={() => onNavigate("about")}
             className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "about"
-                ? "text-[#003087] bg-white/80 shadow-sm"
+                ? "text-emerald-600 bg-white/80 shadow-sm"
                 : "text-gray-600 hover:bg-white/60"
             }`}
           >

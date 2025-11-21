@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { ErrorState } from "./ui/error-state";
+import { toast } from "sonner";
 import { getUserCookie } from "../utils/userCookie";
 import { hasPermission, type UserRole } from "../utils/permissions";
 import {
@@ -135,7 +136,7 @@ function FormBuilderContent() {
       setExistingQuestions(allQuestions);
       setShowExistingQuestionsModal(true);
     } catch (e: any) {
-      alert(e?.message || "Erro ao carregar questões");
+      toast.error(e?.message || "Erro ao carregar questões");
     } finally {
       setIsLoadingQuestions(false);
     }
@@ -270,12 +271,12 @@ function FormBuilderContent() {
       setIsSaving(true);
 
       if (!formTitle.trim()) {
-        alert("O título do formulário é obrigatório");
+        toast.error("O título do formulário é obrigatório");
         return;
       }
 
       if (questions.length === 0) {
-        alert("Adicione pelo menos uma pergunta ao formulário");
+        toast.error("Adicione pelo menos uma pergunta ao formulário");
         return;
       }
 
@@ -295,15 +296,15 @@ function FormBuilderContent() {
       if (formId) {
         // Atualizar formulário existente
         savedForm = await updateForm(formId, payload);
-        alert("Formulário atualizado com sucesso!");
+        toast.success("Formulário atualizado com sucesso!");
       } else {
         // Criar novo formulário
         savedForm = await createForm(payload);
         setFormId(savedForm._id);
-        alert("Formulário criado com sucesso!");
+        toast.success("Formulário criado com sucesso!");
       }
     } catch (e: any) {
-      alert(e?.message || "Erro ao salvar formulário");
+      toast.error(e?.message || "Erro ao salvar formulário");
     } finally {
       setIsSaving(false);
     }
@@ -342,7 +343,7 @@ function FormBuilderContent() {
       }
     } catch (e: any) {
       console.error("Error loading form:", e);
-      alert(e?.message || "Erro ao carregar formulário");
+      toast.error(e?.message || "Erro ao carregar formulário");
     } finally {
       setIsLoading(false);
     }
@@ -844,7 +845,7 @@ function QuestionSettings({
 
   const handleSave = async () => {
     if (!question.title.trim()) {
-      alert("O título da pergunta é obrigatório");
+      toast.error("O título da pergunta é obrigatório");
       return;
     }
 
@@ -853,7 +854,7 @@ function QuestionSettings({
       await onSave(question);
       onClose();
     } catch (e: any) {
-      alert(e?.message || "Erro ao salvar questão");
+      toast.error(e?.message || "Erro ao salvar questão");
     } finally {
       setIsSaving(false);
     }

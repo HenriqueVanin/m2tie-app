@@ -10,6 +10,7 @@ import { decodeToken, setTokenCookie } from "../utils/auth";
 import { getUserById } from "../services/userService";
 import { setUserCookie } from "../utils/userCookie";
 import { UserBackgroundLayout } from "./UserBackgroundLayout";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
 
 interface LoginScreenProps {
   onLogin: (type: UserType) => void;
@@ -198,70 +199,18 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
           </Button>
         </form>
       </div>
-      {showForgot && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-lg space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Recuperar senha
-              </h2>
-              <button
-                onClick={() => {
-                  setShowForgot(false);
-                  setForgotStatus(null);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-                aria-label="Fechar"
-              >
-                ×
-              </button>
-            </div>
-            <p className="text-sm text-gray-500">
-              Informe seu email para receber instruções de redefinição.
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="forgot-email" className="text-sm text-gray-700">
-                Email
-              </Label>
-              <Input
-                id="forgot-email"
-                type="email"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                className="h-12 border-gray-200 rounded-xl"
-                placeholder="seu.email@exemplo.com"
-              />
-            </div>
-            {forgotStatus && (
-              <div className="text-xs p-2 rounded bg-gray-50 border border-gray-200 text-gray-600">
-                {forgotStatus}
-              </div>
-            )}
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowForgot(false);
-                  setForgotStatus(null);
-                }}
-                className="flex-1 rounded-xl"
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleForgotPassword}
-                disabled={
-                  forgotLoading ||
-                  !/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(forgotEmail)
-                }
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl"
-              >
-                {forgotLoading ? "Enviando..." : "Enviar"}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ForgotPasswordModal
+        open={showForgot}
+        email={forgotEmail}
+        status={forgotStatus}
+        loading={forgotLoading}
+        onEmailChange={setForgotEmail}
+        onSend={handleForgotPassword}
+        onClose={() => {
+          setShowForgot(false);
+          setForgotStatus(null);
+        }}
+      />
     </UserBackgroundLayout>
   );
 }

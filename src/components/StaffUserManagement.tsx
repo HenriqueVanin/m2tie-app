@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Plus, Edit, Trash2, Mail, X, Check, ShieldAlert } from "lucide-react";
 import { getUserCookie } from "../utils/userCookie";
 import { hasPermission, type UserRole } from "../utils/permissions";
@@ -44,6 +45,10 @@ export function StaffUserManagement() {
   const [activeTab, setActiveTab] = useState<
     "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
   >("all");
+  const [institutionFilter, setInstitutionFilter] = useState<string>("all");
+  const [roleFilter, setRoleFilter] = useState<
+    "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
+  >("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -86,7 +91,18 @@ export function StaffUserManagement() {
       (activeTab === "teacher_analyst" && user.role === "teacher_analyst") ||
       (activeTab === "admin" && user.role === "admin");
 
-    return matchesSearch && matchesTab;
+    const matchesRoleFilter = roleFilter === "all" || user.role === roleFilter;
+
+    const matchesInstitutionFilter =
+      institutionFilter === "all" ||
+      (user.institution || "") === institutionFilter;
+
+    return (
+      matchesSearch &&
+      matchesTab &&
+      matchesRoleFilter &&
+      matchesInstitutionFilter
+    );
   });
 
   const handleDeleteUser = async (id: string) => {
@@ -135,11 +151,40 @@ export function StaffUserManagement() {
         title="Gerenciar Usuários"
         description="Cadastre e gerencie os usuários da plataforma"
         searchComponent={
-          <SearchBar
-            placeholder="Buscar por nome ou email..."
-            value={searchTerm}
-            onChange={setSearchTerm}
-          />
+          <div className="flex items-center gap-3">
+            <SearchBar
+              placeholder="Buscar por nome ou email..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+            />
+
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as any)}
+              className="h-10 px-3 border rounded-md bg-white"
+            >
+              <option value="all">Todos os cargos</option>
+              <option value="student">Estudante</option>
+              <option value="teacher_respondent">Professor</option>
+              <option value="teacher_analyst">Pesquisador</option>
+              <option value="admin">Administrador</option>
+            </select>
+
+            <select
+              value={institutionFilter}
+              onChange={(e) => setInstitutionFilter(e.target.value)}
+              className="h-10 px-3 border rounded-md bg-white"
+            >
+              <option value="all">Todas as instituições</option>
+              {[
+                ...new Set(users.map((u) => u.institution).filter(Boolean)),
+              ].map((inst) => (
+                <option key={inst} value={inst}>
+                  {inst}
+                </option>
+              ))}
+            </select>
+          </div>
         }
       >
         <Button
@@ -259,19 +304,12 @@ export function StaffUserManagement() {
                     className="border-b border-gray-200 hover:bg-gray-50"
                   >
                     <td className="px-6 py-4">
-                      <p className="text-gray-800 font-medium">
-                        {user.anonymous ? "Usuário Anônimo" : user.name}
-                      </p>
-                      {user.anonymous && (
-                        <span className="text-xs text-blue-600 font-medium">
-                          (Dados Ocultos)
-                        </span>
-                      )}
+                      <p className="text-gray-800 font-medium">{user.name}</p>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Mail className="w-4 h-4" />
-                        {user.anonymous ? "N/A" : user.email}
+                        {user.email}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -353,7 +391,7 @@ export function StaffUserManagement() {
               } else {
                 // Criar novo usuário via register
                 if (!password || !confirmPassword) {
-                  alert("Senha é obrigatória para criar usuário");
+                  toast.error("Senha é obrigatória para criar usuário");
                   return;
                 }
 
@@ -369,13 +407,13 @@ export function StaffUserManagement() {
                   institution: user.institution || "",
                 });
 
-                alert("Usuário criado com sucesso!");
+                toast.success("Usuário criado com sucesso!");
               }
               setShowAddModal(false);
               setEditingUser(null);
               fetchUsers();
             } catch (e: any) {
-              alert(e?.message || "Erro ao salvar usuário");
+              toast.error(e?.message || "Erro ao salvar usuário");
             }
           }}
         />
@@ -426,15 +464,15 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
     if (!user) {
       // Validação de senha para novo usuário
       if (!password || !confirmPassword) {
-        alert("Senha e confirmação de senha são obrigatórias");
+        toast.error("Senha e confirmação de senha são obrigatórias");
         return;
       }
       if (password !== confirmPassword) {
-        alert("As senhas não coincidem");
+        toast.error("As senhas não coincidem");
         return;
       }
       if (password.length < 6) {
-        alert("A senha deve ter no mínimo 6 caracteres");
+        toast.error("A senha deve ter no mínimo 6 caracteres");
         return;
       }
     }
@@ -444,10 +482,10 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
-      <div className="bg-white rounded-lg w-full max-w-2xl">
-        <form onSubmit={handleSubmit}>
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
             <h2>{user ? "Editar Usuário" : "Novo Usuário"}</h2>
             <button
               type="button"
@@ -457,50 +495,51 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
               <X className="w-5 h-5" />
             </button>
           </div>
-
           {/* Content */}
-          <div className="p-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome completo *</Label>
-              <Input
-                id="name"
-                required
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="border"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="border"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="institution">Instituição</Label>
-              <Input
-                id="institution"
-                value={formData.institution || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, institution: e.target.value })
-                }
-                className="border"
-                placeholder="Ex: Universidade Federal do Paraná"
-              />
-            </div>
-
+          <div className="p-6 space-y-4 overflow-auto flex-1">
             <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome completo *</Label>
+                <Input
+                  id="name"
+                  required
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="border"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="institution">Instituição</Label>
+                <Input
+                  id="institution"
+                  value={formData.institution || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, institution: e.target.value })
+                  }
+                  className="border"
+                  placeholder="Ex: Universidade Federal do Paraná"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="city">Cidade</Label>
                 <Input
@@ -530,30 +569,32 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
 
             {!user && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="border"
-                    placeholder="Mínimo 6 caracteres"
-                  />
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha *</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="border"
+                      placeholder="Mínimo 6 caracteres"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="border"
-                    placeholder="Confirme a senha"
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="border"
+                      placeholder="Confirme a senha"
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -580,21 +621,6 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
                 <option value="teacher_analyst">Pesquisador</option>
                 <option value="admin">Administrador</option>
               </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="anonymous"
-                checked={formData.anonymous || false}
-                onChange={(e) =>
-                  setFormData({ ...formData, anonymous: e.target.checked })
-                }
-                className="w-4 h-4 border border-gray-300 rounded"
-              />
-              <Label htmlFor="anonymous" className="cursor-pointer">
-                Resposta anônima (oculta identidade nas respostas)
-              </Label>
             </div>
           </div>
 

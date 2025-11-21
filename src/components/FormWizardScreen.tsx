@@ -8,6 +8,7 @@ import {
   FileText,
   Calendar,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -68,7 +69,6 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       setLoading(true);
       setError(null);
       const response = await getActiveForm();
-      console.log(response);
 
       // Caso 1: Nenhum formulário ativo (msg específica ou data vazio)
       if (
@@ -88,14 +88,27 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       }
 
       // Caso 3: Formulários disponíveis
-      const forms = Array.isArray(response.data)
+      const rawForms = Array.isArray(response.data)
         ? response.data
         : [response.data];
-      setAvailableForms(forms);
 
-      // Se houver apenas um formulário, selecionar automaticamente
-      if (forms.length === 1) {
-        setForm(forms[0]);
+      // Filtrar apenas formulários ativos e que o usuário não tenha respondido
+      const unrespondedActiveForms = rawForms.filter(
+        (f) => f && f.isActive === true && f.hasResponded !== true
+      );
+
+      // Se não houver formulários não-respondidos, marcar tudo como respondido
+      if (unrespondedActiveForms.length === 0) {
+        setAvailableForms([]);
+        setAllFormsAnswered(true);
+        return;
+      }
+
+      setAvailableForms(unrespondedActiveForms);
+
+      // Se houver apenas um formulário disponível, selecionar automaticamente
+      if (unrespondedActiveForms.length === 1) {
+        setForm(unrespondedActiveForms[0]);
         setSelectedFormIndex(0);
       } else {
         // Múltiplos formulários: mostrar tela de seleção
@@ -133,7 +146,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
     if (currentQuestion) {
       const questionId = currentQuestion.questionId._id;
       if (currentQuestion.required && !answers[questionId]) {
-        alert("Esta questão é obrigatória");
+        toast.error("Esta questão é obrigatória");
         return;
       }
     }
@@ -152,10 +165,9 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       setAnswers({});
       setCurrentStep(0);
       return;
-    } else if (currentStep === 0 && availableForms.length > 1) {
+    } else if (currentStep === 0 && availableForms.length === 1) {
       onNavigate("home");
     }
-
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
@@ -235,7 +247,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       // Marcar submissão como bem-sucedida
       setSubmissionSuccess(true);
     } catch (e: any) {
-      alert(e?.message || "Erro ao enviar formulário");
+      toast.error(e?.message || "Erro ao enviar formulário");
     } finally {
       setSubmitting(false);
     }
@@ -257,9 +269,9 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
 
   // Submission success state
   if (submissionSuccess) {
-    const remainingForms = availableForms.filter(
-      (_, idx) => idx !== selectedFormIndex
-    );
+    // availableForms was already updated after a successful submission
+    // so remaining forms are exactly the current availableForms
+    const remainingForms = availableForms;
     const hasMoreForms = remainingForms.length > 0;
 
     return (
@@ -297,7 +309,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
 
           {hasMoreForms ? (
             <>
-              <p className="text-white/90 text-center">
+              <p className="text-white text-center">
                 Você ainda tem {remainingForms.length} formulário
                 {remainingForms.length > 1 ? "s" : ""} para responder
               </p>
@@ -367,8 +379,8 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   if (showFormList && availableForms.length > 0) {
     return (
       <UserBackgroundLayout>
-        <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="p-6 bg-gradient-to-br from-indigo-500 mt-2 rounded-md to-indigo-600 text-white shadow-lg">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => onNavigate("home")}
               className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
@@ -385,46 +397,51 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             </div>
           </div>
         </div>
-
         <div className="flex-1 p-6 overflow-y-auto space-y-4">
-          {availableForms.map((formItem, index) => (
-            <div
-              key={formItem._id}
-              onClick={() => selectForm(index)}
-              className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-indigo-300"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-gray-900 mb-1">
-                    {formItem.title}
-                  </h3>
-                  {formItem.description && (
-                    <p className="text-sm text-gray-600 mb-3">
-                      {formItem.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <FileText className="w-3.5 h-3.5" />
-                      {formItem.questions?.length || 0} questões
-                    </span>
-                    {formItem.createdAt && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(formItem.createdAt).toLocaleDateString(
-                          "pt-BR"
-                        )}
-                      </span>
-                    )}
+          {[...availableForms]
+            .sort(
+              (a, b) =>
+                new Date(a?.createdAt ?? "").getTime() -
+                new Date(b?.createdAt ?? "").getTime()
+            )
+            .map((formItem, index) => (
+              <div
+                key={formItem._id}
+                onClick={() => selectForm(index)}
+                className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-indigo-300"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-gray-900 mb-1">
+                      {formItem.title}
+                    </h3>
+                    {formItem.description && (
+                      <p className="text-sm text-gray-600 mb-3">
+                        {formItem.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <FileText className="w-3.5 h-3.5" />
+                        {formItem.questions?.length || 0} questões
+                      </span>
+                      {formItem.createdAt && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(formItem.createdAt).toLocaleDateString(
+                            "pt-BR"
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </UserBackgroundLayout>
     );
@@ -461,7 +478,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
 
   return (
     <UserBackgroundLayout>
-      <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
+      <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg rounded-md mt-2 mx-4">
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={prevStep}

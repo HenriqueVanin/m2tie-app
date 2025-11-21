@@ -16,6 +16,7 @@ export function AboutScreen({ onNavigate, onLogout }: AboutScreenProps) {
       <ScreenHeader
         title="Sobre"
         subtitle="Conheça nossa plataforma educacional"
+        onLogout={onLogout}
       />
       <div className="relative z-10 flex-1 bg-white  p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4 pb-30">
         <div className="space-y-6 mt-4">
@@ -73,25 +74,6 @@ export function AboutScreen({ onNavigate, onLogout }: AboutScreenProps) {
                   <p className="text-gray-900">{uni}</p>
                 </div>
               ))}
-            </div>
-          </div>
-
-          {/* Contact */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl flex items-center justify-center">
-                <Mail className="w-6 h-6 text-white" />
-              </div>
-              <h2 className="text-gray-900">Contato</h2>
-            </div>
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-              <p className="text-sm text-emerald-900 mb-2">
-                <strong>Suporte para Estudantes</strong>
-              </p>
-              <p className="text-sm text-emerald-700">
-                Para dúvidas ou suporte, entre em contato com a equipe de
-                administração da sua instituição.
-              </p>
             </div>
           </div>
 

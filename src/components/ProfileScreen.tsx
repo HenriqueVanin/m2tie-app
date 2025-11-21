@@ -9,12 +9,13 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import type { Screen } from "../App";
-import { useEffect, useState } from "react";
 import { getUserCookie, getUserInitials } from "../utils/userCookie";
 import { getUserFromToken } from "../utils/auth";
 import { ScreenHeader } from "./ui/screen-header";
 import { UserBackgroundLayout } from "./UserBackgroundLayout";
 import { getUserById, type User } from "../services/userService";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
+import { useState, useEffect } from "react";
 
 interface ProfileScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -28,6 +29,31 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotStatus, setForgotStatus] = useState<string | null>(null);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  async function handleForgotPassword() {
+    setForgotLoading(true);
+    setForgotStatus(null);
+    try {
+      // Aqui você pode usar o serviço de autenticação igual ao LoginScreen
+      // Exemplo:
+      // const res = await authService.forgotPassword({ email: forgotEmail });
+      // setForgotStatus("Se o email estiver cadastrado, você receberá instruções.");
+      setTimeout(() => {
+        setForgotStatus(
+          "Se o email estiver cadastrado, você receberá instruções."
+        );
+        setForgotLoading(false);
+      }, 1500);
+    } catch (e: any) {
+      setForgotStatus("Erro ao enviar solicitação. Tente novamente.");
+      setForgotLoading(false);
+    }
+  }
 
   useEffect(() => {
     async function loadUserData() {
@@ -84,69 +110,46 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
           {/* Informações */}
           <div className="space-y-4 bg-gray-50 p-6 rounded-3xl border border-gray-200">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700 text-sm">
-                Nome completo
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                readOnly
-                className="h-12 border-gray-200 bg-white rounded-xl"
-              />
+              <Label className="text-gray-700 text-sm">Nome completo</Label>
+              <div className="h-12 flex items-center px-4 bg-white rounded-xl border border-gray-200 text-gray-900">
+                {name}
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 text-sm">
-                Email
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
-                  id="email"
-                  value={email}
-                  readOnly
-                  className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
-                />
+              <Label className="text-gray-700 text-sm">Email</Label>
+              <div className="h-12 flex items-center px-4 bg-white rounded-xl border border-gray-200 text-gray-900">
+                <Mail className="mr-2 w-5 h-5 text-gray-400" />
+                {email}
               </div>
             </div>
 
             {institution && (
               <div className="space-y-2">
-                <Label htmlFor="institution" className="text-gray-700 text-sm">
-                  Instituição
-                </Label>
-                <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="institution"
-                    value={institution}
-                    readOnly
-                    className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
-                  />
+                <Label className="text-gray-700 text-sm">Instituição</Label>
+                <div className="h-12 flex items-center px-4 bg-white rounded-xl border border-gray-200 text-gray-900">
+                  <Building2 className="mr-2 w-5 h-5 text-gray-400" />
+                  {institution}
                 </div>
               </div>
             )}
 
             {(city || state) && (
               <div className="space-y-2">
-                <Label htmlFor="location" className="text-gray-700 text-sm">
-                  Localização
-                </Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="location"
-                    value={location}
-                    readOnly
-                    className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
-                  />
+                <Label className="text-gray-700 text-sm">Localização</Label>
+                <div className="h-12 flex items-center px-4 bg-white rounded-xl border border-gray-200 text-gray-900">
+                  <MapPin className="mr-2 w-5 h-5 text-gray-400" />
+                  {location}
                 </div>
               </div>
             )}
             {/* Ações movidas de Configurações */}
             <div className="pt-4 mt-2 border-t border-gray-200 space-y-2 pt-6">
               <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100 overflow-hidden">
-                <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left">
+                <button
+                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => setShowForgot(true)}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center">
                       <Lock className="w-5 h-5 text-emerald-600" />
@@ -160,7 +163,22 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 </button>
-                <button className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left">
+                <ForgotPasswordModal
+                  open={showForgot}
+                  email={forgotEmail}
+                  status={forgotStatus}
+                  loading={forgotLoading}
+                  onEmailChange={setForgotEmail}
+                  onSend={handleForgotPassword}
+                  onClose={() => {
+                    setShowForgot(false);
+                    setForgotStatus(null);
+                  }}
+                />
+                <button
+                  className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left"
+                  onClick={() => onNavigate("faq")}
+                >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl flex items-center justify-center">
                       <HelpCircle className="w-5 h-5 text-orange-600" />

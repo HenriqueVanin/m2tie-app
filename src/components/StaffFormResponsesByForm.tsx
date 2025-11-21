@@ -40,6 +40,7 @@ import {
 } from "../services/responseService";
 import { getRoleLabel, getRoleColor } from "../utils/roleLabels";
 import { getUserCookie } from "../utils/userCookie";
+import { toast } from "sonner";
 
 interface UserWithResponse {
   _id: string | null;
@@ -355,7 +356,8 @@ export function StaffFormResponsesByForm() {
 
     const usersToRemove = selectedUsers[formId] || new Set();
     if (usersToRemove.size === 0) {
-      alert("Selecione pelo menos um usuário para remover");
+      toast.error("Selecione pelo menos um usuário para remover");
+
       return;
     }
 
@@ -397,9 +399,9 @@ export function StaffFormResponsesByForm() {
       // Limpar seleção
       setSelectedUsers((prev) => ({ ...prev, [formId]: new Set() }));
 
-      alert("Usuários removidos com sucesso!");
+      toast.success("Usuários removidos com sucesso!");
     } catch (err: any) {
-      alert(err?.message || "Erro ao remover usuários");
+      toast.error(err?.message || "Erro ao remover usuários");
     }
   };
 
@@ -451,9 +453,9 @@ export function StaffFormResponsesByForm() {
       setAddUserModalOpen(false);
       setCurrentFormId(null);
 
-      alert(`${userIds.length} usuário(s) adicionado(s) com sucesso!`);
+      toast.success(`${userIds.length} usuário(s) adicionado(s) com sucesso!`);
     } catch (err: any) {
-      alert(err?.message || "Erro ao adicionar usuários");
+      toast.error(err?.message || "Erro ao adicionar usuários");
     }
   };
 
@@ -516,7 +518,7 @@ export function StaffFormResponsesByForm() {
       const form = await getFormById(formId, userRole);
       setViewFormModal(form);
     } catch (err: any) {
-      alert(err?.message || "Erro ao carregar formulário");
+      toast.error(err?.message || "Erro ao carregar formulário");
     }
   };
 
@@ -556,13 +558,15 @@ export function StaffFormResponsesByForm() {
         title="Formulários"
         description="Visualize as respostas organizadas por formulário e aluno"
       >
-        <Button
-          onClick={() => navigate("/staff/form-builder")}
-          className="h-12 bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg rounded-2xl"
-        >
-          <Plus className="w-5 h-5" />
-          Criar Formulário
-        </Button>
+        {!isAnalyst && (
+          <Button
+            onClick={() => navigate("/staff/form-builder")}
+            className="h-12 bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-lg rounded-2xl"
+          >
+            <Plus className="w-5 h-5" />
+            Criar Formulário
+          </Button>
+        )}
       </PageHeader>
       {/* Stats */}
       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
@@ -831,9 +835,7 @@ export function StaffFormResponsesByForm() {
                                       )}
                                       <td className="px-6 py-4">
                                         <p className="text-gray-800 dark:text-gray-200 font-medium">
-                                          {user.anonymous
-                                            ? "Usuário Anônimo"
-                                            : user.name}
+                                          {user.name}
                                         </p>
                                       </td>
                                       <td className="px-6 py-4">
@@ -1288,13 +1290,11 @@ function AddUsersModal({
                         </td>
                         <td className="px-4 py-3">
                           <p className="font-medium text-gray-800">
-                            {user.anonymous ? "Usuário Anônimo" : user.name}
+                            {user.name}
                           </p>
                         </td>
                         <td className="px-4 py-3">
-                          <p className="text-sm text-gray-600">
-                            {user.anonymous ? "N/A" : user.email}
-                          </p>
+                          <p className="text-sm text-gray-600">{user.email}</p>
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-sm text-gray-600">

@@ -24,7 +24,9 @@ export function ScreenHeader({
     <div className="relative z-10 p-6 pt-12">
       <div className="m-[0px] flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl mb-2 text-[24px]">{title}</h1>
+          <h1 className="text-white text-3xl mb-2 text-[24px] font-semibold">
+            {title}
+          </h1>
           {subtitle && <p className="text-emerald-100">{subtitle}</p>}
         </div>
         <div className="shrink-0">
@@ -34,7 +36,7 @@ export function ScreenHeader({
             <Button
               onClick={onLogout}
               variant="outline"
-              className="h-10 border-2 border-white/30 text-white hover:bg-white/20 hover:border-white/50 gap-2 rounded-xl bg-white/10 backdrop-blur-md transition-all shadow-xs"
+              className="h-10 bg-white text-red-600 gap-2 rounded-xl backdrop-blur-md transition-all shadow-xs"
             >
               <LogOut className="w-4 h-4" />
               <span className="text-sm font-medium">Sair</span>

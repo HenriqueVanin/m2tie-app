@@ -24,6 +24,7 @@ import {
   type FullAnalysisResponse,
 } from "../services/dashboardService";
 import { getUserCookie } from "../utils/userCookie";
+import { toast } from "sonner";
 
 interface FormOption {
   _id: string;
@@ -129,7 +130,7 @@ export function StaffDashboardViewer() {
       document.body.removeChild(link);
     } catch (err) {
       console.error("Erro ao exportar dados:", err);
-      alert("Erro ao exportar dados");
+      toast.error("Erro ao exportar dados");
     }
   };
 

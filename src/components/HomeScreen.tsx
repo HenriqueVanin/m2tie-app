@@ -1,3 +1,4 @@
+import { NotificationCard } from "./ui/NotificationCard";
 import {
   Plus,
   Bell,
@@ -5,6 +6,9 @@ import {
   CheckCircle,
   Info,
   BookOpen,
+  FileText,
+  ReplyIcon,
+  Edit2,
 } from "lucide-react";
 import type { Screen } from "../App";
 import { useEffect, useState } from "react";
@@ -141,9 +145,9 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
         onLogout={onLogout}
       />
       <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
-        <div className="mt-4 space-y-6">
+        <div className="pb-4 space-y-6">
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
+          {/* <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
               <p className="text-emerald-600 text-xl font-bold text-[24px]">
                 18
@@ -164,35 +168,31 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
               </p>
               <p className="text-xs text-gray-500 mt-1 font-bold">Pendentes</p>
             </div>
-          </div>
+          </div> */}
 
+          <NotificationCard
+            icon={<FileText className="w-5 h-5 text-white" />}
+            title="Novo formulário disponível"
+            subtitle="Você tem um novo formulário para preencher."
+            buttonText="Responder formulário"
+            onButtonClick={() => onNavigate("form")}
+            buttonColor="emerald"
+          />
           {/* Última Anotação do Diário */}
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-200 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 mb-4 rounded-xl flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-gray-900 font-semibold mb-1">
-                  Última Anotação do Diário
-                </h3>
-                {lastDiaryEntry ? (
-                  <p className="text-xs text-gray-500">
-                    {new Date(lastDiaryEntry.date).toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-500">
-                    Nenhuma anotação ainda
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="bg-white/50 rounded-xl p-4 border border-emerald-100">
-              {lastDiaryEntry ? (
+          <NotificationCard
+            icon={<BookOpen className="w-5 h-5 text-white" />}
+            title="Última anotação do diário"
+            subtitle={
+              lastDiaryEntry
+                ? new Date(lastDiaryEntry.date).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "Nenhuma anotação ainda"
+            }
+            content={
+              lastDiaryEntry ? (
                 <p className="text-sm text-gray-700 line-clamp-4 whitespace-pre-wrap">
                   {lastDiaryEntry.text}
                 </p>
@@ -201,63 +201,34 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
                   Comece a escrever suas anotações diárias para acompanhar seu
                   progresso e reflexões.
                 </p>
-              )}
-            </div>
-            {lastDiaryEntry ? (
-              <button
-                onClick={() => onNavigate("diary")}
-                className="mt-3 text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors cursor-pointer"
-              >
-                Ver diário completo →
-              </button>
-            ) : (
-              <button
-                onClick={() => onNavigate("diary")}
-                className="mt-4 w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
-              >
-                <Plus className="w-5 h-5" />
-                Começar a escrever
-              </button>
-            )}
-          </div>
-
-          {/* Your Schedule */}
-          {/* <div>
-            <h2 className="mb-4 text-gray-900">Notificações</h2>
-            <div className="space-y-3">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className="p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={`w-10 h-10 bg-gradient-to-br ${notification.color} rounded-xl flex items-center justify-center flex-shrink-0`}
-                    >
-                      {notification.icon === "info" && (
-                        <Info className="w-5 h-5 text-white" />
-                      )}
-                      {notification.icon === "alert" && (
-                        <AlertCircle className="w-5 h-5 text-white" />
-                      )}
-                      {notification.icon === "success" && (
-                        <CheckCircle className="w-5 h-5 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 mb-1">{notification.title}</p>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {notification.message}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {notification.time}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div> */}
+              )
+            }
+            buttonText={
+              lastDiaryEntry ? "Ver diário completo →" : "Começar a escrever"
+            }
+            onButtonClick={() => onNavigate("diary")}
+            buttonColor="emerald"
+          />
+          {/* Notificações */}
+          {/* {notifications.map((notification) => (
+            <NotificationCard
+              key={notification.id}
+              icon={
+                notification.icon === "info" ? (
+                  <Info className="w-5 h-5 text-white" />
+                ) : notification.icon === "alert" ? (
+                  <AlertCircle className="w-5 h-5 text-white" />
+                ) : (
+                  <CheckCircle className="w-5 h-5 text-white" />
+                )
+              }
+              title={notification.title}
+              subtitle={notification.message}
+              buttonText="Ver mais"
+              onButtonClick={() => onNavigate("notification")}
+              buttonColor={notification.color}
+            />
+          ))} */}
         </div>
       </div>
     </UserBackgroundLayout>

@@ -25,6 +25,7 @@ import { getUserFromToken } from "./utils/auth";
 import { StaffQuestionManager } from "./components/StaffQuestionManager";
 import { AboutScreen } from "./components/AboutScreen";
 import { StaffUserManagement } from "./components/StaffUserManagement";
+import { FAQScreen } from "./components/FAQScreen";
 
 export type Screen =
   | "login"
@@ -38,8 +39,10 @@ export type Screen =
   | "staff-form-builder"
   | "staff-form-responses"
   | "staff-form-responses-by-form"
+  | "faq"
   | "staff-user-management"
-  | "staff-question-bank";
+  | "staff-question-bank"
+  | "notification";
 
 export type UserType = "user" | "staff";
 
@@ -57,12 +60,14 @@ function AppContent() {
     diary: "/diary",
     form: "/form",
     about: "/about",
+    faq: "/faq",
     "staff-dashboards": "/staff/dashboards",
     "staff-form-builder": "/staff/form-builder",
     "staff-form-responses": "/staff/forms/responses",
     "staff-form-responses-by-form": "/staff/forms/responses/by-form",
     "staff-question-bank": "/staff/questions",
     "staff-user-management": "/staff/users",
+    notification: "/notifications",
   };
   const reverseRouteMap: Record<string, Screen> = Object.fromEntries(
     Object.entries(routeMap).map(([k, v]) => [v, k as Screen])
@@ -134,6 +139,20 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route
+        path="/faq"
+        element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} userType={userType}>
+            <div className="min-h-screen bg-gray-50">
+              <FAQScreen onLogout={handleLogout} />
+              <MobileNav
+                currentScreen={currentScreen}
+                onNavigate={navigateTo}
+              />
+            </div>
+          </ProtectedRoute>
+        }
+      />
       <Route path="/login" element={<LoginScreen onLogin={handleLogin} />} />
       <Route
         path="/signup"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus, Edit, Trash2, ShieldAlert } from "lucide-react";
 import { getUserCookie } from "../utils/userCookie";
 import { hasPermission, type UserRole } from "../utils/permissions";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { ErrorState } from "./ui/error-state";
 import { SearchBar } from "./ui/search-bar";
@@ -243,7 +244,7 @@ export function StaffQuestionManager() {
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (e: any) {
-      alert(e?.message || "Erro ao criar questão");
+      toast.error(e?.message || "Erro ao criar questão");
     }
   }
 
@@ -299,7 +300,7 @@ export function StaffQuestionManager() {
       setIsEditDialogOpen(false);
       resetForm();
     } catch (e: any) {
-      alert(e?.message || "Erro ao atualizar questão");
+      toast.error(e?.message || "Erro ao atualizar questão");
     }
   }
 
