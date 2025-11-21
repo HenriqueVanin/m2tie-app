@@ -15,27 +15,28 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
+import { useStaffFormResponses } from "./useStaffFormResponses";
+import { Button } from "../../../components/ui/button";
+import { ErrorState } from "../../../components/ui/error-state";
+import { SearchBar } from "../../../components/ui/search-bar";
+import { PageHeaderWithSearch } from "../../../components/ui/page-header";
+import { Input } from "../../../components/ui/input";
+import { Badge } from "../../../components/ui/badge";
 import {
-  getAllResponses,
-  ResponseData,
-  deleteResponse,
-} from "../services/responseService";
-import { Button } from "./ui/button";
-import { ErrorState } from "./ui/error-state";
-import { SearchBar } from "./ui/search-bar";
-import { PageHeaderWithSearch } from "./ui/page-header";
-import { Input } from "./ui/input";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
-import { getUserCookie } from "../utils/userCookie";
+} from "../../../components/ui/select";
+import { DeleteConfirmationDialog } from "../../../components/ui/delete-confirmation-dialog";
+import { getUserCookie } from "../../../utils/userCookie";
 
 interface FormResponse {
   id: string;
@@ -54,127 +55,36 @@ interface FormResponse {
 }
 
 export function StaffFormResponses() {
-  const [responses, setResponses] = useState<FormResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterForm, setFilterForm] = useState<string>("all");
-  const [filterUser, setFilterUser] = useState<string>("all");
-  const [selectedResponse, setSelectedResponse] = useState<FormResponse | null>(
-    null
-  );
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [responseToDelete, setResponseToDelete] = useState<FormResponse | null>(
-    null
-  );
-  const [deleting, setDeleting] = useState(false);
+  const {
+    responses,
+    setResponses,
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    filterForm,
+    setFilterForm,
+    filterUser,
+    setFilterUser,
+    selectedResponse,
+    setSelectedResponse,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    responseToDelete,
+    setResponseToDelete,
+    deleting,
+    setDeleting,
+    isAnalyst,
+    fetchResponses,
+    handleDeleteClick,
+    handleDeleteConfirm,
+    filteredResponses,
+    uniqueForms,
+    uniqueUsers,
+    formatDate,
+  } = useStaffFormResponses();
 
-  // Verificar se o usuário é analyst (sem permissões de exclusão)
-  const currentUser = getUserCookie();
-  const isAnalyst = currentUser?.role === "teacher_analyst";
-
-  // Fetch responses on mount
-  useEffect(() => {
-    fetchResponses();
-  }, []);
-
-  const fetchResponses = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const user = getUserCookie();
-      const userRole = user?.role || "teacher_analyst";
-      const result = await getAllResponses(userRole);
-      if (result.error) {
-        setError(result.error);
-      } else if (result.data) {
-        // Map backend data to UI format
-        const mappedResponses: FormResponse[] = result.data.map(
-          (r: ResponseData) => ({
-            id: r._id,
-            formTitle: r.formId.title,
-            formDescription: r.formId.description,
-            userName: r.userId.anonymous ? "Usuário Anônimo" : r.userId.name,
-            userEmail: r.userId.anonymous ? "N/A" : r.userId.email,
-            submittedAt: r.submittedAt,
-            answers: r.answers.map((a) => ({
-              questionId: a.questionId._id,
-              questionTitle: a.questionId.title,
-              questionType: a.questionId.type,
-              questionOptions: a.questionId.options,
-              answer: a.answer,
-            })),
-          })
-        );
-        setResponses(mappedResponses);
-      }
-    } catch (err) {
-      setError("Erro ao carregar respostas");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDeleteClick = (response: FormResponse) => {
-    setResponseToDelete(response);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!responseToDelete) return;
-
-    setDeleting(true);
-    try {
-      const result = await deleteResponse(responseToDelete.id);
-      if (result.error) {
-        setError(result.error);
-      } else {
-        // Remove da lista local
-        setResponses((prev) =>
-          prev.filter((r) => r.id !== responseToDelete.id)
-        );
-        setDeleteDialogOpen(false);
-        setResponseToDelete(null);
-      }
-    } catch (err) {
-      setError("Erro ao deletar resposta");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  // Filtrar respostas
-  const filteredResponses = responses.filter((response) => {
-    const matchesSearch =
-      response.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      response.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      response.formTitle.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesForm =
-      filterForm === "all" || response.formTitle === filterForm;
-
-    const matchesUser =
-      filterUser === "all" || response.userName === filterUser;
-
-    return matchesSearch && matchesForm && matchesUser;
-  });
-
-  // Obter lista única de formulários e usuários
-  const uniqueForms = Array.from(new Set(responses.map((r) => r.formTitle)));
-  const uniqueUsers = Array.from(
-    new Set(responses.map((r) => r.userName))
-  ).sort();
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
-  };
+  // derived data is provided by the hook
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">

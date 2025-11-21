@@ -8,6 +8,7 @@ interface NotificationCardProps {
   buttonText?: string;
   onButtonClick?: () => void;
   buttonColor?: string;
+  buttonAriaLabel?: string;
 }
 
 export function NotificationCard({
@@ -18,14 +19,16 @@ export function NotificationCard({
   buttonText,
   onButtonClick,
   buttonColor = "emerald",
+  buttonAriaLabel,
 }: NotificationCardProps) {
   return (
     <div
-      className={`bg-gradient-to-br from-${buttonColor}-50 to-${buttonColor}-50 border border-${buttonColor}-200 rounded-2xl p-5 shadow-sm`}
+      className={`bg-gradient-to-br from-${buttonColor}-50 to-${buttonColor}-50 rounded-2xl p-5 shadow-sm`}
     >
       <div className="flex items-start gap-3 mb-3">
         <div
           className={`w-10 h-10 bg-gradient-to-br from-${buttonColor}-500 to-${buttonColor}-600 mb-4 rounded-xl flex items-center justify-center flex-shrink-0`}
+          aria-hidden
         >
           {icon}
         </div>
@@ -43,7 +46,9 @@ export function NotificationCard({
       )}
       {buttonText && (
         <button
+          type="button"
           onClick={onButtonClick}
+          aria-label={buttonAriaLabel}
           className={`mt-3 text-sm text-${buttonColor}-600 hover:text-${buttonColor}-700 font-medium transition-colors cursor-pointer`}
         >
           {buttonText}

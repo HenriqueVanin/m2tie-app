@@ -1,20 +1,10 @@
-import { NotificationCard } from "./ui/NotificationCard";
-import {
-  Plus,
-  Bell,
-  AlertCircle,
-  CheckCircle,
-  Info,
-  BookOpen,
-  FileText,
-  ReplyIcon,
-  Edit2,
-} from "lucide-react";
-import type { Screen } from "../App";
+import { NotificationCard } from "../../../components/ui/NotificationCard";
+import { BookOpen, FileText } from "lucide-react";
+import type { Screen } from "../../../App";
 import { useEffect, useState } from "react";
-import { getUserCookie } from "../utils/userCookie";
-import { ScreenHeader } from "./ui/screen-header";
-import { UserBackgroundLayout } from "./UserBackgroundLayout";
+import useHomeScreen from "./useHomeScreen";
+import { ScreenHeader } from "../../../components/ui/screen-header";
+import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
 
 interface HomeScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -22,34 +12,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
-  const [userName, setUserName] = useState("");
-  const [lastDiaryEntry, setLastDiaryEntry] = useState<{
-    date: string;
-    text: string;
-  } | null>(null);
-
-  useEffect(() => {
-    const user = getUserCookie();
-    if (user?.name) setUserName(user.name);
-
-    // Buscar última anotação do diário
-    try {
-      const diaryEntries = localStorage.getItem("diaryEntries");
-      if (diaryEntries) {
-        const entries = JSON.parse(diaryEntries);
-        const dates = Object.keys(entries).sort().reverse();
-        if (dates.length > 0) {
-          const lastDate = dates[0];
-          const text = entries[lastDate];
-          if (text && text.trim()) {
-            setLastDiaryEntry({ date: lastDate, text });
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar última anotação do diário:", error);
-    }
-  }, []);
+  const { userName, lastDiaryEntry } = useHomeScreen();
   const notifications = [
     {
       id: 1,
@@ -142,12 +105,14 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
       <ScreenHeader
         title={`Olá${userName ? `, ${userName.split(" ")[0]}!` : "!"}`}
         subtitle="Navegue pelos seus formulários"
+        titleId="home-heading"
         onLogout={onLogout}
       />
-      <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
-        <div className="pb-4 space-y-6">
-          {/* Stats */}
-          {/* <div className="grid grid-cols-3 gap-3">
+      <main aria-labelledby="home-heading">
+        <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
+          <div className="pb-4 space-y-6">
+            {/* Stats */}
+            {/* <div className="grid grid-cols-3 gap-3">
             <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
               <p className="text-emerald-600 text-xl font-bold text-[24px]">
                 18
@@ -170,47 +135,53 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
             </div>
           </div> */}
 
-          <NotificationCard
-            icon={<FileText className="w-5 h-5 text-white" />}
-            title="Novo formulário disponível"
-            subtitle="Você tem um novo formulário para preencher."
-            buttonText="Responder formulário"
-            onButtonClick={() => onNavigate("form")}
-            buttonColor="emerald"
-          />
-          {/* Última Anotação do Diário */}
-          <NotificationCard
-            icon={<BookOpen className="w-5 h-5 text-white" />}
-            title="Última anotação do diário"
-            subtitle={
-              lastDiaryEntry
-                ? new Date(lastDiaryEntry.date).toLocaleDateString("pt-BR", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })
-                : "Nenhuma anotação ainda"
-            }
-            content={
-              lastDiaryEntry ? (
-                <p className="text-sm text-gray-700 line-clamp-4 whitespace-pre-wrap">
-                  {lastDiaryEntry.text}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-400 italic">
-                  Comece a escrever suas anotações diárias para acompanhar seu
-                  progresso e reflexões.
-                </p>
-              )
-            }
-            buttonText={
-              lastDiaryEntry ? "Ver diário completo →" : "Começar a escrever"
-            }
-            onButtonClick={() => onNavigate("diary")}
-            buttonColor="emerald"
-          />
-          {/* Notificações */}
-          {/* {notifications.map((notification) => (
+            <NotificationCard
+              icon={<FileText className="w-5 h-5 text-white" aria-hidden />}
+              title="Novo formulário disponível"
+              subtitle="Você tem um novo formulário para preencher."
+              buttonText="Responder formulário"
+              onButtonClick={() => onNavigate("form")}
+              buttonColor="emerald"
+            />
+            {/* Última Anotação do Diário */}
+            <NotificationCard
+              icon={<BookOpen className="w-5 h-5 text-white" aria-hidden />}
+              title="Última anotação do diário"
+              subtitle={
+                lastDiaryEntry
+                  ? new Date(lastDiaryEntry.date).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Nenhuma anotação ainda"
+              }
+              content={
+                lastDiaryEntry ? (
+                  <p className="text-sm text-gray-700 line-clamp-4 whitespace-pre-wrap">
+                    {lastDiaryEntry.text}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">
+                    Comece a escrever suas anotações diárias para acompanhar seu
+                    progresso e reflexões.
+                  </p>
+                )
+              }
+              buttonText={
+                lastDiaryEntry ? "Ver diário completo →" : "Começar a escrever"
+              }
+              onButtonClick={() => onNavigate("diary")}
+              // Provide clearer label for screen readers on the CTA
+              buttonAriaLabel={
+                lastDiaryEntry
+                  ? "Ver diário completo"
+                  : "Começar a escrever diário"
+              }
+              buttonColor="emerald"
+            />
+            {/* Notificações */}
+            {/* {notifications.map((notification) => (
             <NotificationCard
               key={notification.id}
               icon={
@@ -229,8 +200,9 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
               buttonColor={notification.color}
             />
           ))} */}
+          </div>
         </div>
-      </div>
+      </main>
     </UserBackgroundLayout>
   );
 }

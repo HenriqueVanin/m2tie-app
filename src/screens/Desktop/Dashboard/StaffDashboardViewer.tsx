@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import ReactECharts from "echarts-for-react";
 import {
   BarChart3,
@@ -14,17 +14,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { Button } from "./ui/button";
-import { Card } from "./ui/card";
-import { PageHeaderWithSearch } from "./ui/page-header";
-import { getAllForms, type Form } from "../services/formService";
-import {
-  dashboardService,
-  type FullAnalysisResponse,
-} from "../services/dashboardService";
-import { getUserCookie } from "../utils/userCookie";
-import { toast } from "sonner";
+} from "../../../components/ui/select";
+import { Button } from "../../../components/ui/button";
+import { Card } from "../../../components/ui/card";
+import { PageHeaderWithSearch } from "../../../components/ui/page-header";
+import useStaffDashboardViewer from "./useStaffDashboardViewer";
+import type { FullAnalysisResponse } from "../../../services/dashboardService";
 
 interface FormOption {
   _id: string;
@@ -32,107 +27,15 @@ interface FormOption {
 }
 
 export function StaffDashboardViewer() {
-  const [forms, setForms] = useState<FormOption[]>([]);
-  const [selectedFormId, setSelectedFormId] = useState<string>("");
-  const [dashboardData, setDashboardData] =
-    useState<FullAnalysisResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Carregar formulários disponíveis
-  useEffect(() => {
-    loadForms();
-  }, []);
-
-  // Carregar dados do dashboard quando um formulário é selecionado
-  useEffect(() => {
-    if (selectedFormId) {
-      loadDashboardData(selectedFormId);
-    }
-  }, [selectedFormId]);
-
-  const loadForms = async () => {
-    try {
-      const user = getUserCookie();
-      const userRole = user?.role || "teacher_analyst";
-      const formsData = await getAllForms(userRole);
-      setForms(formsData);
-      if (formsData.length > 0) {
-        setSelectedFormId(formsData[0]._id);
-      }
-    } catch (err) {
-      console.error("Erro ao carregar formulários:", err);
-      setError("Erro ao carregar formulários");
-    }
-  };
-
-  const loadDashboardData = async (formId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await dashboardService.getFullAnalysis(formId);
-      setDashboardData(data);
-    } catch (err) {
-      console.error("Erro ao carregar dados do dashboard:", err);
-      setError("Erro ao carregar análise do formulário");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleExportData = async () => {
-    if (!selectedFormId) return;
-
-    try {
-      const user = getUserCookie();
-      const userRole = user?.role || "teacher_analyst";
-
-      const exportData = await dashboardService.exportFormData(
-        selectedFormId,
-        userRole
-      );
-
-      // Converter para CSV
-      const headers = Object.keys(exportData.data[0] || {});
-      const csvContent = [
-        headers.join(","),
-        ...exportData.data.map((row) =>
-          headers
-            .map((header) => {
-              const value = row[header];
-              // Escapar valores com vírgulas ou aspas
-              if (
-                typeof value === "string" &&
-                (value.includes(",") || value.includes('"'))
-              ) {
-                return `"${value.replace(/"/g, '""')}"`;
-              }
-              return value;
-            })
-            .join(",")
-        ),
-      ].join("\n");
-
-      // Download do arquivo
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute(
-        "download",
-        `${exportData.formTitle}_export_${
-          new Date().toISOString().split("T")[0]
-        }.csv`
-      );
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("Erro ao exportar dados:", err);
-      toast.error("Erro ao exportar dados");
-    }
-  };
+  const {
+    forms,
+    selectedFormId,
+    setSelectedFormId,
+    dashboardData,
+    loading,
+    error,
+    handleExportData,
+  } = useStaffDashboardViewer();
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
@@ -297,9 +200,9 @@ function QuestionChart({ question }: QuestionChartProps) {
     switch (question.type) {
       case "scale":
         if (!question.distribution) return null;
-        const scaleData = Object.entries(question.distribution).sort(
-          (a, b) => Number(a[0]) - Number(b[0])
-        );
+        const scaleData = Object.entries(
+          question.distribution as Record<string, number>
+        ).sort((a, b) => Number(a[0]) - Number(b[0]));
         return {
           ...baseOption,
           xAxis: {
@@ -331,9 +234,9 @@ function QuestionChart({ question }: QuestionChartProps) {
       case "multiple_choice":
       case "dropdown":
         if (!question.distribution) return null;
-        const choiceData = Object.entries(question.distribution).sort(
-          (a, b) => b[1] - a[1]
-        );
+        const choiceData = Object.entries(
+          question.distribution as Record<string, number>
+        ).sort((a, b) => (b[1] as number) - (a[1] as number));
         return {
           ...baseOption,
           tooltip: {
@@ -373,9 +276,9 @@ function QuestionChart({ question }: QuestionChartProps) {
 
       case "checkbox":
         if (!question.distribution) return null;
-        const checkboxData = Object.entries(question.distribution).sort(
-          (a, b) => b[1] - a[1]
-        );
+        const checkboxData = Object.entries(
+          question.distribution as Record<string, number>
+        ).sort((a, b) => (b[1] as number) - (a[1] as number));
         return {
           ...baseOption,
           xAxis: {
@@ -471,7 +374,7 @@ function QuestionChart({ question }: QuestionChartProps) {
                 Exemplos de respostas:
               </p>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {question.sampleAnswers.map((answer, idx) => (
+                {question.sampleAnswers.map((answer: string, idx: number) => (
                   <div
                     key={idx}
                     className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300"

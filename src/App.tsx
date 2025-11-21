@@ -7,25 +7,24 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import { LoginScreen } from "./components/LoginScreen";
-import { SignupScreen } from "./components/SignupScreen";
-import { HomeScreen } from "./components/HomeScreen";
-import { ProfileScreen } from "./components/ProfileScreen";
-import { DiaryScreen } from "./components/DiaryScreen";
-import { FormWizardScreen } from "./components/FormWizardScreen";
+import { LoginScreen } from "./screens/LoginScreen";
+import { HomeScreen } from "./screens/Mobile/Home/HomeScreen";
+import { ProfileScreen } from "./screens/Mobile/Profile/ProfileScreen";
+import { DiaryScreen } from "./screens/Mobile/Diary/DiaryScreen";
+import { FormWizardScreen } from "./screens/Mobile/Form/FormWizardScreen";
 import { MobileNav } from "./components/MobileNav";
-import { StaffDashboardViewer } from "./components/StaffDashboardViewer";
-import { StaffFormBuilder } from "./components/StaffFormBuilder";
-import { StaffFormResponses } from "./components/StaffFormResponses";
-import { StaffFormResponsesByForm } from "./components/StaffFormResponsesByForm";
+import { StaffDashboardViewer } from "./screens/Desktop/Dashboard/StaffDashboardViewer";
+import { StaffFormBuilder } from "./screens/Desktop/FormBuilder/StaffFormBuilder";
+import { StaffFormResponses } from "./screens/Desktop/Responses/StaffFormResponses";
+import { StaffFormResponsesByForm } from "./screens/Desktop/Forms/StaffFormResponsesByForm";
 import { StaffNav } from "./components/StaffNav";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { AuthFallback } from "./components/AuthFallback";
+import { ProtectedRoute } from "./layout/ProtectedRoute";
+import { AuthFallback } from "./layout/AuthFallback";
 import { getUserFromToken } from "./utils/auth";
-import { StaffQuestionManager } from "./components/StaffQuestionManager";
-import { AboutScreen } from "./components/AboutScreen";
-import { StaffUserManagement } from "./components/StaffUserManagement";
-import { FAQScreen } from "./components/FAQScreen";
+import { StaffQuestionManager } from "./screens/Desktop/Question/StaffQuestionManager";
+import { AboutScreen } from "./screens/Mobile/About/AboutScreen";
+import { StaffUserManagement } from "./screens/Desktop/UserManagement/StaffUserManagement";
+import { FAQScreen } from "./screens/Mobile/FAQ/FAQScreen";
 
 export type Screen =
   | "login"
@@ -154,15 +153,6 @@ function AppContent() {
         }
       />
       <Route path="/login" element={<LoginScreen onLogin={handleLogin} />} />
-      <Route
-        path="/signup"
-        element={
-          <SignupScreen
-            onNavigateToLogin={() => navigate(routeMap.login)}
-            onSignupSuccess={() => navigate(routeMap.login)}
-          />
-        }
-      />
       <Route
         path="/home"
         element={

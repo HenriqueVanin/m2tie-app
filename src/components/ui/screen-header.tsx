@@ -9,6 +9,7 @@ interface ScreenHeaderProps {
   gradientTo?: string; // tailwind to-* class
   action?: ReactNode; // optional custom action element overrides default
   onLogout?: () => void; // if provided and no custom action, renders default logout button
+  titleId?: string;
 }
 
 export function ScreenHeader({
@@ -18,13 +19,17 @@ export function ScreenHeader({
   gradientTo = "to-emerald-700",
   action,
   onLogout,
+  titleId,
 }: ScreenHeaderProps) {
   const gradientClass = `bg-gradient-to-br ${gradientFrom} via-emerald-600 ${gradientTo}`;
   return (
     <div className="relative z-10 p-6 pt-12">
       <div className="m-[0px] flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl mb-2 text-[24px] font-semibold">
+          <h1
+            id={titleId}
+            className="text-white text-3xl mb-2 text-[24px] font-semibold"
+          >
             {title}
           </h1>
           {subtitle && <p className="text-emerald-100">{subtitle}</p>}

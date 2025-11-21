@@ -1,7 +1,7 @@
-import type { Screen } from "../App";
+import type { Screen } from "../../../App";
 import { useEffect, useState } from "react";
-import { ScreenHeader } from "./ui/screen-header";
-import { UserBackgroundLayout } from "./UserBackgroundLayout";
+import { ScreenHeader } from "../../../components/ui/screen-header";
+import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
 
 interface DiaryScreenProps {
   onNavigate: (screen: Screen) => void;

@@ -1,6 +1,6 @@
 import { Mail } from "lucide-react";
-import { UserBackgroundLayout } from "./UserBackgroundLayout";
-import { ScreenHeader } from "./ui/screen-header";
+import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
+import { ScreenHeader } from "../../../components/ui/screen-header";
 
 export function FAQScreen({ onLogout }: { onLogout: () => void }) {
   return (

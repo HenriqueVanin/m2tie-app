@@ -9,249 +9,61 @@ import {
   Calendar,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Checkbox } from "./ui/checkbox";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { RadioGroup, RadioGroupItem } from "../../../components/ui/radio-group";
+import { Checkbox } from "../../../components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import { ErrorState } from "./ui/error-state";
-import type { Screen } from "../App";
-import {
-  getActiveForm,
-  Form,
-  FormQuestion,
-  ActiveFormResponse,
-} from "../services/formService";
-import { submitResponse } from "../services/responseService";
-import { UserBackgroundLayout } from "./UserBackgroundLayout";
+} from "../../../components/ui/select";
+import { ErrorState } from "../../../components/ui/error-state";
+import type { Screen } from "../../../App";
+import { Form, FormQuestion } from "../../../services/formService";
+import { useFormWizard } from "./useFormWizard";
+import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
 
 interface FormWizardScreenProps {
   onNavigate: (screen: Screen) => void;
 }
 
 export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
-  const [availableForms, setAvailableForms] = useState<Form[]>([]);
-  const [selectedFormIndex, setSelectedFormIndex] = useState<number | null>(
-    null
-  );
-  const [form, setForm] = useState<Form | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [allFormsAnswered, setAllFormsAnswered] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [showFormList, setShowFormList] = useState(false);
-  const [hasVisitedReview, setHasVisitedReview] = useState(false);
-
-  const totalSteps = (form?.questions?.length || 0) + 1; // +1 para a etapa de revisão
-  const isReviewStep = currentStep === (form?.questions?.length || 0);
-  const currentQuestion = isReviewStep ? null : form?.questions?.[currentStep];
-
-  useEffect(() => {
-    fetchActiveForms();
-  }, []);
-
-  useEffect(() => {
-    if (isReviewStep) setHasVisitedReview(true);
-  }, [isReviewStep]);
-
-  const fetchActiveForms = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await getActiveForm();
-
-      // Caso 1: Nenhum formulário ativo (msg específica ou data vazio)
-      if (
-        response.msg ===
-          "Nenhum formulário ativo encontrado para este usuário" ||
-        !response.data ||
-        (Array.isArray(response.data) && response.data.length === 0)
-      ) {
-        setAllFormsAnswered(true);
-        return;
-      }
-
-      // Caso 2: Erro genérico
-      if (response.error) {
-        setError(response.error);
-        return;
-      }
-
-      // Caso 3: Formulários disponíveis
-      const rawForms = Array.isArray(response.data)
-        ? response.data
-        : [response.data];
-
-      // Filtrar apenas formulários ativos e que o usuário não tenha respondido
-      const unrespondedActiveForms = rawForms.filter(
-        (f) => f && f.isActive === true && f.hasResponded !== true
-      );
-
-      // Se não houver formulários não-respondidos, marcar tudo como respondido
-      if (unrespondedActiveForms.length === 0) {
-        setAvailableForms([]);
-        setAllFormsAnswered(true);
-        return;
-      }
-
-      setAvailableForms(unrespondedActiveForms);
-
-      // Se houver apenas um formulário disponível, selecionar automaticamente
-      if (unrespondedActiveForms.length === 1) {
-        setForm(unrespondedActiveForms[0]);
-        setSelectedFormIndex(0);
-      } else {
-        // Múltiplos formulários: mostrar tela de seleção
-        setShowFormList(true);
-      }
-    } catch (e: any) {
-      setError(e?.message || "Erro ao carregar formulários");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const selectForm = (index: number) => {
-    setForm(availableForms[index]);
-    setSelectedFormIndex(index);
-    setShowFormList(false);
-    setAnswers({});
-    setCurrentStep(0);
-  };
-
-  const handleAnswerChange = (questionId: string, value: any) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
-  const nextStep = async () => {
-    if (!form) return;
-
-    // Se estiver na etapa de revisão, submeter
-    if (isReviewStep) {
-      await handleSubmit();
-      return;
-    }
-
-    // Validar resposta obrigatória nas questões
-    if (currentQuestion) {
-      const questionId = currentQuestion.questionId._id;
-      if (currentQuestion.required && !answers[questionId]) {
-        toast.error("Esta questão é obrigatória");
-        return;
-      }
-    }
-
-    // Avançar para próxima etapa (questão ou revisão)
-    if (currentStep < totalSteps - 1) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep === 0 && availableForms.length > 1) {
-      setForm(null);
-      setSelectedFormIndex(null);
-      setShowFormList(true);
-      setAnswers({});
-      setCurrentStep(0);
-      return;
-    } else if (currentStep === 0 && availableForms.length === 1) {
-      onNavigate("home");
-    }
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const goToQuestion = (questionIndex: number) => {
-    setCurrentStep(questionIndex);
-  };
-
-  // Verifica se todas as questões obrigatórias até a etapa atual estão respondidas
-  // Now this helper returns true only if the user has visited the review
-  // screen at least once. That means they had the opportunity to check
-  // all answers before submitting.
-  const areRequiredQuestionsAnswered = (
-    _frm: Form | null,
-    _ans: Record<string, any>
-  ) => {
-    return hasVisitedReview === true;
-  };
-
-  const handleSubmit = async () => {
-    if (!form) return;
-
-    try {
-      setSubmitting(true);
-
-      // Mapear respostas para o formato da API
-      const formattedAnswers = Object.entries(answers).map(
-        ([questionId, answer]) => ({
-          questionId,
-          answer,
-        })
-      );
-
-      const response = await submitResponse({
-        formId: form._id,
-        answers: formattedAnswers,
-      });
-
-      // Verificar se houve erro na resposta
-      if (response.error) {
-        // Caso especial: formulário já respondido
-        if (
-          response.error === "Você já respondeu este formulário" ||
-          response.msg === "Formulário já respondido"
-        ) {
-          // Remover formulário atual da lista
-          const updatedForms = availableForms.filter(
-            (_, idx) => idx !== selectedFormIndex
-          );
-          setAvailableForms(updatedForms);
-
-          // Se não houver mais formulários, mostrar tela de conclusão
-          if (updatedForms.length === 0) {
-            setAllFormsAnswered(true);
-            setSubmissionSuccess(false);
-            return;
-          }
-
-          // Caso contrário, mostrar lista de formulários restantes
-          setShowFormList(true);
-          setForm(null);
-          setSelectedFormIndex(null);
-          setAnswers({});
-          setCurrentStep(0);
-          return;
-        }
-        throw new Error(response.error);
-      }
-
-      // Remover formulário respondido da lista
-      const updatedForms = availableForms.filter(
-        (_, idx) => idx !== selectedFormIndex
-      );
-      setAvailableForms(updatedForms);
-
-      // Marcar submissão como bem-sucedida
-      setSubmissionSuccess(true);
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao enviar formulário");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const {
+    availableForms,
+    selectedFormIndex,
+    form,
+    loading,
+    error,
+    allFormsAnswered,
+    currentStep,
+    totalSteps,
+    answers,
+    submitting,
+    submissionSuccess,
+    showFormList,
+    hasVisitedReview,
+    isReviewStep,
+    currentQuestion,
+    fetchActiveForms,
+    selectForm,
+    handleAnswerChange,
+    nextStep,
+    prevStep,
+    goToQuestion,
+    areRequiredQuestionsAnswered,
+    handleSubmit,
+    setSubmissionSuccess,
+    setAvailableForms,
+    setForm,
+    setSelectedFormIndex,
+    setShowFormList,
+    setAnswers,
+    setCurrentStep,
+  } = useFormWizard();
 
   // Loading state
   if (loading) {
@@ -259,8 +71,13 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       <UserBackgroundLayout centered>
         <div className="flex items-center justify-center flex-1 p-6">
           <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4" />
-            <p className="text-gray-600">Carregando formulário...</p>
+            <div role="status" aria-live="polite">
+              <Loader2
+                className="w-12 h-12 animate-spin text-indigo-600 mx-auto mb-4"
+                aria-hidden
+              />
+              <p className="text-gray-600">Carregando formulário...</p>
+            </div>
           </div>
         </div>
       </UserBackgroundLayout>
@@ -281,7 +98,11 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             <CheckCircle2 className="w-12 h-12 text-emerald-600" />
           </div>
 
-          <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700"
+          >
             <h1 className="text-white text-2xl font-bold">
               Formulário Enviado!
             </h1>
@@ -314,6 +135,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
                 {remainingForms.length > 1 ? "s" : ""} para responder
               </p>
               <Button
+                type="button"
                 onClick={() => {
                   setSubmissionSuccess(false);
                   if (remainingForms.length === 1) {
@@ -337,6 +159,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             </>
           ) : (
             <Button
+              type="button"
               onClick={() => onNavigate("home")}
               className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 cursor-pointer"
             >
@@ -357,7 +180,11 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             <CheckCircle2 className="w-12 h-12 text-emerald-600" />
           </div>
 
-          <div className="text-center space-y-3">
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-center space-y-3"
+          >
             <h1 className="text-white text-2xl font-bold">Tudo Respondido!</h1>
             <p className="text-white text-sm">
               Você já respondeu todos os formulários ativos disponíveis.
@@ -365,6 +192,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           </div>
 
           <Button
+            type="button"
             onClick={() => onNavigate("home")}
             className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg cursor-pointer"
           >
@@ -382,10 +210,12 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
         <div className="p-6 bg-gradient-to-br from-indigo-500 mt-2 rounded-md to-indigo-600 text-white shadow-lg">
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={() => onNavigate("home")}
               className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+              aria-label="Voltar para Home"
             >
-              <ArrowLeft className="w-6 h-6 text-white" />
+              <ArrowLeft className="w-6 h-6 text-white" aria-hidden />
             </button>
             <div className="flex-1">
               <h1 className="text-white text-xl font-bold">
@@ -405,14 +235,19 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
                 new Date(b?.createdAt ?? "").getTime()
             )
             .map((formItem, index) => (
-              <div
+              <button
                 key={formItem._id}
+                type="button"
                 onClick={() => selectForm(index)}
-                className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-indigo-300"
+                className="w-full text-left bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-indigo-300"
+                aria-label={`Selecionar formulário ${formItem.title}`}
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-white" />
+                  <div
+                    className="shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center"
+                    aria-hidden
+                  >
+                    <FileText className="w-6 h-6 text-white" aria-hidden />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base font-semibold text-gray-900 mb-1">
@@ -425,12 +260,12 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
                     )}
                     <div className="flex items-center gap-4 text-xs text-gray-500">
                       <span className="flex items-center gap-1">
-                        <FileText className="w-3.5 h-3.5" />
+                        <FileText className="w-3.5 h-3.5" aria-hidden />
                         {formItem.questions?.length || 0} questões
                       </span>
                       {formItem.createdAt && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
+                          <Calendar className="w-3.5 h-3.5" aria-hidden />
                           {new Date(formItem.createdAt).toLocaleDateString(
                             "pt-BR"
                           )}
@@ -438,9 +273,9 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
                       )}
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                  <ChevronRight className="w-5 h-5 text-gray-400" aria-hidden />
                 </div>
-              </div>
+              </button>
             ))}
         </div>
       </UserBackgroundLayout>
@@ -478,108 +313,121 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
 
   return (
     <UserBackgroundLayout>
-      <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg rounded-md mt-2 mx-4">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={prevStep}
-            className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors"
+      <main aria-labelledby="form-heading">
+        <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg rounded-md mt-2 mx-4">
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              type="button"
+              onClick={prevStep}
+              className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors"
+              aria-label="Voltar"
+            >
+              <ArrowLeft className="w-6 h-6 text-white" aria-hidden />
+            </button>
+            <div className="flex-1">
+              <h1 id="form-heading" className="text-white">
+                {form?.title || "Formulário"}
+              </h1>
+              <p className="text-sm text-indigo-100">
+                {isReviewStep
+                  ? "Revisão Final"
+                  : `Questão ${currentStep + 1} de ${totalSteps - 1}`}
+              </p>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div
+            role="progressbar"
+            aria-label="Progresso do formulário"
+            aria-valuemin={0}
+            aria-valuemax={totalSteps - 1}
+            aria-valuenow={currentStep}
+            className="flex gap-2"
           >
-            <ArrowLeft className="w-6 h-6 text-white" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-white">{form?.title || "Formulário"}</h1>
-            <p className="text-sm text-indigo-100">
-              {isReviewStep
-                ? "Revisão Final"
-                : `Questão ${currentStep + 1} de ${totalSteps - 1}`}
-            </p>
+            {Array.from({ length: totalSteps }).map((_, index) => (
+              <div
+                key={index}
+                className={`h-2 flex-1 rounded-full transition-all ${
+                  index <= currentStep ? "bg-white" : "bg-white/30"
+                }`}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="flex gap-2">
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <div
-              key={index}
-              className={`h-2 flex-1 rounded-full transition-all ${
-                index <= currentStep ? "bg-white" : "bg-white/30"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 p-6 overflow-y-auto">
-        <div className="bg-white rounded-3xl shadow-md p-6">
-          {isReviewStep ? (
-            <ReviewStep
-              form={form}
-              answers={answers}
-              onEditQuestion={goToQuestion}
-            />
-          ) : (
-            currentQuestion && (
-              <QuestionRenderer
-                question={currentQuestion}
-                value={answers[currentQuestion.questionId._id]}
-                onChange={(value) =>
-                  handleAnswerChange(currentQuestion.questionId._id, value)
-                }
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-md p-6">
+            {isReviewStep ? (
+              <ReviewStep
+                form={form}
+                answers={answers}
+                onEditQuestion={goToQuestion}
               />
-            )
+            ) : (
+              currentQuestion && (
+                <QuestionRenderer
+                  question={currentQuestion}
+                  value={answers[currentQuestion.questionId._id]}
+                  onChange={(value) =>
+                    handleAnswerChange(currentQuestion.questionId._id, value)
+                  }
+                />
+              )
+            )}
+          </div>
+        </div>
+        <div className="p-6 space-y-3 pb-30">
+          <Button
+            onClick={nextStep}
+            disabled={submitting}
+            className="w-full h-14 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white gap-2 shadow-lg rounded-2xl disabled:opacity-50"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Enviando...
+              </>
+            ) : isReviewStep ? (
+              <>
+                <Check className="w-5 h-5" />
+                Enviar Formulário
+              </>
+            ) : currentStep === totalSteps - 2 ? (
+              <>
+                <Check className="w-5 h-5" />
+                Revisar Respostas
+              </>
+            ) : (
+              <>
+                Próximo
+                <ChevronRight className="w-5 h-5" />
+              </>
+            )}
+          </Button>
+          {currentStep > 0 && (
+            <Button
+              onClick={() => {
+                // Se houver mais de um formulário disponível, voltar para tela intermediária
+                if (availableForms.length > 1) {
+                  setForm(null);
+                  setSelectedFormIndex(null);
+                  setShowFormList(true);
+                  setAnswers({});
+                  setCurrentStep(0);
+                } else {
+                  prevStep();
+                }
+              }}
+              disabled={submitting}
+              variant="outline"
+              className="w-full h-12 border-2 border-gray-200 rounded-2xl"
+            >
+              Voltar
+            </Button>
           )}
         </div>
-      </div>
-      <div className="p-6 space-y-3 pb-30">
-        <Button
-          onClick={nextStep}
-          disabled={submitting}
-          className="w-full h-14 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white gap-2 shadow-lg rounded-2xl disabled:opacity-50"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Enviando...
-            </>
-          ) : isReviewStep ? (
-            <>
-              <Check className="w-5 h-5" />
-              Enviar Formulário
-            </>
-          ) : currentStep === totalSteps - 2 ? (
-            <>
-              <Check className="w-5 h-5" />
-              Revisar Respostas
-            </>
-          ) : (
-            <>
-              Próximo
-              <ChevronRight className="w-5 h-5" />
-            </>
-          )}
-        </Button>
-        {currentStep > 0 && (
-          <Button
-            onClick={() => {
-              // Se houver mais de um formulário disponível, voltar para tela intermediária
-              if (availableForms.length > 1) {
-                setForm(null);
-                setSelectedFormIndex(null);
-                setShowFormList(true);
-                setAnswers({});
-                setCurrentStep(0);
-              } else {
-                prevStep();
-              }
-            }}
-            disabled={submitting}
-            variant="outline"
-            className="w-full h-12 border-2 border-gray-200 rounded-2xl"
-          >
-            Voltar
-          </Button>
-        )}
-      </div>
+      </main>
     </UserBackgroundLayout>
   );
 }

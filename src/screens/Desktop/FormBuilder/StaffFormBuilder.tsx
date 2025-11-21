@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSearchParams } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { ErrorState } from "./ui/error-state";
+import { ErrorState } from "../../../components/ui/error-state";
 import { toast } from "sonner";
-import { getUserCookie } from "../utils/userCookie";
-import { hasPermission, type UserRole } from "../utils/permissions";
+import { getUserCookie } from "../../../utils/userCookie";
+import { hasPermission, type UserRole } from "../../../utils/permissions";
 import {
   Plus,
   GripVertical,
@@ -24,40 +23,30 @@ import {
   BarChart3,
   ShieldAlert,
 } from "lucide-react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { SearchBar } from "./ui/search-bar";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Textarea } from "../../../components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
+import { SearchBar } from "../../../components/ui/search-bar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "./ui/select";
-import {
-  createQuestion,
-  updateQuestion as updateQuestionAPI,
-  QuestionOption,
-  getQuestion,
-  getAllQuestions,
-  Question as QuestionFromService,
-} from "../services/questionService";
+} from "../../../components/ui/select";
 import {
   UIQuestionType,
   QUESTION_TYPE_ICONS,
   getQuestionTypeLabel,
-} from "../utils/questionTypes";
-import {
-  createForm,
-  updateForm,
-  getFormById,
-  CreateFormPayload,
-  Form,
-  FormQuestion,
-} from "../services/formService";
+} from "../../../utils/questionTypes";
+import useStaffFormBuilder from "./useStaffFormBuilder";
 
 interface Question {
   id: string;
@@ -86,274 +75,40 @@ export function StaffFormBuilder() {
 }
 
 function FormBuilderContent() {
-  const [searchParams] = useSearchParams();
-  const formIdFromUrl = searchParams.get("formId");
-
-  console.log("FormIdFromUrl:", formIdFromUrl);
-
-  const [formId, setFormId] = useState<string | null>(null);
-  const [formTitle, setFormTitle] = useState("Novo Formulário");
-  const [formDescription, setFormDescription] = useState("");
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [showExistingQuestionsModal, setShowExistingQuestionsModal] =
-    useState(false);
-  const [existingQuestions, setExistingQuestions] = useState<
-    QuestionFromService[]
-  >([]);
-  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<UIQuestionType | "all">("all");
-  const [userRole, setUserRole] = useState<UserRole>("student");
   const navigate = useNavigate();
+  const hook = useStaffFormBuilder((path: string) => navigate(path));
+  const {
+    formId,
+    formTitle,
+    formDescription,
+    questions,
+    selectedQuestion,
+    isLoading,
+    isSaving,
+    showExistingQuestionsModal,
+    setShowExistingQuestionsModal,
+    isLoadingQuestions,
+    searchQuery,
+    setSearchQuery,
+    filterType,
+    setFilterType,
+    setFormTitle,
+    setFormDescription,
+    setSelectedQuestion,
+    loadExistingQuestions,
+    addExistingQuestion,
+    filteredQuestions,
+    addQuestion,
+    moveQuestion,
+    deleteQuestion,
+    updateQuestion,
+    saveQuestion,
+    saveForm,
+    selectedQuestionData,
+    canManage,
+  } = hook;
 
-  useEffect(() => {
-    const user = getUserCookie();
-    if (user?.role) setUserRole(user.role as UserRole);
-  }, []);
-
-  const canManage = hasPermission(userRole, "canManageForms");
-  const canCreate = hasPermission(userRole, "canCreateForms");
-  const canEdit = hasPermission(userRole, "canEditForms");
-
-  // Carregar formulário ao montar componente ou quando formIdFromUrl mudar
-  useEffect(() => {
-    console.log(
-      "useEffect triggered - formIdFromUrl:",
-      formIdFromUrl,
-      "formId:",
-      formId
-    );
-    if (formIdFromUrl && formIdFromUrl !== formId) {
-      loadForm(formIdFromUrl);
-    }
-  }, [formIdFromUrl]);
-
-  const loadExistingQuestions = async () => {
-    try {
-      setIsLoadingQuestions(true);
-      const allQuestions = await getAllQuestions();
-      setExistingQuestions(allQuestions);
-      setShowExistingQuestionsModal(true);
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao carregar questões");
-    } finally {
-      setIsLoadingQuestions(false);
-    }
-  };
-
-  const addExistingQuestion = (existingQ: QuestionFromService) => {
-    const newQuestion: Question = {
-      id: existingQ._id,
-      type: existingQ.type as UIQuestionType,
-      title: existingQ.title,
-      required: existingQ.validation?.required || false,
-      options: existingQ.options?.map((o) => o.label),
-    };
-    setQuestions([...questions, newQuestion]);
-    setShowExistingQuestionsModal(false);
-  };
-
-  // Filtrar questões baseado na pesquisa e tipo
-  const filteredQuestions = existingQuestions.filter((q) => {
-    const matchesSearch = q.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || q.type === filterType;
-    return matchesSearch && matchesType;
-  });
-
-  const addQuestion = (type: UIQuestionType) => {
-    const options: string[] | undefined =
-      type === "multiple_choice" || type === "checkbox" || type === "dropdown"
-        ? ["Opção 1", "Opção 2"]
-        : type === "scale"
-        ? Array.from({ length: 11 }, (_, i) => String(i))
-        : undefined;
-
-    const newQuestion: Question = {
-      id: `temp-${Date.now()}`, // ID temporário até salvar
-      type,
-      title: "Nova Pergunta",
-      required: false,
-      options,
-    };
-    setQuestions([...questions, newQuestion]);
-    setSelectedQuestion(newQuestion.id);
-  };
-
-  const moveQuestion = (dragIndex: number, hoverIndex: number) => {
-    const newQuestions = [...questions];
-    const [draggedItem] = newQuestions.splice(dragIndex, 1);
-    newQuestions.splice(hoverIndex, 0, draggedItem);
-    setQuestions(newQuestions);
-  };
-
-  const deleteQuestion = (id: string) => {
-    setQuestions(questions.filter((q) => q.id !== id));
-    if (selectedQuestion === id) {
-      setSelectedQuestion(null);
-    }
-  };
-
-  const updateQuestion = (id: string, updates: Partial<Question>) => {
-    setQuestions(
-      questions.map((q) => (q.id === id ? { ...q, ...updates } : q))
-    );
-  };
-
-  const saveQuestion = async (question: Question) => {
-    // Se o ID for temporário, criar nova questão no backend
-    if (question.id.startsWith("temp-")) {
-      const options: QuestionOption[] | undefined =
-        question.type === "multiple_choice" ||
-        question.type === "checkbox" ||
-        question.type === "dropdown"
-          ? question.options?.map((label, i) => ({
-              label,
-              value: label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-            }))
-          : question.type === "scale"
-          ? question.options?.map((label) => ({
-              label,
-              value: label,
-            }))
-          : undefined;
-
-      const created = await createQuestion({
-        title: question.title,
-        type: question.type,
-        options,
-        validation: { required: question.required },
-      });
-
-      // Atualizar a questão com o ID real do backend
-      setQuestions(
-        questions.map((q) =>
-          q.id === question.id
-            ? {
-                ...q,
-                id: created._id,
-              }
-            : q
-        )
-      );
-      setSelectedQuestion(null);
-    } else {
-      // Se já tem ID real, atualizar questão existente
-      const options: QuestionOption[] | undefined =
-        question.type === "multiple_choice" ||
-        question.type === "checkbox" ||
-        question.type === "dropdown"
-          ? question.options?.map((label, i) => ({
-              label,
-              value: label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
-            }))
-          : question.type === "scale"
-          ? question.options?.map((label) => ({
-              label,
-              value: label,
-            }))
-          : undefined;
-
-      await updateQuestionAPI(question.id, {
-        title: question.title,
-        type: question.type,
-        options,
-        validation: { required: question.required },
-      });
-      setSelectedQuestion(null);
-    }
-  };
-
-  const saveForm = async () => {
-    try {
-      setIsSaving(true);
-
-      if (!formTitle.trim()) {
-        toast.error("O título do formulário é obrigatório");
-        return;
-      }
-
-      if (questions.length === 0) {
-        toast.error("Adicione pelo menos uma pergunta ao formulário");
-        return;
-      }
-
-      const payload = {
-        title: formTitle,
-        description: formDescription || undefined,
-        questions: questions.map((q, index) => ({
-          questionId: q.id,
-          order: index + 1,
-          required: q.required,
-        })),
-        assignedUsers: [], // necessário para CreateFormPayload; preencher conforme lógica futura
-        isActive: true,
-      };
-
-      let savedForm: Form;
-      if (formId) {
-        // Atualizar formulário existente
-        savedForm = await updateForm(formId, payload);
-        toast.success("Formulário atualizado com sucesso!");
-      } else {
-        // Criar novo formulário
-        savedForm = await createForm(payload);
-        setFormId(savedForm._id);
-        toast.success("Formulário criado com sucesso!");
-        // Navegar para a tela de respostas por formulário, indicando o formId
-        navigate(`/staff/forms/responses/by-form?formId=${savedForm._id}`);
-      }
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao salvar formulário");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const loadForm = async (id: string) => {
-    try {
-      console.log("Loading form with ID:", id);
-      setIsLoading(true);
-      const user = getUserCookie();
-      const userRole = user?.role || "admin";
-      const form = await getFormById(id, userRole);
-
-      setFormId(form._id);
-      setFormTitle(form.title);
-      setFormDescription(form.description || "");
-
-      // Carregar detalhes das questões usando os dados já populados na resposta
-      if (form.questions && form.questions.length > 0) {
-        const loadedQuestions: Question[] = form.questions
-          .sort((a, b) => a.order - b.order)
-          .map((fq: any) => {
-            // O backend retorna questionId como objeto aninhado
-            const questionData = fq.questionId;
-            return {
-              id: questionData._id,
-              type: questionData.type,
-              title: questionData.title,
-              description: "", // ajuste se o backend passar descrição
-              required: fq.required, // required vem do FormQuestion, não do questionId
-              options: questionData.options?.map((o: any) => o.label),
-            };
-          });
-        setQuestions(loadedQuestions);
-        console.log("Questions loaded:", loadedQuestions);
-      }
-    } catch (e: any) {
-      console.error("Error loading form:", e);
-      toast.error(e?.message || "Erro ao carregar formulário");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const selectedQuestionData = questions.find((q) => q.id === selectedQuestion);
+  // logic moved to hook
 
   if (!canManage) {
     return (
@@ -548,7 +303,7 @@ function FormBuilderContent() {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-xl font-semibold">Banco de Questões</h2>
                 <p className="text-sm text-gray-500 mt-1">
@@ -568,7 +323,7 @@ function FormBuilderContent() {
             </div>
 
             {/* Filters and Search */}
-            <div className="p-4 border-b border-gray-200 space-y-3 flex-shrink-0">
+            <div className="p-4 border-b border-gray-200 space-y-3 shrink-0">
               <SearchBar
                 value={searchQuery}
                 onChange={setSearchQuery}

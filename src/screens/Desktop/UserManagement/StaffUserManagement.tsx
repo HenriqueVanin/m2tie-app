@@ -1,25 +1,24 @@
-import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useState } from "react";
 import { Plus, Edit, Trash2, Mail, X, Check, ShieldAlert } from "lucide-react";
-import { getUserCookie } from "../utils/userCookie";
-import { hasPermission, type UserRole } from "../utils/permissions";
-import { Button } from "./ui/button";
-import { ErrorState } from "./ui/error-state";
-import { SearchBar } from "./ui/search-bar";
-import { PageHeaderWithSearch } from "./ui/page-header";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Badge } from "./ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
-import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
+import { Button } from "../../../components/ui/button";
+import { ErrorState } from "../../../components/ui/error-state";
+import { SearchBar } from "../../../components/ui/search-bar";
+import { PageHeaderWithSearch } from "../../../components/ui/page-header";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Badge } from "../../../components/ui/badge";
 import {
-  getAllUsers,
-  deleteUser as deleteUserAPI,
-  updateUser,
-  User as APIUser,
-} from "../services/userService";
-import { authService } from "../services/authService";
-import { getRoleLabel, getRoleColor } from "../utils/roleLabels";
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "../../../components/ui/tabs";
+import { DeleteConfirmationDialog } from "../../../components/ui/delete-confirmation-dialog";
+import { authService } from "../../../services/authService";
+import { updateUser } from "../../../services/userService";
+import { getRoleLabel, getRoleColor } from "../../../utils/roleLabels";
+import { useStaffUserManagement } from "./useStaffUserManagement";
 
 interface User {
   _id: string;
@@ -35,97 +34,37 @@ interface User {
 }
 
 export function StaffUserManagement() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>("student");
-  const [activeTab, setActiveTab] = useState<
-    "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
-  >("all");
-  const [institutionFilter, setInstitutionFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<
-    "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
-  >("all");
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    const user = getUserCookie();
-    if (user?.role) setUserRole(user.role as UserRole);
-  }, []);
-
-  const canManage = hasPermission(userRole, "canManageUsers");
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getAllUsers();
-      setUsers(data);
-    } catch (e: any) {
-      setError(e?.message || "Erro ao carregar usuários");
-      console.error("Error fetching users:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "student" && user.role === "student") ||
-      (activeTab === "teacher_respondent" &&
-        user.role === "teacher_respondent") ||
-      (activeTab === "teacher_analyst" && user.role === "teacher_analyst") ||
-      (activeTab === "admin" && user.role === "admin");
-
-    const matchesRoleFilter = roleFilter === "all" || user.role === roleFilter;
-
-    const matchesInstitutionFilter =
-      institutionFilter === "all" ||
-      (user.institution || "") === institutionFilter;
-
-    return (
-      matchesSearch &&
-      matchesTab &&
-      matchesRoleFilter &&
-      matchesInstitutionFilter
-    );
-  });
-
-  const handleDeleteUser = async (id: string) => {
-    const user = users.find((u) => u._id === id);
-    if (!user) return;
-    setUserToDelete(user);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!userToDelete) return;
-    setDeleting(true);
-    try {
-      await deleteUserAPI(userToDelete._id);
-      setUsers(users.filter((u) => u._id !== userToDelete._id));
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
-    } catch (e: any) {
-      setError(e?.message || "Erro ao excluir usu\u00e1rio");
-    } finally {
-      setDeleting(false);
-    }
-  };
+  const {
+    users,
+    setUsers,
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    showAddModal,
+    setShowAddModal,
+    editingUser,
+    setEditingUser,
+    userRole,
+    setUserRole,
+    activeTab,
+    setActiveTab,
+    institutionFilter,
+    setInstitutionFilter,
+    roleFilter,
+    setRoleFilter,
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+    userToDelete,
+    setUserToDelete,
+    deleting,
+    setDeleting,
+    canManage,
+    fetchUsers,
+    filteredUsers,
+    handleDeleteUser,
+    handleDeleteConfirm,
+  } = useStaffUserManagement();
 
   if (!canManage) {
     return (
