@@ -198,7 +198,7 @@ export function StaffUserManagement() {
               {users.filter((u) => u.role === "teacher_respondent").length})
             </TabsTrigger>
             <TabsTrigger value="teacher_analyst">
-              Prof. Analistas (
+              Prof. Pesquisadors (
               {users.filter((u) => u.role === "teacher_analyst").length})
             </TabsTrigger>
             <TabsTrigger value="admin">
@@ -259,17 +259,19 @@ export function StaffUserManagement() {
                     className="border-b border-gray-200 hover:bg-gray-50"
                   >
                     <td className="px-6 py-4">
-                      <p className="text-gray-800 font-medium">{user.name}</p>
+                      <p className="text-gray-800 font-medium">
+                        {user.anonymous ? "Usuário Anônimo" : user.name}
+                      </p>
                       {user.anonymous && (
-                        <span className="text-xs text-gray-500 italic">
-                          (Anônimo)
+                        <span className="text-xs text-blue-600 font-medium">
+                          (Dados Ocultos)
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Mail className="w-4 h-4" />
-                        {user.email}
+                        {user.anonymous ? "N/A" : user.email}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -574,10 +576,8 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
                 className="w-full h-12 px-3 border border-gray-300 rounded-md bg-white"
               >
                 <option value="student">Estudante</option>
-                <option value="teacher_respondent">
-                  Professor Respondente
-                </option>
-                <option value="teacher_analyst">Professor Analista</option>
+                <option value="teacher_respondent">Professor</option>
+                <option value="teacher_analyst">Pesquisador</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>

@@ -25,7 +25,7 @@ export function StaffNav({
   onLogout,
 }: StaffNavProps) {
   const [name, setName] = useState("");
-  const [userRole, setUserRole] = useState<UserRole>("user");
+  const [userRole, setUserRole] = useState<UserRole>("student");
 
   useEffect(() => {
     const user = getUserCookie();

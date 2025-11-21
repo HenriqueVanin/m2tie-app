@@ -14,6 +14,7 @@ import { Checkbox } from "./ui/checkbox";
 import { authService } from "../services/authService";
 import { UserBackgroundLayout } from "./UserBackgroundLayout";
 import { ROLE_LABELS } from "../utils/roleLabels";
+import { User } from "../services/userService";
 
 interface SignupScreenProps {
   onNavigateToLogin: () => void;
@@ -29,7 +30,7 @@ export function SignupScreen({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<string>("");
+  const [role, setRole] = useState<User["role"]>("student");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [institution, setInstitution] = useState("");
@@ -52,6 +53,14 @@ export function SignupScreen({
       !institution
     ) {
       setError("Todos os campos são obrigatórios");
+      setIsLoading(false);
+      return;
+    }
+
+    // Validar formato de e-mail
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Formato de e-mail inválido");
       setIsLoading(false);
       return;
     }
@@ -223,7 +232,9 @@ export function SignupScreen({
             <Checkbox
               id="anonymous"
               checked={anonymous}
-              onCheckedChange={(checked) => setAnonymous(checked === true)}
+              onCheckedChange={(checked: boolean) =>
+                setAnonymous(checked === true)
+              }
             />
             <label
               htmlFor="anonymous"

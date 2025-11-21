@@ -1,11 +1,20 @@
-import { Mail, Lock, HelpCircle, ChevronRight } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  HelpCircle,
+  ChevronRight,
+  MapPin,
+  Building2,
+} from "lucide-react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import type { Screen } from "../App";
 import { useEffect, useState } from "react";
 import { getUserCookie, getUserInitials } from "../utils/userCookie";
+import { getUserFromToken } from "../utils/auth";
 import { ScreenHeader } from "./ui/screen-header";
 import { UserBackgroundLayout } from "./UserBackgroundLayout";
+import { getUserById, type User } from "../services/userService";
 
 interface ProfileScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -15,15 +24,39 @@ interface ProfileScreenProps {
 export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [institution, setInstitution] = useState("Universidade"); // placeholder sem backend
+  const [institution, setInstitution] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    const user = getUserCookie();
-    if (user) {
-      setName(user.name || "Usuário");
-      setEmail(user.email || "");
+    async function loadUserData() {
+      const tokenData = getUserFromToken();
+      if (tokenData && tokenData.userId) {
+        try {
+          const userData = await getUserById(tokenData.userId);
+          setName(userData.name || "Usuário");
+          setEmail(userData.email || "");
+          setInstitution(userData.institution || "");
+          setCity(userData.city || "");
+          setState(userData.state || "");
+        } catch (error) {
+          console.error("Erro ao carregar dados do usuário:", error);
+          // Fallback para dados do token
+          setName(tokenData.name || "Usuário");
+          setEmail("");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
     }
+    loadUserData();
   }, []);
+
   const initials = getUserInitials(name);
+  const location = [city, state].filter(Boolean).join(" - ") || "Não informado";
   return (
     <UserBackgroundLayout>
       <ScreenHeader
@@ -42,7 +75,9 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
             </div>
             <div className="text-center">
               <p className="text-gray-900">{name || "Usuário"}</p>
-              <p className="text-sm text-gray-500">{institution}</p>
+              {institution && (
+                <p className="text-sm text-gray-500">{institution}</p>
+              )}
             </div>
           </div>
 
@@ -55,18 +90,6 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
               <Input
                 id="name"
                 value={name}
-                readOnly
-                className="h-12 border-gray-200 bg-white rounded-xl"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="institution" className="text-gray-700 text-sm">
-                Instituição
-              </Label>
-              <Input
-                id="institution"
-                value={institution}
                 readOnly
                 className="h-12 border-gray-200 bg-white rounded-xl"
               />
@@ -86,6 +109,40 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
                 />
               </div>
             </div>
+
+            {institution && (
+              <div className="space-y-2">
+                <Label htmlFor="institution" className="text-gray-700 text-sm">
+                  Instituição
+                </Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="institution"
+                    value={institution}
+                    readOnly
+                    className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
+                  />
+                </div>
+              </div>
+            )}
+
+            {(city || state) && (
+              <div className="space-y-2">
+                <Label htmlFor="location" className="text-gray-700 text-sm">
+                  Localização
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Input
+                    id="location"
+                    value={location}
+                    readOnly
+                    className="h-12 border-gray-200 pl-11 bg-white rounded-xl"
+                  />
+                </div>
+              </div>
+            )}
             {/* Ações movidas de Configurações */}
             <div className="pt-4 mt-2 border-t border-gray-200 space-y-2 pt-6">
               <div className="divide-y divide-gray-100 rounded-2xl border border-gray-100 overflow-hidden">

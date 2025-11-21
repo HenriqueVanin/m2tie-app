@@ -167,9 +167,9 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
           </div>
 
           {/* Última Anotação do Diário */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-2xl p-5 shadow-sm">
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-50 border border-emerald-200 rounded-2xl p-5 shadow-sm">
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 mb-4 rounded-xl flex items-center justify-center flex-shrink-0">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
@@ -191,7 +191,7 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
                 )}
               </div>
             </div>
-            <div className="bg-white/50 rounded-xl p-4 border border-indigo-100">
+            <div className="bg-white/50 rounded-xl p-4 border border-emerald-100">
               {lastDiaryEntry ? (
                 <p className="text-sm text-gray-700 line-clamp-4 whitespace-pre-wrap">
                   {lastDiaryEntry.text}
@@ -203,14 +203,22 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
                 </p>
               )}
             </div>
-            <button
-              onClick={() => onNavigate("diary")}
-              className="mt-3 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-            >
-              {lastDiaryEntry
-                ? "Ver diário completo →"
-                : "Começar a escrever →"}
-            </button>
+            {lastDiaryEntry ? (
+              <button
+                onClick={() => onNavigate("diary")}
+                className="mt-3 text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors cursor-pointer"
+              >
+                Ver diário completo →
+              </button>
+            ) : (
+              <button
+                onClick={() => onNavigate("diary")}
+                className="mt-4 w-full h-12 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+              >
+                <Plus className="w-5 h-5" />
+                Começar a escrever
+              </button>
+            )}
           </div>
 
           {/* Your Schedule */}

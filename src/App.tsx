@@ -98,7 +98,9 @@ function AppContent() {
     const user = getUserFromToken();
     if (user) {
       const type: UserType =
-        user.role === "staff" || user.role === "admin" ? "staff" : "user";
+        user.role === "teacher_analyst" || user.role === "admin"
+          ? "staff"
+          : "user";
       setIsAuthenticated(true);
       setUserType(type);
       if (["/", "/login", "/signup"].includes(location.pathname)) {

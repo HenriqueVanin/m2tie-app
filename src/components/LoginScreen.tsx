@@ -32,6 +32,17 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const passwordValid = password.length >= 4;
 
   const handleLogin = async () => {
+    // Validação de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !password) {
+      setError("Email e senha são obrigatórios");
+      return;
+    }
+    if (!emailRegex.test(email)) {
+      setError("Formato de e-mail inválido");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     try {
@@ -56,7 +67,9 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
         });
       }
       const userType: UserType =
-        decoded.role === "staff" || decoded.role === "admin" ? "staff" : "user";
+        decoded.role === "teacher_analyst" || decoded.role === "admin"
+          ? "staff"
+          : "user";
       onLogin(userType);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao fazer login");

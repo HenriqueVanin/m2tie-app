@@ -7,8 +7,8 @@ export type UserRole =
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: "Administrador",
-  teacher_analyst: "Professor Analista",
-  teacher_respondent: "Professor Respondente",
+  teacher_analyst: "Pesquisador",
+  teacher_respondent: "Professor",
   student: "Estudante",
 };
 

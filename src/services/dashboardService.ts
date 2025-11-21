@@ -103,23 +103,73 @@ export const dashboardService = {
   },
 
   /**
-   * Exporta dados do formulário em formato tabular
+   * Exporta dados do formulário em formato tabular (ADMIN)
    * @param formId - ID do formulário
    * @returns Dados formatados para exportação CSV/Excel
    */
-  async exportFormData(formId: string): Promise<ExportDataResponse> {
-    const response = await api.get(`/dashboards/export/${formId}`);
+  async exportFormDataAdmin(formId: string): Promise<ExportDataResponse> {
+    const response = await api.get(`/dashboards/admins/export/${formId}`);
     return response.data;
   },
 
   /**
-   * Obtém todas as respostas brutas do formulário
+   * Exporta dados do formulário em formato tabular (ANALYST)
+   * @param formId - ID do formulário
+   * @returns Dados formatados para exportação CSV/Excel (com anonimização)
+   */
+  async exportFormDataAnalyst(formId: string): Promise<ExportDataResponse> {
+    const response = await api.get(`/dashboards/analysts/export/${formId}`);
+    return response.data;
+  },
+
+  /**
+   * Obtém todas as respostas brutas do formulário (ADMIN)
    * @param formId - ID do formulário
    * @returns Todas as respostas sem processamento estatístico
    */
-  async getAllResponses(formId: string): Promise<AllResponsesResponse> {
-    const response = await api.get(`/dashboards/${formId}`);
+  async getAllResponsesAdmin(formId: string): Promise<AllResponsesResponse> {
+    const response = await api.get(`/dashboards/admins/${formId}`);
     return response.data;
+  },
+
+  /**
+   * Obtém todas as respostas brutas do formulário (ANALYST)
+   * @param formId - ID do formulário
+   * @returns Todas as respostas sem processamento estatístico (com anonimização)
+   */
+  async getAllResponsesAnalyst(formId: string): Promise<AllResponsesResponse> {
+    const response = await api.get(`/dashboards/analysts/${formId}`);
+    return response.data;
+  },
+
+  /**
+   * Exporta dados do formulário baseado no role do usuário
+   * @param formId - ID do formulário
+   * @param role - Role do usuário ("admin" ou "teacher_analyst")
+   * @returns Dados formatados para exportação
+   */
+  async exportFormData(
+    formId: string,
+    role: string
+  ): Promise<ExportDataResponse> {
+    return role === "admin"
+      ? this.exportFormDataAdmin(formId)
+      : this.exportFormDataAnalyst(formId);
+  },
+
+  /**
+   * Obtém todas as respostas brutas baseado no role do usuário
+   * @param formId - ID do formulário
+   * @param role - Role do usuário ("admin" ou "teacher_analyst")
+   * @returns Todas as respostas sem processamento
+   */
+  async getAllResponses(
+    formId: string,
+    role: string
+  ): Promise<AllResponsesResponse> {
+    return role === "admin"
+      ? this.getAllResponsesAdmin(formId)
+      : this.getAllResponsesAnalyst(formId);
   },
 };
 

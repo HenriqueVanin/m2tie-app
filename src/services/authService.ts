@@ -19,7 +19,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   confirmPassword: string;
-  role: string;
+  role: "admin" | "student" | "teacher_analyst" | "teacher_respondent";
   city: string;
   state: string;
   institution: string;

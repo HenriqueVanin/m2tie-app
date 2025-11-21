@@ -313,7 +313,9 @@ function FormBuilderContent() {
     try {
       console.log("Loading form with ID:", id);
       setIsLoading(true);
-      const form = await getFormById(id);
+      const user = getUserCookie();
+      const userRole = user?.role || "admin";
+      const form = await getFormById(id, userRole);
 
       setFormId(form._id);
       setFormTitle(form.title);

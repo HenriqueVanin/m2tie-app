@@ -5,6 +5,8 @@ import {
   ChevronRight,
   Loader2,
   CheckCircle2,
+  FileText,
+  Calendar,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -34,65 +36,84 @@ interface FormWizardScreenProps {
 }
 
 export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
+  const [availableForms, setAvailableForms] = useState<Form[]>([]);
+  const [selectedFormIndex, setSelectedFormIndex] = useState<number | null>(
+    null
+  );
   const [form, setForm] = useState<Form | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [alreadyAnswered, setAlreadyAnswered] = useState(false);
-  const [responseDate, setResponseDate] = useState<string | null>(null);
+  const [allFormsAnswered, setAllFormsAnswered] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [showFormList, setShowFormList] = useState(false);
+  const [hasVisitedReview, setHasVisitedReview] = useState(false);
 
   const totalSteps = (form?.questions?.length || 0) + 1; // +1 para a etapa de revisão
   const isReviewStep = currentStep === (form?.questions?.length || 0);
   const currentQuestion = isReviewStep ? null : form?.questions?.[currentStep];
 
   useEffect(() => {
-    fetchActiveForm();
+    fetchActiveForms();
   }, []);
 
-  const fetchActiveForm = async () => {
+  useEffect(() => {
+    if (isReviewStep) setHasVisitedReview(true);
+  }, [isReviewStep]);
+
+  const fetchActiveForms = async () => {
     try {
       setLoading(true);
       setError(null);
       const response = await getActiveForm();
       console.log(response);
-      // Verificar se houve erro ou formulário já respondido
+
+      // Caso 1: Nenhum formulário ativo (msg específica ou data vazio)
       if (
-        response.error ||
-        response.msg === "Nenhum formulário ativo encontrado para este usuário"
+        response.msg ===
+          "Nenhum formulário ativo encontrado para este usuário" ||
+        !response.data ||
+        (Array.isArray(response.data) && response.data.length === 0)
       ) {
-        setAlreadyAnswered(true);
-        setResponseDate(new Date().toLocaleDateString("pt-BR"));
-        // Se houver dados do formulário, manté-los para exibir o nome
-        if (response.data) {
-          // Se a API retornar um array, usar o primeiro formulário
-          setForm(
-            Array.isArray(response.data) ? response.data[0] : response.data
-          );
-        }
-        return;
-      }
-      // Se data for null ou undefined, não há formulário ativo
-      if (!response.data) {
-        setError("Nenhum formulário ativo disponível no momento.");
+        setAllFormsAnswered(true);
         return;
       }
 
-      // Se vier um array vazio
-      if (Array.isArray(response.data) && response.data.length === 0) {
-        setError("Nenhum formulário ativo disponível no momento.");
+      // Caso 2: Erro genérico
+      if (response.error) {
+        setError(response.error);
         return;
       }
 
-      // Aceitar tanto objeto único quanto array
-      setForm(Array.isArray(response.data) ? response.data[0] : response.data);
+      // Caso 3: Formulários disponíveis
+      const forms = Array.isArray(response.data)
+        ? response.data
+        : [response.data];
+      setAvailableForms(forms);
+
+      // Se houver apenas um formulário, selecionar automaticamente
+      if (forms.length === 1) {
+        setForm(forms[0]);
+        setSelectedFormIndex(0);
+      } else {
+        // Múltiplos formulários: mostrar tela de seleção
+        setShowFormList(true);
+      }
     } catch (e: any) {
-      setError(e?.message || "Erro ao carregar formulário");
+      setError(e?.message || "Erro ao carregar formulários");
     } finally {
       setLoading(false);
     }
+  };
+
+  const selectForm = (index: number) => {
+    setForm(availableForms[index]);
+    setSelectedFormIndex(index);
+    setShowFormList(false);
+    setAnswers({});
+    setCurrentStep(0);
   };
 
   const handleAnswerChange = (questionId: string, value: any) => {
@@ -124,6 +145,17 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   };
 
   const prevStep = () => {
+    if (currentStep === 0 && availableForms.length > 1) {
+      setForm(null);
+      setSelectedFormIndex(null);
+      setShowFormList(true);
+      setAnswers({});
+      setCurrentStep(0);
+      return;
+    } else if (currentStep === 0 && availableForms.length > 1) {
+      onNavigate("home");
+    }
+
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
@@ -131,6 +163,17 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
 
   const goToQuestion = (questionIndex: number) => {
     setCurrentStep(questionIndex);
+  };
+
+  // Verifica se todas as questões obrigatórias até a etapa atual estão respondidas
+  // Now this helper returns true only if the user has visited the review
+  // screen at least once. That means they had the opportunity to check
+  // all answers before submitting.
+  const areRequiredQuestionsAnswered = (
+    _frm: Form | null,
+    _ans: Record<string, any>
+  ) => {
+    return hasVisitedReview === true;
   };
 
   const handleSubmit = async () => {
@@ -155,13 +198,39 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       // Verificar se houve erro na resposta
       if (response.error) {
         // Caso especial: formulário já respondido
-        if (response.msg === "Formulário já respondido") {
-          setAlreadyAnswered(true);
-          setResponseDate(new Date().toLocaleDateString("pt-BR"));
+        if (
+          response.error === "Você já respondeu este formulário" ||
+          response.msg === "Formulário já respondido"
+        ) {
+          // Remover formulário atual da lista
+          const updatedForms = availableForms.filter(
+            (_, idx) => idx !== selectedFormIndex
+          );
+          setAvailableForms(updatedForms);
+
+          // Se não houver mais formulários, mostrar tela de conclusão
+          if (updatedForms.length === 0) {
+            setAllFormsAnswered(true);
+            setSubmissionSuccess(false);
+            return;
+          }
+
+          // Caso contrário, mostrar lista de formulários restantes
+          setShowFormList(true);
+          setForm(null);
+          setSelectedFormIndex(null);
+          setAnswers({});
+          setCurrentStep(0);
           return;
         }
         throw new Error(response.error);
       }
+
+      // Remover formulário respondido da lista
+      const updatedForms = availableForms.filter(
+        (_, idx) => idx !== selectedFormIndex
+      );
+      setAvailableForms(updatedForms);
 
       // Marcar submissão como bem-sucedida
       setSubmissionSuccess(true);
@@ -188,6 +257,11 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
 
   // Submission success state
   if (submissionSuccess) {
+    const remainingForms = availableForms.filter(
+      (_, idx) => idx !== selectedFormIndex
+    );
+    const hasMoreForms = remainingForms.length > 0;
+
     return (
       <UserBackgroundLayout centered>
         <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-6">
@@ -196,10 +270,10 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           </div>
 
           <div className="text-center space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-white text-3xl font-bold">
+            <h1 className="text-white text-2xl font-bold">
               Formulário Enviado!
             </h1>
-            <p className="text-white text-md">
+            <p className="text-white text-sm">
               Suas respostas foram registradas com sucesso.
             </p>
           </div>
@@ -221,19 +295,49 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             </div>
           )}
 
-          <Button
-            onClick={() => onNavigate("home")}
-            className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300"
-          >
-            Voltar para Home
-          </Button>
+          {hasMoreForms ? (
+            <>
+              <p className="text-white/90 text-center">
+                Você ainda tem {remainingForms.length} formulário
+                {remainingForms.length > 1 ? "s" : ""} para responder
+              </p>
+              <Button
+                onClick={() => {
+                  setSubmissionSuccess(false);
+                  if (remainingForms.length === 1) {
+                    // Se só resta um, ir direto para ele
+                    selectForm(0);
+                    setAvailableForms(remainingForms);
+                  } else {
+                    // Se tem mais de um, mostrar lista
+                    setShowFormList(true);
+                    setAvailableForms(remainingForms);
+                    setForm(null);
+                    setSelectedFormIndex(null);
+                  }
+                }}
+                className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 cursor-pointer"
+              >
+                {remainingForms.length === 1
+                  ? "Responder Próximo"
+                  : "Ver Formulários Restantes"}
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => onNavigate("home")}
+              className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 cursor-pointer"
+            >
+              Voltar para Home
+            </Button>
+          )}
         </div>
       </UserBackgroundLayout>
     );
   }
 
-  // Already answered state
-  if (alreadyAnswered) {
+  // All forms answered state
+  if (allFormsAnswered) {
     return (
       <UserBackgroundLayout centered>
         <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-6">
@@ -242,38 +346,85 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           </div>
 
           <div className="text-center space-y-3">
-            <h1 className="text-white text-3xl font-bold">
-              Formulário já Respondido!
-            </h1>
+            <h1 className="text-white text-2xl font-bold">Tudo Respondido!</h1>
+            <p className="text-white text-sm">
+              Você já respondeu todos os formulários ativos disponíveis.
+            </p>
           </div>
-
-          {form && (
-            <div className="w-full max-w-sm p-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl space-y-2">
-              <div className="text-center">
-                <p className="text-white text-sm mb-1">Formulário</p>
-                <p className="text-white font-semibold text-base">
-                  {form.formTitle}
-                </p>
-              </div>
-              {responseDate && (
-                <div className="pt-2 border-t border-white/20 text-center">
-                  <p className="text-white text-sm mb-1 mt-2">
-                    Data de resposta
-                  </p>
-                  <p className="text-white font-semibold text-base">
-                    {responseDate}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
 
           <Button
             onClick={() => onNavigate("home")}
-            className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg"
+            className="w-full max-w-sm h-14 bg-white text-emerald-600 hover:bg-emerald-50 font-semibold rounded-2xl shadow-lg cursor-pointer"
           >
             Voltar para Home
           </Button>
+        </div>
+      </UserBackgroundLayout>
+    );
+  }
+
+  // Form selection screen (multiple forms available)
+  if (showFormList && availableForms.length > 0) {
+    return (
+      <UserBackgroundLayout>
+        <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
+          <div className="flex items-center gap-4 mb-4">
+            <button
+              onClick={() => onNavigate("home")}
+              className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-6 h-6 text-white" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-white text-xl font-bold">
+                Formulários Disponíveis
+              </h1>
+              <p className="text-sm text-indigo-100">
+                Selecione um formulário para responder
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+          {availableForms.map((formItem, index) => (
+            <div
+              key={formItem._id}
+              onClick={() => selectForm(index)}
+              className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-indigo-300"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">
+                    {formItem.title}
+                  </h3>
+                  {formItem.description && (
+                    <p className="text-sm text-gray-600 mb-3">
+                      {formItem.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5" />
+                      {formItem.questions?.length || 0} questões
+                    </span>
+                    {formItem.createdAt && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(formItem.createdAt).toLocaleDateString(
+                          "pt-BR"
+                        )}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+            </div>
+          ))}
         </div>
       </UserBackgroundLayout>
     );
@@ -284,7 +435,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
     return (
       <UserBackgroundLayout centered>
         <div className="flex items-center justify-center flex-1 bg-gray-50 p-6">
-          <ErrorState message={error} onRetry={fetchActiveForm} />
+          <ErrorState message={error} onRetry={fetchActiveForms} />
         </div>
       </UserBackgroundLayout>
     );
@@ -313,9 +464,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
       <div className="p-6 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-lg">
         <div className="flex items-center gap-4 mb-6">
           <button
-            onClick={() =>
-              currentStep === 1 ? onNavigate("home") : prevStep()
-            }
+            onClick={prevStep}
             className="p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors"
           >
             <ArrowLeft className="w-6 h-6 text-white" />
@@ -394,7 +543,18 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
         </Button>
         {currentStep > 0 && (
           <Button
-            onClick={prevStep}
+            onClick={() => {
+              // Se houver mais de um formulário disponível, voltar para tela intermediária
+              if (availableForms.length > 1) {
+                setForm(null);
+                setSelectedFormIndex(null);
+                setShowFormList(true);
+                setAnswers({});
+                setCurrentStep(0);
+              } else {
+                prevStep();
+              }
+            }}
             disabled={submitting}
             variant="outline"
             className="w-full h-12 border-2 border-gray-200 rounded-2xl"
@@ -441,7 +601,7 @@ function ReviewStep({ form, answers, onEditQuestion }: ReviewStepProps) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-xl font-bold text-gray-900 mb-2">
           Revisão das Respostas
         </h2>
         <p className="text-gray-600">
@@ -514,7 +674,7 @@ function QuestionRenderer({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2">{questionDetails.title}</h2>
+        <h2 className="text-lg font-semibold mb-2">{questionDetails.title}</h2>
         {question.required && (
           <p className="text-sm text-red-600">* Obrigatório</p>
         )}
@@ -653,7 +813,7 @@ function QuestionRenderer({
                       <button
                         type="button"
                         onClick={() => onChange(option.value || option.label)}
-                        className={`relative w-full aspect-square flex items-center justify-center text-2xl font-bold rounded-2xl transition-all duration-300 ${
+                        className={`relative w-full aspect-square flex items-center justify-center text-xl font-bold rounded-2xl transition-all duration-300 ${
                           isSelected
                             ? `bg-gradient-to-br ${colorClass} text-white shadow-2xl transform scale-110 ring-4 ring-offset-2 ring-${
                                 percentage > 66

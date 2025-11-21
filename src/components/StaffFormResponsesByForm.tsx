@@ -29,18 +29,24 @@ import {
   updateForm,
   type Form,
 } from "../services/formService";
-import { getAllUsers, type User } from "../services/userService";
+import {
+  getAllUsers,
+  getAssignableUsers,
+  type User,
+} from "../services/userService";
 import {
   getFormRespondents,
   type Respondent,
 } from "../services/responseService";
 import { getRoleLabel, getRoleColor } from "../utils/roleLabels";
+import { getUserCookie } from "../utils/userCookie";
 
 interface UserWithResponse {
   _id: string | null;
   name: string;
   email: string;
   role: string;
+  anonymous?: boolean;
   responded: boolean;
   submittedAt?: string;
   responseId?: string;
@@ -91,17 +97,42 @@ export function StaffFormResponsesByForm() {
   ) => {
     setLoadingRespondents((prev) => ({ ...prev, [formId]: true }));
     try {
-      const response = await getFormRespondents(formId);
+      const user = getUserCookie();
+      const userRole = user?.role || "teacher_analyst";
+      const response = await getFormRespondents(formId, userRole);
 
       if (response.error) {
         console.error("Error loading respondents:", response.error);
         return null;
       }
 
-      // Filtrar usuários atribuídos
-      const assignedUsers = users.filter((u) =>
-        assignedUserIds.includes(u._id)
-      );
+      // Se users está vazio (analyst), buscar os dados dos usuários atribuídos do backend
+      let assignedUsers: User[] = [];
+
+      if (users.length === 0 && assignedUserIds.length > 0) {
+        // Buscar detalhes do formulário para obter dados completos dos usuários
+        try {
+          const formDetails = await getFormById(formId, userRole);
+          assignedUsers = formDetails.assignedUsers
+            .filter((u): u is User => typeof u !== "string")
+            .map((u) => ({
+              _id: u._id,
+              name: u.name || "Usuário Anônimo",
+              email: u.email || "-",
+              role: u.role || "Anonimo",
+              anonymous: u.anonymous,
+              city: u.city || "-",
+              state: u.state || "-",
+              institution: u.institution || "-",
+            }));
+        } catch (err) {
+          console.error("Error fetching form details for assigned users:", err);
+          return null;
+        }
+      } else {
+        // Usar o array de users passado (caso admin)
+        assignedUsers = users.filter((u) => assignedUserIds.includes(u._id));
+      }
 
       // Criar mapa de respondentes
       const respondentsMap = new Map<string, Respondent>();
@@ -120,6 +151,7 @@ export function StaffFormResponsesByForm() {
             name: user.name,
             email: user.email,
             role: user.role,
+            anonymous: user.anonymous,
             responded: !!respondent,
             submittedAt: respondent?.submittedAt,
             responseId: respondent?.responseId,
@@ -143,6 +175,10 @@ export function StaffFormResponsesByForm() {
     }
   };
 
+  // Verificar se o usuário é analyst (sem permissões de edição)
+  const currentUser = getUserCookie();
+  const isAnalyst = currentUser?.role === "teacher_analyst";
+
   // Fetch forms from API
   useEffect(() => {
     let isMounted = true;
@@ -158,9 +194,13 @@ export function StaffFormResponsesByForm() {
       setLoading(true);
       setError(null);
       try {
+        const user = getUserCookie();
+        const userRole = user?.role;
+
+        // Analyst não precisa carregar lista de usuários (não pode editar)
         const [apiForms, users] = await Promise.all([
-          getAllForms(),
-          getAllUsers(),
+          getAllForms(userRole),
+          isAnalyst ? Promise.resolve([]) : getAssignableUsers(), // Apenas usuários que podem ser atribuídos a formulários
         ]);
 
         if (!isMounted) return;
@@ -182,8 +222,6 @@ export function StaffFormResponsesByForm() {
           formsList = Array.isArray(apiForms.data) ? apiForms.data : [];
         }
 
-        console.log("Forms list:", formsList);
-
         const mapped: FormWithStudents[] = formsList.map((f: any) => ({
           id: f._id || f.id || "unknown",
           title: f.title || "Sem título",
@@ -196,7 +234,6 @@ export function StaffFormResponsesByForm() {
           assignedUserIds: f.assignedUsers?.map((u: any) => u._id || u) || [],
         }));
 
-        console.log("Mapped forms:", mapped);
         setForms(mapped);
 
         // Carregar respondentes para todos os formulários em paralelo
@@ -205,7 +242,6 @@ export function StaffFormResponsesByForm() {
             loadRespondentsForForm(form.id, users, form.assignedUserIds)
           )
         );
-
         if (!isMounted) return;
 
         // Atualizar formulários com dados de respondentes
@@ -218,7 +254,6 @@ export function StaffFormResponsesByForm() {
         });
 
         setForms(updatedForms);
-
         // Auto-expand the active form
         const activeForm = updatedForms.find((f) => f.isActive);
         if (activeForm) {
@@ -251,7 +286,9 @@ export function StaffFormResponsesByForm() {
     // Se não tiver IDs no estado, buscar do backend
     if (assignedUserIds.length === 0) {
       try {
-        const formDetails = await getFormById(formId);
+        const user = getUserCookie();
+        const userRole = user?.role || "teacher_analyst";
+        const formDetails = await getFormById(formId, userRole);
         assignedUserIds = formDetails.assignedUsers.map((u) =>
           typeof u === "string" ? u : u._id
         );
@@ -474,7 +511,9 @@ export function StaffFormResponsesByForm() {
   ) => {
     e.stopPropagation();
     try {
-      const form = await getFormById(formId);
+      const user = getUserCookie();
+      const userRole = user?.role || "teacher_analyst";
+      const form = await getFormById(formId, userRole);
       setViewFormModal(form);
     } catch (err: any) {
       alert(err?.message || "Erro ao carregar formulário");
@@ -662,29 +701,33 @@ export function StaffFormResponsesByForm() {
                         Ver
                       </Button>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-                          handleEditForm(form.id, e)
-                        }
-                        className="gap-2"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Editar
-                      </Button>
+                      {!isAnalyst && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                              handleEditForm(form.id, e)
+                            }
+                            className="gap-2"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar
+                          </Button>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-                          handleDeleteForm(form.id, e)
-                        }
-                        className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Excluir
-                      </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
+                              handleDeleteForm(form.id, e)
+                            }
+                            className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </Button>
+                        </>
+                      )}
 
                       <div className="text-gray-400">
                         {form.isActive ? (
@@ -715,18 +758,20 @@ export function StaffFormResponsesByForm() {
                           <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
                               <tr>
-                                <th className="text-left px-6 py-3 w-12">
-                                  <input
-                                    type="checkbox"
-                                    checked={
-                                      form.respondents.length > 0 &&
-                                      (selectedUsers[form.id]?.size || 0) ===
-                                        form.respondents.length
-                                    }
-                                    onChange={() => toggleSelectAll(form.id)}
-                                    className="w-4 h-4 rounded border-gray-300"
-                                  />
-                                </th>
+                                {!isAnalyst && (
+                                  <th className="text-left px-6 py-3 w-12">
+                                    <input
+                                      type="checkbox"
+                                      checked={
+                                        form.respondents.length > 0 &&
+                                        (selectedUsers[form.id]?.size || 0) ===
+                                          form.respondents.length
+                                      }
+                                      onChange={() => toggleSelectAll(form.id)}
+                                      className="w-4 h-4 rounded border-gray-300"
+                                    />
+                                  </th>
+                                )}
                                 <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
                                   Nome
                                 </th>
@@ -734,26 +779,29 @@ export function StaffFormResponsesByForm() {
                                   Email
                                 </th>
                                 <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-                                  Função
+                                  Cargo
                                 </th>
                                 <th className="text-left px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
                                   Status
                                 </th>
-                                <th className="text-right px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
-                                  {(selectedUsers[form.id]?.size || 0) > 0 && (
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleRemoveSelectedUsers(form.id)
-                                      }
-                                      className="gap-1 text-red-600 hover:bg-red-50 border-red-200"
-                                    >
-                                      <UserMinus className="w-4 h-4" />
-                                      Remover ({selectedUsers[form.id]?.size})
-                                    </Button>
-                                  )}
-                                </th>
+                                {!isAnalyst && (
+                                  <th className="text-right px-6 py-3 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    {(selectedUsers[form.id]?.size || 0) >
+                                      0 && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() =>
+                                          handleRemoveSelectedUsers(form.id)
+                                        }
+                                        className="gap-1 text-red-600 hover:bg-red-50 border-red-200"
+                                      >
+                                        <UserMinus className="w-4 h-4" />
+                                        Remover ({selectedUsers[form.id]?.size})
+                                      </Button>
+                                    )}
+                                  </th>
+                                )}
                               </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-900">
@@ -764,29 +812,33 @@ export function StaffFormResponsesByForm() {
                                       key={user._id || user.email}
                                       className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                                     >
-                                      <td className="px-6 py-4">
-                                        <input
-                                          type="checkbox"
-                                          checked={selectedUsers[form.id]?.has(
-                                            user._id || ""
-                                          )}
-                                          onChange={() =>
-                                            toggleUserSelection(
-                                              form.id,
-                                              user._id || ""
-                                            )
-                                          }
-                                          className="w-4 h-4 rounded border-gray-300"
-                                        />
-                                      </td>
+                                      {!isAnalyst && (
+                                        <td className="px-6 py-4">
+                                          <input
+                                            type="checkbox"
+                                            checked={selectedUsers[
+                                              form.id
+                                            ]?.has(user._id || "")}
+                                            onChange={() =>
+                                              toggleUserSelection(
+                                                form.id,
+                                                user._id || ""
+                                              )
+                                            }
+                                            className="w-4 h-4 rounded border-gray-300"
+                                          />
+                                        </td>
+                                      )}
                                       <td className="px-6 py-4">
                                         <p className="text-gray-800 dark:text-gray-200 font-medium">
-                                          {user.name}
+                                          {user.anonymous
+                                            ? "Usuário Anônimo"
+                                            : user.name}
                                         </p>
                                       </td>
                                       <td className="px-6 py-4">
                                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                                          {user.email}
+                                          {user.anonymous ? "N/A" : user.email}
                                         </p>
                                       </td>
                                       <td className="px-6 py-4">
@@ -816,45 +868,51 @@ export function StaffFormResponsesByForm() {
                                           </Badge>
                                         )}
                                       </td>
-                                      <td className="px-6 py-4"></td>
+                                      {!isAnalyst && (
+                                        <td className="px-6 py-4"></td>
+                                      )}
                                     </tr>
                                   ))}
-                                  {/* Linha para adicionar usuários */}
-                                  <tr className="border-t-2 border-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    <td colSpan={6} className="px-6 py-4">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleOpenAddUserModal(form.id)
-                                        }
-                                        className="w-full gap-2 border-dashed border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600"
-                                      >
-                                        <UserPlus className="w-4 h-4" />
-                                        Adicionar Usuários
-                                      </Button>
-                                    </td>
-                                  </tr>
+                                  {/* Linha para adicionar usuários - apenas para admin */}
+                                  {!isAnalyst && (
+                                    <tr className="border-t-2 border-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                      <td colSpan={6} className="px-6 py-4">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleOpenAddUserModal(form.id)
+                                          }
+                                          className="w-full gap-2 border-dashed border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                                        >
+                                          <UserPlus className="w-4 h-4" />
+                                          Adicionar Usuários
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  )}
                                 </>
                               ) : (
                                 <tr>
                                   <td
-                                    colSpan={6}
+                                    colSpan={isAnalyst ? 5 : 6}
                                     className="px-6 py-8 text-center text-gray-500"
                                   >
                                     <div className="flex flex-col items-center gap-3">
                                       <p>Nenhum usuário atribuído</p>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleOpenAddUserModal(form.id)
-                                        }
-                                        className="gap-2"
-                                      >
-                                        <UserPlus className="w-4 h-4" />
-                                        Adicionar Usuários
-                                      </Button>
+                                      {!isAnalyst && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleOpenAddUserModal(form.id)
+                                          }
+                                          className="gap-2"
+                                        >
+                                          <UserPlus className="w-4 h-4" />
+                                          Adicionar Usuários
+                                        </Button>
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
@@ -878,7 +936,7 @@ export function StaffFormResponsesByForm() {
           open={!!viewFormModal}
           onOpenChange={() => setViewFormModal(null)}
         >
-          <DialogContent className="max-w-3xl  overflow-auto flex flex-col h-full  overflow-auto">
+          <DialogContent className="max-w-3xl overflow-auto flex flex-col h-full  overflow-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
@@ -1075,7 +1133,7 @@ function AddUsersModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl w-full max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-3xl sm:max-w-3xl w-full h-[600px] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
@@ -1083,9 +1141,9 @@ function AddUsersModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 flex-1 overflow-hidden">
+        <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-2">
           {/* Barra de busca e filtros */}
-          <div className="space-y-3">
+          <div className="space-y-3 flex-shrink-0">
             <div className="flex gap-2">
               <Input
                 placeholder="Buscar por nome ou email..."
@@ -1154,7 +1212,7 @@ function AddUsersModal({
           </div>
 
           {/* Informações */}
-          <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center justify-between text-sm text-gray-600 flex-shrink-0">
             <div>
               <span>
                 {filteredUsers.length} de {availableUsers.length} usuário(s)
@@ -1175,98 +1233,104 @@ function AddUsersModal({
           </div>
 
           {/* Lista de usuários */}
-          <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg">
-            {filteredUsers.length === 0 ? (
-              <div className="flex items-center justify-center h-full p-8 text-gray-500">
-                {availableUsers.length === 0
-                  ? "Todos os usuários já estão atribuídos a este formulário"
-                  : "Nenhum usuário encontrado"}
-              </div>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
-                  <tr>
-                    <th className="text-left px-4 py-3 w-12">
-                      <input
-                        type="checkbox"
-                        checked={
-                          filteredUsers.length > 0 &&
-                          selectedUserIds.size === filteredUsers.length
-                        }
-                        onChange={toggleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300"
-                      />
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
-                      Nome
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
-                      Email
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
-                      Instituição / Localização
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
-                      Função
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-900">
-                  {filteredUsers.map((user) => (
-                    <tr
-                      key={user._id}
-                      className="border-t border-gray-200 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => toggleUserSelection(user._id)}
-                    >
-                      <td className="px-4 py-3">
+          <div className="flex-1 min-h-0 border border-gray-200 rounded-lg overflow-hidden">
+            <div className="overflow-y-auto h-full">
+              {filteredUsers.length === 0 ? (
+                <div className="flex items-center justify-center h-full p-8 text-gray-500">
+                  {availableUsers.length === 0
+                    ? "Todos os usuários já estão atribuídos a este formulário"
+                    : "Nenhum usuário encontrado"}
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+                    <tr>
+                      <th className="text-left px-4 py-3 w-12">
                         <input
                           type="checkbox"
-                          checked={selectedUserIds.has(user._id)}
-                          onChange={() => toggleUserSelection(user._id)}
+                          checked={
+                            filteredUsers.length > 0 &&
+                            selectedUserIds.size === filteredUsers.length
+                          }
+                          onChange={toggleSelectAll}
                           className="w-4 h-4 rounded border-gray-300"
-                          onClick={(e) => e.stopPropagation()}
                         />
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-800">{user.name}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm text-gray-600">
-                          {user.institution && (
-                            <p className="font-medium text-gray-800">
-                              {user.institution}
-                            </p>
-                          )}
-                          {(user.city || user.state) && (
-                            <p className="text-xs text-gray-500">
-                              {[user.city, user.state]
-                                .filter(Boolean)
-                                .join(" - ")}
-                            </p>
-                          )}
-                          {!user.institution && !user.city && !user.state && (
-                            <span className="text-gray-400 italic">-</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge className={getRoleColor(user.role)}>
-                          {getRoleLabel(user.role)}
-                        </Badge>
-                      </td>
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
+                        Nome
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
+                        Email
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
+                        Instituição / Localização
+                      </th>
+                      <th className="text-left px-4 py-3 text-sm font-medium text-gray-500">
+                        Função
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-900">
+                    {filteredUsers.map((user) => (
+                      <tr
+                        key={user._id}
+                        className="border-t border-gray-200 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => toggleUserSelection(user._id)}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedUserIds.has(user._id)}
+                            onChange={() => toggleUserSelection(user._id)}
+                            className="w-4 h-4 rounded border-gray-300"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-800">
+                            {user.anonymous ? "Usuário Anônimo" : user.name}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm text-gray-600">
+                            {user.anonymous ? "N/A" : user.email}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-600">
+                            {user.institution && (
+                              <p className="font-medium text-gray-800">
+                                {user.institution}
+                              </p>
+                            )}
+                            {(user.city || user.state) && (
+                              <p className="text-xs text-gray-500">
+                                {[user.city, user.state]
+                                  .filter(Boolean)
+                                  .join(" - ")}
+                              </p>
+                            )}
+                            {!user.institution && !user.city && !user.state && (
+                              <span className="text-gray-400 italic">-</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge className={getRoleColor(user.role)}>
+                            {getRoleLabel(user.role)}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Footer com botões */}
-        <div className="flex gap-3 pt-4 border-t">
+        <div className="flex gap-3 pt-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={handleClose} className="flex-1">
             Cancelar
           </Button>

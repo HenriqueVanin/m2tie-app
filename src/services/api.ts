@@ -2,6 +2,18 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
+// Helper para obter token (cookies primeiro, depois localStorage)
+function getToken(): string | null {
+  // Buscar no cookie primeiro
+  const cookies = document.cookie.split("; ");
+  const tokenCookie = cookies.find((row) => row.startsWith("token="));
+  if (tokenCookie) {
+    return tokenCookie.split("=")[1];
+  }
+  // Fallback para localStorage
+  return localStorage.getItem("token");
+}
+
 // Configuração do axios
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,7 +25,7 @@ const api = axios.create({
 // Interceptor para adicionar token nas requisições
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = getToken();
     if (token) {
       // Envia nos dois formatos para compatibilidade com backends diferentes
       config.headers.Authorization = `Bearer ${token}`;

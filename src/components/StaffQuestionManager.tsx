@@ -125,7 +125,7 @@ export function StaffQuestionManager() {
   const [filterRequired, setFilterRequired] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>("user");
+  const [userRole, setUserRole] = useState<UserRole>("student");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState<UIQuestion | null>(
     null
@@ -141,6 +141,11 @@ export function StaffQuestionManager() {
   const canCreate = hasPermission(userRole, "canCreateQuestions");
   const canEdit = hasPermission(userRole, "canEditQuestions");
   const canDelete = hasPermission(userRole, "canDeleteQuestions");
+
+  // Verificar se o usuário é analyst (sem permissões de edição/exclusão)
+  const currentUser = getUserCookie();
+  const isAnalyst = currentUser?.role === "teacher_analyst";
+
   const [currentQuestion, setCurrentQuestion] = useState<UIQuestion | null>(
     null
   );
@@ -415,13 +420,15 @@ export function StaffQuestionManager() {
           </div>
         }
       >
-        <Button
-          onClick={() => setIsCreateDialogOpen(true)}
-          className="gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-2xl"
-        >
-          <Plus className="w-5 h-5" />
-          Nova Questão
-        </Button>
+        {!isAnalyst && (
+          <Button
+            onClick={() => setIsCreateDialogOpen(true)}
+            className="gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-2xl"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Questão
+          </Button>
+        )}
       </PageHeaderWithSearch>
 
       <div className="flex-1 overflow-auto">
@@ -532,26 +539,32 @@ export function StaffQuestionManager() {
                         : "--"}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleEdit(q)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                          Editar
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(q._id)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Excluir
-                        </Button>
-                      </div>
+                      {!isAnalyst ? (
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => handleEdit(q)}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(q._id)}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">
+                          Somente visualização
+                        </span>
+                      )}
                     </td>
                   </tr>
                 );

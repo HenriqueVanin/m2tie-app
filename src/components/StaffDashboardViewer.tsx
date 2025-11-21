@@ -23,6 +23,7 @@ import {
   dashboardService,
   type FullAnalysisResponse,
 } from "../services/dashboardService";
+import { getUserCookie } from "../utils/userCookie";
 
 interface FormOption {
   _id: string;
@@ -51,7 +52,9 @@ export function StaffDashboardViewer() {
 
   const loadForms = async () => {
     try {
-      const formsData = await getAllForms();
+      const user = getUserCookie();
+      const userRole = user?.role || "teacher_analyst";
+      const formsData = await getAllForms(userRole);
       setForms(formsData);
       if (formsData.length > 0) {
         setSelectedFormId(formsData[0]._id);
@@ -80,7 +83,13 @@ export function StaffDashboardViewer() {
     if (!selectedFormId) return;
 
     try {
-      const exportData = await dashboardService.exportFormData(selectedFormId);
+      const user = getUserCookie();
+      const userRole = user?.role || "teacher_analyst";
+
+      const exportData = await dashboardService.exportFormData(
+        selectedFormId,
+        userRole
+      );
 
       // Converter para CSV
       const headers = Object.keys(exportData.data[0] || {});

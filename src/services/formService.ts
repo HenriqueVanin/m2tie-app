@@ -111,9 +111,14 @@ export async function createForm(payload: CreateFormPayload): Promise<Form> {
   return response.data?.data || response.data;
 }
 
-export async function getAllForms(): Promise<Form[]> {
-  const response = await api.get<{ data?: Form[] } | Form[]>("/forms/all");
-  // Backend pode retornar wrapper { data, error, msg } ou array direto
+/**
+ * Obtém todos os formulários (ADMIN)
+ * @returns Lista de formulários com dados completos
+ */
+export async function getAllFormsAdmin(): Promise<Form[]> {
+  const response = await api.get<{ data?: Form[] } | Form[]>(
+    "/forms/admins/all"
+  );
   if (Array.isArray(response.data)) {
     return response.data;
   }
@@ -121,10 +126,66 @@ export async function getAllForms(): Promise<Form[]> {
   return response.data?.data || [];
 }
 
-export async function getFormById(id: string): Promise<Form> {
-  const response = await api.get<{ data?: Form } | Form>(`/forms/${id}`);
+/**
+ * Obtém todos os formulários (ANALYST)
+ * @returns Lista de formulários com dados anonimizados quando necessário
+ */
+export async function getAllFormsAnalyst(): Promise<Form[]> {
+  const response = await api.get<{ data?: Form[] } | Form[]>(
+    "/forms/analysts/all"
+  );
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  // @ts-ignore
+  return response.data?.data || [];
+}
+
+/**
+ * Obtém todos os formulários baseado no role do usuário
+ * @param role - Role do usuário ("admin" ou "teacher_analyst")
+ * @returns Lista de formulários
+ */
+export async function getAllForms(role?: string): Promise<Form[]> {
+  return role === "admin" || role === undefined
+    ? getAllFormsAdmin()
+    : getAllFormsAnalyst();
+}
+
+/**
+ * Obtém um formulário por ID (ADMIN)
+ * @param id - ID do formulário
+ * @returns Formulário com dados completos
+ */
+export async function getFormByIdAdmin(id: string): Promise<Form> {
+  const response = await api.get<{ data?: Form } | Form>(`/forms/admins/${id}`);
   // @ts-ignore
   return response.data?.data || response.data;
+}
+
+/**
+ * Obtém um formulário por ID (ANALYST)
+ * @param id - ID do formulário
+ * @returns Formulário com dados anonimizados quando necessário
+ */
+export async function getFormByIdAnalyst(id: string): Promise<Form> {
+  const response = await api.get<{ data?: Form } | Form>(
+    `/forms/analysts/${id}`
+  );
+  // @ts-ignore
+  return response.data?.data || response.data;
+}
+
+/**
+ * Obtém um formulário por ID baseado no role do usuário
+ * @param id - ID do formulário
+ * @param role - Role do usuário ("admin" ou "teacher_analyst")
+ * @returns Formulário
+ */
+export async function getFormById(id: string, role?: string): Promise<Form> {
+  return role === "admin" || role === undefined
+    ? getFormByIdAdmin(id)
+    : getFormByIdAnalyst(id);
 }
 
 export async function deleteForm(id: string): Promise<void> {

@@ -51,7 +51,11 @@ export interface UpdateQuestionDto {
 
 const RESOURCE = "/questions";
 
-// Create Question
+/**
+ * Cria uma nova questão (apenas ADMIN)
+ * @param body - Dados da questão
+ * @returns Questão criada
+ */
 export async function createQuestion(
   body: CreateQuestionDto
 ): Promise<Question> {
@@ -62,7 +66,10 @@ export async function createQuestion(
   return (res.data?.data || res.data) as Question;
 }
 
-// Get All Questions
+/**
+ * Obtém todas as questões (ADMIN e ANALYST)
+ * @returns Lista de questões
+ */
 export async function getAllQuestions(): Promise<Question[]> {
   const res = await api.get<{ data?: Question[]; msg?: string; error?: any }>(
     `${RESOURCE}/all`
@@ -75,14 +82,23 @@ export async function getAllQuestions(): Promise<Question[]> {
   return res.data.data || [];
 }
 
-// Get Single Question
+/**
+ * Obtém uma questão por ID (ADMIN e ANALYST)
+ * @param id - ID da questão
+ * @returns Questão
+ */
 export async function getQuestion(id: string): Promise<Question> {
   const res = await api.get<{ data: Question }>(`${RESOURCE}/${id}`);
   // @ts-ignore
   return (res.data?.data || res.data) as Question;
 }
 
-// Update Question
+/**
+ * Atualiza uma questão existente (apenas ADMIN)
+ * @param id - ID da questão
+ * @param body - Dados a atualizar
+ * @returns Questão atualizada
+ */
 export async function updateQuestion(
   id: string,
   body: UpdateQuestionDto
@@ -92,7 +108,10 @@ export async function updateQuestion(
   return (res.data?.data || res.data) as Question;
 }
 
-// Delete Question
+/**
+ * Deleta uma questão (soft delete - apenas ADMIN)
+ * @param id - ID da questão
+ */
 export async function deleteQuestion(id: string): Promise<void> {
   await api.delete(`${RESOURCE}/${id}`);
 }

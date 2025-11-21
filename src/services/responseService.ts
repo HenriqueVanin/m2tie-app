@@ -23,6 +23,7 @@ export interface ResponseData {
     _id?: string; // pode não existir quando usuário foi deletado
     name: string;
     email: string;
+    anonymous?: boolean;
     city?: string;
     state?: string;
     institution?: string;
@@ -84,31 +85,101 @@ export const submitResponse = async (
   }
 };
 
-// Get all responses (GET /responses/all)
-export const getAllResponses = async (): Promise<
+/**
+ * Obtém todas as respostas (ADMIN)
+ * @returns Lista de respostas com dados completos
+ */
+export const getAllResponsesAdmin = async (): Promise<
   ApiResponse<ResponseData[]>
 > => {
   try {
-    const response = await api.get("/responses/all");
+    const response = await api.get("/responses/admins/all");
     return response.data;
   } catch (error: any) {
     return { error: extractError(error, "Erro ao buscar respostas") };
   }
 };
 
-// Get response by ID (GET /responses/:id)
-export const getResponseById = async (
+/**
+ * Obtém todas as respostas (ANALYST)
+ * @returns Lista de respostas com anonimização quando necessário
+ */
+export const getAllResponsesAnalyst = async (): Promise<
+  ApiResponse<ResponseData[]>
+> => {
+  try {
+    const response = await api.get("/responses/analysts/all");
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao buscar respostas") };
+  }
+};
+
+/**
+ * Obtém todas as respostas baseado no role do usuário
+ * @param role - Role do usuário ("admin" ou "teacher_analyst")
+ * @returns Lista de respostas
+ */
+export const getAllResponses = async (
+  role?: string
+): Promise<ApiResponse<ResponseData[]>> => {
+  return role === "admin" || role === undefined
+    ? getAllResponsesAdmin()
+    : getAllResponsesAnalyst();
+};
+
+/**
+ * Obtém uma resposta por ID (ADMIN)
+ * @param id - ID da resposta
+ * @returns Resposta com dados completos
+ */
+export const getResponseByIdAdmin = async (
   id: string
 ): Promise<ApiResponse<ResponseData>> => {
   try {
-    const response = await api.get(`/responses/${id}`);
+    const response = await api.get(`/responses/admins/${id}`);
     return response.data;
   } catch (error: any) {
     return { error: extractError(error, "Erro ao buscar resposta") };
   }
 };
 
-// Delete response by ID (DELETE /responses/:id) - faltava integrar
+/**
+ * Obtém uma resposta por ID (ANALYST)
+ * @param id - ID da resposta
+ * @returns Resposta com anonimização quando necessário
+ */
+export const getResponseByIdAnalyst = async (
+  id: string
+): Promise<ApiResponse<ResponseData>> => {
+  try {
+    const response = await api.get(`/responses/analysts/${id}`);
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao buscar resposta") };
+  }
+};
+
+/**
+ * Obtém uma resposta por ID baseado no role do usuário
+ * @param id - ID da resposta
+ * @param role - Role do usuário ("admin" ou "teacher_analyst")
+ * @returns Resposta
+ */
+export const getResponseById = async (
+  id: string,
+  role?: string
+): Promise<ApiResponse<ResponseData>> => {
+  return role === "admin" || role === undefined
+    ? getResponseByIdAdmin(id)
+    : getResponseByIdAnalyst(id);
+};
+
+/**
+ * Deleta uma resposta por ID (apenas ADMIN)
+ * @param id - ID da resposta
+ * @returns Confirmação da deleção
+ */
 export const deleteResponse = async (
   id: string
 ): Promise<ApiResponse<null>> => {
@@ -120,12 +191,16 @@ export const deleteResponse = async (
   }
 };
 
-// Get respondents of a form (GET /responses/:formId/respondents)
-export const getFormRespondents = async (
+/**
+ * Obtém respondentes de um formulário (ADMIN)
+ * @param formId - ID do formulário
+ * @returns Lista de respondentes com dados completos
+ */
+export const getFormRespondentsAdmin = async (
   formId: string
 ): Promise<GetFormRespondentsResponse> => {
   try {
-    const response = await api.get(`/responses/${formId}/respondents`);
+    const response = await api.get(`/responses/admins/${formId}/respondents`);
     return response.data as GetFormRespondentsResponse;
   } catch (error: any) {
     return {
@@ -136,4 +211,41 @@ export const getFormRespondents = async (
       respondents: [],
     };
   }
+};
+
+/**
+ * Obtém respondentes de um formulário (ANALYST)
+ * @param formId - ID do formulário
+ * @returns Lista de respondentes com anonimização quando necessário
+ */
+export const getFormRespondentsAnalyst = async (
+  formId: string
+): Promise<GetFormRespondentsResponse> => {
+  try {
+    const response = await api.get(`/responses/analysts/${formId}/respondents`);
+    return response.data as GetFormRespondentsResponse;
+  } catch (error: any) {
+    return {
+      error: extractError(error, "Erro ao buscar respondentes"),
+      formTitle: "",
+      formDescription: "",
+      totalRespondents: 0,
+      respondents: [],
+    };
+  }
+};
+
+/**
+ * Obtém respondentes de um formulário baseado no role do usuário
+ * @param formId - ID do formulário
+ * @param role - Role do usuário ("admin" ou "teacher_analyst")
+ * @returns Lista de respondentes
+ */
+export const getFormRespondents = async (
+  formId: string,
+  role?: string
+): Promise<GetFormRespondentsResponse> => {
+  return role === "admin" || role === undefined
+    ? getFormRespondentsAdmin(formId)
+    : getFormRespondentsAnalyst(formId);
 };

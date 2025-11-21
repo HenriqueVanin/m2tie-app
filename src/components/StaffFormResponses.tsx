@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { DeleteConfirmationDialog } from "./ui/delete-confirmation-dialog";
+import { getUserCookie } from "../utils/userCookie";
 
 interface FormResponse {
   id: string;
@@ -68,6 +69,10 @@ export function StaffFormResponses() {
   );
   const [deleting, setDeleting] = useState(false);
 
+  // Verificar se o usuário é analyst (sem permissões de exclusão)
+  const currentUser = getUserCookie();
+  const isAnalyst = currentUser?.role === "teacher_analyst";
+
   // Fetch responses on mount
   useEffect(() => {
     fetchResponses();
@@ -77,7 +82,9 @@ export function StaffFormResponses() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getAllResponses();
+      const user = getUserCookie();
+      const userRole = user?.role || "teacher_analyst";
+      const result = await getAllResponses(userRole);
       if (result.error) {
         setError(result.error);
       } else if (result.data) {
@@ -87,8 +94,8 @@ export function StaffFormResponses() {
             id: r._id,
             formTitle: r.formId.title,
             formDescription: r.formId.description,
-            userName: r.userId.name,
-            userEmail: r.userId.email,
+            userName: r.userId.anonymous ? "Usuário Anônimo" : r.userId.name,
+            userEmail: r.userId.anonymous ? "N/A" : r.userId.email,
             submittedAt: r.submittedAt,
             answers: r.answers.map((a) => ({
               questionId: a.questionId._id,
@@ -323,15 +330,17 @@ export function StaffFormResponses() {
                           <Eye className="w-4 h-4" />
                           Ver Detalhes
                         </Button>
-                        <Button
-                          onClick={() => handleDeleteClick(response)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Excluir
-                        </Button>
+                        {!isAnalyst && (
+                          <Button
+                            onClick={() => handleDeleteClick(response)}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Excluir
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

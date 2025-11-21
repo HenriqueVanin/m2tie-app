@@ -13,10 +13,10 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
         <div className="flex items-center justify-around h-20 px-6">
           <button
             onClick={() => onNavigate("home")}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "home"
                 ? "text-[#003087] bg-white/80 shadow-sm"
-                : "text-gray-600 hover:bg-white/50"
+                : "text-gray-600 hover:bg-white/60"
             }`}
           >
             <Home className="w-6 h-6" />
@@ -24,10 +24,10 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
           </button>
           <button
             onClick={() => onNavigate("diary")}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "diary"
                 ? "text-[#003087] bg-white/80 shadow-sm"
-                : "text-gray-600 hover:bg-white/50"
+                : "text-gray-600 hover:bg-white/60"
             }`}
             aria-label="Diário"
           >
@@ -38,17 +38,17 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
           {/* FAB - Form Button */}
           <button
             onClick={() => onNavigate("form")}
-            className="flex items-center justify-center w-16 h-16 -mt-8 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
+            className="flex items-center justify-center w-16 h-16 -mt-8 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all cursor-pointer"
           >
             <FileText className="w-7 h-7" />
           </button>
 
           <button
             onClick={() => onNavigate("profile")}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "profile"
                 ? "text-[#003087] bg-white/80 shadow-sm"
-                : "text-gray-600 hover:bg-white/50"
+                : "text-gray-600 hover:bg-white/60"
             }`}
           >
             <User className="w-6 h-6" />
@@ -56,10 +56,10 @@ export function MobileNav({ currentScreen, onNavigate }: MobileNavProps) {
           </button>
           <button
             onClick={() => onNavigate("about")}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all cursor-pointer ${
               currentScreen === "about"
                 ? "text-[#003087] bg-white/80 shadow-sm"
-                : "text-gray-600 hover:bg-white/50"
+                : "text-gray-600 hover:bg-white/60"
             }`}
           >
             <Info className="w-6 h-6" />
