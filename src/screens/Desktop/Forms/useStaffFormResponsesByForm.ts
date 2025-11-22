@@ -489,7 +489,8 @@ export function useStaffFormResponsesByForm(
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("pt-BR", {
       day: "2-digit",

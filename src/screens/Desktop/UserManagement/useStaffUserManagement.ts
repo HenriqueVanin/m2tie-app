@@ -21,6 +21,13 @@ interface User {
   updatedAt?: string;
 }
 
+export type UserTab =
+  | "all"
+  | "student"
+  | "teacher_respondent"
+  | "teacher_analyst"
+  | "admin";
+
 export function useStaffUserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,13 +36,9 @@ export function useStaffUserManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userRole, setUserRole] = useState<UserRole>("student");
-  const [activeTab, setActiveTab] = useState<
-    "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
-  >("all");
+  const [activeTab, setActiveTab] = useState<UserTab>("all");
   const [institutionFilter, setInstitutionFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<
-    "all" | "student" | "teacher_respondent" | "teacher_analyst" | "admin"
-  >("all");
+  const [roleFilter, setRoleFilter] = useState<UserTab | "all">("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [deleting, setDeleting] = useState(false);

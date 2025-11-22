@@ -8,16 +8,17 @@ import {
   useLocation,
 } from "react-router-dom";
 import { LoginScreen } from "./screens/In";
+import ResetPasswordScreen from "./screens/In/ResetPassword";
 import { HomeScreen } from "./screens/Mobile/Home";
 import { ProfileScreen } from "./screens/Mobile/Profile";
 import { DiaryScreen } from "./screens/Mobile/Diary";
 import { FormWizardScreen } from "./screens/Mobile/Form";
-import { MobileNav } from "./components/MobileNav";
+import { MobileNav } from "./components/shared/MobileNav";
 import { StaffDashboardViewer } from "./screens/Desktop/Dashboard";
 import { StaffFormBuilder } from "./screens/Desktop/FormBuilder";
 import { StaffFormResponses } from "./screens/Desktop/Responses";
 import { StaffFormResponsesByForm } from "./screens/Desktop/Forms";
-import { StaffNav } from "./components/StaffNav";
+import { StaffNav } from "./components/shared/StaffNav";
 import { ProtectedRoute } from "./layout/ProtectedRoute";
 import { AuthFallback } from "./layout/AuthFallback";
 import { getUserFromToken } from "./utils/auth";
@@ -153,6 +154,7 @@ function AppContent() {
         }
       />
       <Route path="/login" element={<LoginScreen onLogin={handleLogin} />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordScreen />} />
       <Route
         path="/home"
         element={

@@ -9,7 +9,7 @@ import {
 import type { Screen } from "../../../App";
 import { ScreenHeader } from "../../../components/ui/screen-header";
 import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
-import { ForgotPasswordModal } from "../../../components/ForgotPasswordModal";
+import { ForgotPasswordModal } from "../../../components/shared/ForgotPasswordModal";
 import { useProfileScreen } from "./useProfileScreen";
 
 interface ProfileScreenProps {

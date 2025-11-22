@@ -249,3 +249,23 @@ export const getFormRespondents = async (
     ? getFormRespondentsAdmin(formId)
     : getFormRespondentsAnalyst(formId);
 };
+
+/**
+ * Verifica se o usuário pode responder ao diário hoje
+ * GET /responses/diary/:formId/can-respond
+ */
+export const canRespondToDiary = async (
+  formId: string
+): Promise<ApiResponse<{ canRespond: boolean }>> => {
+  try {
+    const response = await api.get(`/responses/diary/${formId}/can-respond`);
+    return response.data;
+  } catch (error: any) {
+    return {
+      error: extractError(
+        error,
+        "Erro ao verificar se o usuário pode responder o diário hoje"
+      ),
+    };
+  }
+};

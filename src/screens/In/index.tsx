@@ -6,7 +6,7 @@ import Logo from "../../assets/logo.svg";
 import type { UserType } from "../../App";
 import useLoginScreen from "./useLoginScreen";
 import { UserBackgroundLayout } from "../../layout/UserBackgroundLayout";
-import { ForgotPasswordModal } from "../../components/ForgotPasswordModal";
+import { ForgotPasswordModal } from "../../components/shared/ForgotPasswordModal";
 
 interface LoginScreenProps {
   onLogin: (type: UserType) => void;

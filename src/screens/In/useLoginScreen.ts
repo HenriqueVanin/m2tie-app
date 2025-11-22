@@ -70,7 +70,7 @@ export default function useLoginScreen(onLogin: (type: UserType) => void) {
     try {
       const res = await authService.forgotPassword({ email: forgotEmail });
       setForgotStatus(
-        res.message ||
+        (res as any).msg ||
           "Email enviado (se existir). Verifique sua caixa de entrada."
       );
     } catch (err) {

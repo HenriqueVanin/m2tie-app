@@ -37,6 +37,33 @@ export const QUESTION_TYPE_ICONS: Record<BackendQuestionType, any> = {
   date: Calendar,
 };
 
+export interface QuestionTypeDef {
+  type: BackendQuestionType;
+  label: string;
+  icon: any;
+}
+
+export const QUESTION_TYPES: QuestionTypeDef[] = [
+  { type: "text", label: QUESTION_TYPE_LABELS_PT.text, icon: Type },
+  {
+    type: "multiple_choice",
+    label: QUESTION_TYPE_LABELS_PT.multiple_choice,
+    icon: ListChecks,
+  },
+  {
+    type: "checkbox",
+    label: QUESTION_TYPE_LABELS_PT.checkbox,
+    icon: CheckSquare,
+  },
+  {
+    type: "dropdown",
+    label: QUESTION_TYPE_LABELS_PT.dropdown,
+    icon: ChevronDown,
+  },
+  { type: "scale", label: QUESTION_TYPE_LABELS_PT.scale, icon: BarChart3 },
+  { type: "date", label: QUESTION_TYPE_LABELS_PT.date, icon: Calendar },
+];
+
 // UI and backend types are identical now, just pass through
 export function uiToBackendType(t: UIQuestionType): BackendQuestionType {
   return t;

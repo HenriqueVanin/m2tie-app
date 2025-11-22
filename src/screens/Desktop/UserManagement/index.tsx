@@ -18,7 +18,7 @@ import { DeleteConfirmationDialog } from "../../../components/ui/delete-confirma
 import { authService } from "../../../services/authService";
 import { updateUser } from "../../../services/userService";
 import { getRoleLabel, getRoleColor } from "../../../utils/roleLabels";
-import { useStaffUserManagement } from "./useStaffUserManagement";
+import { useStaffUserManagement, UserTab } from "./useStaffUserManagement";
 
 interface User {
   _id: string;
@@ -135,42 +135,11 @@ export function StaffUserManagement() {
         </Button>
       </PageHeaderWithSearch>
 
-      {/* Stats */}
-      {/* <div className="px-6 py-4 bg-white border-b border-gray-200">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600 mb-1">Total de Usuários</p>
-            <p className="text-gray-900 text-2xl">{users.length}</p>
-          </div>
-          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600 mb-1">Administradores</p>
-            <p className="text-gray-900 text-2xl">
-              {users.filter((u) => u.role === "admin").length}
-            </p>
-          </div>
-          <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200 shadow-sm">
-            <p className="text-sm text-gray-600 mb-1">Staff</p>
-            <p className="text-gray-900 text-2xl">
-              {users.filter((u) => u.role === "staff").length}
-            </p>
-          </div>
-        </div>
-      </div> */}
-
       {/* Tabs */}
       <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <Tabs
           value={activeTab}
-          onValueChange={(v: string) =>
-            setActiveTab(
-              v as
-                | "all"
-                | "student"
-                | "teacher_respondent"
-                | "teacher_analyst"
-                | "admin"
-            )
-          }
+          onValueChange={(v: string) => setActiveTab(v as UserTab)}
         >
           <TabsList>
             <TabsTrigger value="all">Todos ({users.length})</TabsTrigger>
@@ -424,7 +393,7 @@ function UserModal({ user, onClose, onSave }: UserModalProps) {
       <div className="bg-white rounded-lg w-full max-w-2xl max-h-[80vh] overflow-hidden">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+          <div className="p-6 border-b border-gray-200 flex items-center justify-between shrink-0">
             <h2>{user ? "Editar Usuário" : "Novo Usuário"}</h2>
             <button
               type="button"

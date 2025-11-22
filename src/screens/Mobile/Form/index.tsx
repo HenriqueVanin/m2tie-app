@@ -14,6 +14,7 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { RadioGroup, RadioGroupItem } from "../../../components/ui/radio-group";
 import { Checkbox } from "../../../components/ui/checkbox";
+import { Calendar as CalendarComponent } from "../../../components/ui/calendar";
 import {
   Select,
   SelectContent,
@@ -716,18 +717,14 @@ function QuestionRenderer({
 
         {type === "date" && (
           <div className="space-y-2">
-            <Label
-              htmlFor="date-input"
-              className="text-sm font-medium text-gray-700"
-            >
+            <Label className="text-sm font-medium text-gray-700">
               Selecione a data
             </Label>
-            <Input
-              id="date-input"
-              type="date"
-              value={value || ""}
-              onChange={(e) => onChange(e.target.value)}
-              className="h-14 border-2 border-gray-300 rounded-xl text-lg focus:border-indigo-500"
+            <CalendarComponent
+              mode="single"
+              selected={value}
+              onSelect={onChange}
+              className="p-3 border rounded-lg"
             />
             {value && (
               <div className="mt-3 p-3 bg-indigo-50 rounded-xl">
