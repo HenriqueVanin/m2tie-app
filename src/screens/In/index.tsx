@@ -42,8 +42,8 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   return (
     <UserBackgroundLayout centered>
-      <div aria-hidden className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]" />
-      <div className="flex justify-center items-center">
+      <div className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]" />
+      <div className="justify-center items-center">
         <main>
           <form
             onSubmit={(e) => {
@@ -52,16 +52,10 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 handleLogin();
               }
             }}
-            className="flex-1 bg-white shadow-md space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] mb-8"
+            className="flex-1 bg-white shadow-md space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] py-12 mb-8"
             aria-labelledby="login-heading"
           >
-            <h1 id="login-heading" className="sr-only">
-              Entrar no M2TIE
-            </h1>
-            <header
-              className="flex items-center justify-center py-4"
-              aria-hidden
-            >
+            <header className="flex items-center justify-center py-4">
               <img
                 src={Logo}
                 alt="M2TIE Logo"
@@ -90,7 +84,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     id="email"
                     name="email"
                     type="email"
-                    autoComplete="email"
                     placeholder="seu.email@exemplo.com"
                     value={email}
                     onBlur={() => setEmailTouched(true)}
@@ -125,7 +118,6 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
                     placeholder="••••••••"
                     value={password}
                     onBlur={() => setPasswordTouched(true)}
@@ -175,7 +167,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             <Button
               type="submit"
               disabled={isLoading || !emailValid || !passwordValid}
-              className="w-full h-14 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg rounded-2xl"
+              className="w-full h-14 bg-linear-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg rounded-2xl"
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
