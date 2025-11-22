@@ -6,8 +6,6 @@ import {
   MapPin,
   Building2,
 } from "lucide-react";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
 import type { Screen } from "../../../App";
 import { ScreenHeader } from "../../../components/ui/screen-header";
 import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";

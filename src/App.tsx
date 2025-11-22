@@ -7,24 +7,24 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import { LoginScreen } from "./screens/LoginScreen";
-import { HomeScreen } from "./screens/Mobile/Home/HomeScreen";
-import { ProfileScreen } from "./screens/Mobile/Profile/ProfileScreen";
-import { DiaryScreen } from "./screens/Mobile/Diary/DiaryScreen";
-import { FormWizardScreen } from "./screens/Mobile/Form/FormWizardScreen";
+import { LoginScreen } from "./screens/In";
+import { HomeScreen } from "./screens/Mobile/Home";
+import { ProfileScreen } from "./screens/Mobile/Profile";
+import { DiaryScreen } from "./screens/Mobile/Diary";
+import { FormWizardScreen } from "./screens/Mobile/Form";
 import { MobileNav } from "./components/MobileNav";
-import { StaffDashboardViewer } from "./screens/Desktop/Dashboard/StaffDashboardViewer";
-import { StaffFormBuilder } from "./screens/Desktop/FormBuilder/StaffFormBuilder";
-import { StaffFormResponses } from "./screens/Desktop/Responses/StaffFormResponses";
-import { StaffFormResponsesByForm } from "./screens/Desktop/Forms/StaffFormResponsesByForm";
+import { StaffDashboardViewer } from "./screens/Desktop/Dashboard";
+import { StaffFormBuilder } from "./screens/Desktop/FormBuilder";
+import { StaffFormResponses } from "./screens/Desktop/Responses";
+import { StaffFormResponsesByForm } from "./screens/Desktop/Forms";
 import { StaffNav } from "./components/StaffNav";
 import { ProtectedRoute } from "./layout/ProtectedRoute";
 import { AuthFallback } from "./layout/AuthFallback";
 import { getUserFromToken } from "./utils/auth";
-import { StaffQuestionManager } from "./screens/Desktop/Question/StaffQuestionManager";
-import { AboutScreen } from "./screens/Mobile/About/AboutScreen";
-import { StaffUserManagement } from "./screens/Desktop/UserManagement/StaffUserManagement";
-import { FAQScreen } from "./screens/Mobile/FAQ/FAQScreen";
+import { StaffQuestionManager } from "./screens/Desktop/Question";
+import { AboutScreen } from "./screens/Mobile/About";
+import { StaffUserManagement } from "./screens/Desktop/UserManagement";
+import { FAQScreen } from "./screens/Mobile/FAQ";
 
 export type Screen =
   | "login"

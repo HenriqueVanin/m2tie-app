@@ -1,105 +1,48 @@
-import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import Logo from "../assets/logo.svg";
-import type { UserType } from "../App";
-import { authService } from "../services/authService";
-import { decodeToken, setTokenCookie } from "../utils/auth";
-import { getUserById } from "../services/userService";
-import { setUserCookie } from "../utils/userCookie";
-import { UserBackgroundLayout } from "../layout/UserBackgroundLayout";
-import { ForgotPasswordModal } from "../components/ForgotPasswordModal";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import Logo from "../../assets/logo.svg";
+import type { UserType } from "../../App";
+import useLoginScreen from "./useLoginScreen";
+import { UserBackgroundLayout } from "../../layout/UserBackgroundLayout";
+import { ForgotPasswordModal } from "../../components/ForgotPasswordModal";
 
 interface LoginScreenProps {
   onLogin: (type: UserType) => void;
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [passwordTouched, setPasswordTouched] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotStatus, setForgotStatus] = useState<string | null>(null);
-  const [forgotLoading, setForgotLoading] = useState(false);
-
-  const emailValid = /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
-  const passwordValid = password.length >= 4;
-
-  const handleLogin = async () => {
-    // Validação de formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !password) {
-      setError("Email e senha são obrigatórios");
-      return;
-    }
-    if (!emailRegex.test(email)) {
-      setError("Formato de e-mail inválido");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-    try {
-      const data = await authService.login({ email, password });
-      if (!data.token) throw new Error("Token não recebido");
-      // Salvar em cookie e localStorage (fallback)
-      setTokenCookie(data.token);
-      localStorage.setItem("token", data.token);
-      const decoded = decodeToken(data.token);
-      if (!decoded) throw new Error("Erro ao processar token");
-      // Buscar dados completos do usuário
-      try {
-        const user = await getUserById(decoded.userId);
-        setUserCookie(user);
-      } catch {
-        // fallback: construir objeto mínimo do token
-        setUserCookie({
-          _id: decoded.userId,
-          name: decoded.name,
-          email: email,
-          role: decoded.role as any,
-        });
-      }
-      const userType: UserType =
-        decoded.role === "teacher_analyst" || decoded.role === "admin"
-          ? "staff"
-          : "user";
-      onLogin(userType);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao fazer login");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    setForgotLoading(true);
-    setForgotStatus(null);
-    try {
-      const res = await authService.forgotPassword({ email: forgotEmail });
-      setForgotStatus(
-        res.message ||
-          "Email enviado (se existir). Verifique sua caixa de entrada."
-      );
-    } catch (err) {
-      setForgotStatus(
-        err instanceof Error ? err.message : "Falha ao solicitar recuperação"
-      );
-    } finally {
-      setForgotLoading(false);
-    }
-  };
+  const {
+    showPassword,
+    setShowPassword,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    isLoading,
+    error,
+    emailTouched,
+    setEmailTouched,
+    passwordTouched,
+    setPasswordTouched,
+    showForgot,
+    setShowForgot,
+    forgotEmail,
+    setForgotEmail,
+    forgotStatus,
+    forgotLoading,
+    setForgotStatus,
+    setForgotLoading,
+    emailValid,
+    passwordValid,
+    handleLogin,
+    handleForgotPassword,
+  } = useLoginScreen(onLogin as (type: UserType) => void);
 
   return (
     <UserBackgroundLayout centered>
-      <div className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]" />
+      <div aria-hidden className="pt-[48px] pr-[24px] pb-[24px] pl-[30px]" />
       <div className="flex justify-center items-center">
         <main>
           <form
@@ -109,10 +52,16 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 handleLogin();
               }
             }}
-            className="flex-1 bg-white shadow-md space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] py-12 mb-8"
+            className="flex-1 bg-white shadow-md space-y-6 rounded-[32px] mx-[10px] px-[30px] py-[32px] mb-8"
             aria-labelledby="login-heading"
           >
-            <header className="flex items-center justify-center py-4">
+            <h1 id="login-heading" className="sr-only">
+              Entrar no M2TIE
+            </h1>
+            <header
+              className="flex items-center justify-center py-4"
+              aria-hidden
+            >
               <img
                 src={Logo}
                 alt="M2TIE Logo"
@@ -141,6 +90,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="seu.email@exemplo.com"
                     value={email}
                     onBlur={() => setEmailTouched(true)}
@@ -175,6 +125,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     placeholder="••••••••"
                     value={password}
                     onBlur={() => setPasswordTouched(true)}

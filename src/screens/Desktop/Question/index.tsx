@@ -137,7 +137,13 @@ export function StaffQuestionManager() {
 
       <div className="flex-1 overflow-auto">
         {loading ? (
-          <div className="text-center py-12 text-gray-500">Carregando...</div>
+          <div
+            className="text-center py-12 text-gray-500"
+            role="status"
+            aria-live="polite"
+          >
+            Carregando...
+          </div>
         ) : error ? (
           <ErrorState message={error} onRetry={fetchQuestions} />
         ) : filteredQuestions.length === 0 ? (
@@ -150,131 +156,172 @@ export function StaffQuestionManager() {
             </p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-              <tr>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Questão
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Tipo
-                </th>
-                <th className="text-center px-6 py-4 text-sm font-medium text-gray-500">
-                  Obrigatória
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Criado Por
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Data de Criação
-                </th>
-                <th className="text-left px-6 py-4 text-sm font-medium text-gray-500">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              {filteredQuestions.map((q) => {
-                const Icon = QUESTION_TYPE_ICONS[q.type];
-                return (
-                  <tr
-                    key={q._id}
-                    className="border-b border-gray-200 hover:bg-gray-50"
+          <section aria-labelledby="question-list-heading">
+            <h2 id="question-list-heading" className="sr-only">
+              Lista de Questões
+            </h2>
+            <table className="w-full">
+              <caption className="sr-only">
+                Lista de questões disponíveis
+              </caption>
+              <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
+                <tr>
+                  <th
+                    scope="col"
+                    className="text-left px-6 py-4 text-sm font-medium text-gray-500"
                   >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-linear-to-br bg-[#003087] rounded-xl flex items-center justify-center shrink-0">
-                          {Icon && <Icon className="w-5 h-5 text-white" />}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-gray-800 font-medium">{q.title}</p>
-                          {q.description && (
-                            <p className="text-sm text-gray-600 mt-1">
-                              {q.description}
-                            </p>
-                          )}
-                          {q.options && q.options.length > 0 && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              {q.options.length}{" "}
-                              {q.options.length === 1 ? "opção" : "opções"}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        variant="secondary"
-                        className="bg-gray-100 text-gray-700 hover:bg-gray-100"
-                      >
-                        {getQuestionTypeLabel(q.type)}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {q.required ? (
-                        <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
-                          Sim
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-gray-500">
-                          Não
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <p className="text-sm text-gray-800 font-medium">
-                          {q.createdBy.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {q.createdBy.email}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {q.createdAt
-                        ? new Date(q.createdAt).toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "--"}
-                    </td>
-                    <td className="px-6 py-4">
-                      {!isAnalyst ? (
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleEdit(q)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
+                    Questão
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-left px-6 py-4 text-sm font-medium text-gray-500"
+                  >
+                    Tipo
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-center px-6 py-4 text-sm font-medium text-gray-500"
+                  >
+                    Obrigatória
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-left px-6 py-4 text-sm font-medium text-gray-500"
+                  >
+                    Criado Por
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-left px-6 py-4 text-sm font-medium text-gray-500"
+                  >
+                    Data de Criação
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-left px-6 py-4 text-sm font-medium text-gray-500"
+                  >
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white">
+                {filteredQuestions.map((q) => {
+                  const Icon = QUESTION_TYPE_ICONS[q.type];
+                  return (
+                    <tr
+                      key={q._id}
+                      className="border-b border-gray-200 hover:bg-gray-50"
+                    >
+                      <th scope="row" className="px-6 py-4 text-left align-top">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-10 h-10 bg-linear-to-br bg-[#003087] rounded-xl flex items-center justify-center shrink-0"
+                            aria-hidden
                           >
-                            <Edit className="w-4 h-4" />
-                            Editar
-                          </Button>
-                          <Button
-                            onClick={() => handleDelete(q._id)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Excluir
-                          </Button>
+                            {Icon && (
+                              <Icon
+                                className="w-5 h-5 text-white"
+                                aria-hidden
+                              />
+                            )}
+                          </div>
+                          {Icon && (
+                            <span className="sr-only">
+                              {getQuestionTypeLabel(q.type)}
+                            </span>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-gray-800 font-medium">
+                              {q.title}
+                            </p>
+                            {q.description && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                {q.description}
+                              </p>
+                            )}
+                            {q.options && q.options.length > 0 && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {q.options.length}{" "}
+                                {q.options.length === 1 ? "opção" : "opções"}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-sm text-gray-400">
-                          Somente visualização
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </th>
+                      <td className="px-6 py-4">
+                        <Badge
+                          variant="secondary"
+                          className="bg-gray-100 text-gray-700 hover:bg-gray-100"
+                        >
+                          {getQuestionTypeLabel(q.type)}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {q.required ? (
+                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">
+                            Sim
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-500">
+                            Não
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div>
+                          <p className="text-sm text-gray-800 font-medium">
+                            {q.createdBy.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {q.createdBy.email}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {q.createdAt
+                          ? new Date(q.createdAt).toLocaleDateString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "--"}
+                      </td>
+                      <td className="px-6 py-4">
+                        {!isAnalyst ? (
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleEdit(q)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2"
+                            >
+                              <Edit className="w-4 h-4" aria-hidden />
+                              Editar
+                            </Button>
+                            <Button
+                              onClick={() => handleDelete(q._id)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                            >
+                              <Trash2 className="w-4 h-4" aria-hidden />
+                              Excluir
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-gray-400">
+                            Somente visualização
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </section>
         )}
       </div>
 
@@ -289,6 +336,7 @@ export function StaffQuestionManager() {
               <Input
                 id="title"
                 placeholder="Digite o título da questão"
+                autoComplete="off"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
@@ -359,6 +407,7 @@ export function StaffQuestionManager() {
                     type="number"
                     min={0}
                     value={formData.minLength ?? ""}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -377,6 +426,7 @@ export function StaffQuestionManager() {
                     type="number"
                     min={0}
                     value={formData.maxLength ?? ""}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -398,6 +448,7 @@ export function StaffQuestionManager() {
                     id="scaleMin"
                     type="number"
                     value={formData.scaleMin}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -413,6 +464,7 @@ export function StaffQuestionManager() {
                     id="scaleMax"
                     type="number"
                     value={formData.scaleMax}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -459,7 +511,7 @@ export function StaffQuestionManager() {
                 (formData.type === "scale" &&
                   formData.scaleMin >= formData.scaleMax)
               }
-              className="bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
             >
               Criar Questão
             </Button>
@@ -478,6 +530,7 @@ export function StaffQuestionManager() {
               <Input
                 id="edit-title"
                 placeholder="Digite o título da questão"
+                autoComplete="off"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
@@ -548,6 +601,7 @@ export function StaffQuestionManager() {
                     type="number"
                     min={0}
                     value={formData.minLength ?? ""}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -566,6 +620,7 @@ export function StaffQuestionManager() {
                     type="number"
                     min={0}
                     value={formData.maxLength ?? ""}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -587,6 +642,7 @@ export function StaffQuestionManager() {
                     id="edit-scaleMin"
                     type="number"
                     value={formData.scaleMin}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -602,6 +658,7 @@ export function StaffQuestionManager() {
                     id="edit-scaleMax"
                     type="number"
                     value={formData.scaleMax}
+                    autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
@@ -648,7 +705,7 @@ export function StaffQuestionManager() {
                 (formData.type === "scale" &&
                   formData.scaleMin >= formData.scaleMax)
               }
-              className="bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
             >
               Salvar Alterações
             </Button>
