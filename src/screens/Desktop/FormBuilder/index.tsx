@@ -55,6 +55,10 @@ interface Question {
   description?: string;
   required: boolean;
   options?: any[];
+  minLength?: number;
+  maxLength?: number;
+  scaleMin?: number;
+  scaleMax?: number;
 }
 
 const QUESTION_TYPES: { type: UIQuestionType; icon: any; label: string }[] = [
@@ -624,6 +628,9 @@ function QuestionSettings({
     question.type === "checkbox" ||
     question.type === "dropdown";
 
+  const isText = question.type === "text";
+  const isScale = question.type === "scale";
+
   const addOption = () => {
     const newOptions = [
       ...(question.options || []),
@@ -726,6 +733,82 @@ function QuestionSettings({
               <Plus className="w-4 h-4 mr-2" />
               Adicionar Opção
             </Button>
+          </div>
+        )}
+
+        {isText && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="question-minLength">Mín. Caracteres</Label>
+              <Input
+                id="question-minLength"
+                type="number"
+                min={0}
+                value={question.minLength ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    minLength: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : undefined,
+                  })
+                }
+                className="h-12"
+              />
+            </div>
+            <div>
+              <Label htmlFor="question-maxLength">Máx. Caracteres</Label>
+              <Input
+                id="question-maxLength"
+                type="number"
+                min={0}
+                value={question.maxLength ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    maxLength: e.target.value
+                      ? parseInt(e.target.value, 10)
+                      : undefined,
+                  })
+                }
+                className="h-12"
+              />
+            </div>
+          </div>
+        )}
+
+        {isScale && (
+          <div className="grid grid-cols-3 gap-4 items-end">
+            <div>
+              <Label htmlFor="question-scaleMin">Valor Inicial</Label>
+              <Input
+                id="question-scaleMin"
+                type="number"
+                value={question.scaleMin ?? 0}
+                onChange={(e) =>
+                  onUpdate({ scaleMin: parseInt(e.target.value, 10) })
+                }
+                className="h-12"
+              />
+            </div>
+            <div>
+              <Label htmlFor="question-scaleMax">Valor Final</Label>
+              <Input
+                id="question-scaleMax"
+                type="number"
+                value={question.scaleMax ?? 10}
+                onChange={(e) =>
+                  onUpdate({ scaleMax: parseInt(e.target.value, 10) })
+                }
+                className="h-12"
+              />
+            </div>
+            <div className="text-sm text-gray-600">
+              {typeof question.scaleMin === "number" &&
+              typeof question.scaleMax === "number"
+                ? question.scaleMin < question.scaleMax
+                  ? `${question.scaleMax - question.scaleMin + 1} pontos`
+                  : "Intervalo inválido"
+                : "Defina início e fim"}
+            </div>
           </div>
         )}
 

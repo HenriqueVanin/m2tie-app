@@ -26,6 +26,8 @@ import { StaffQuestionManager } from "./screens/Desktop/Question";
 import { AboutScreen } from "./screens/Mobile/About";
 import { StaffUserManagement } from "./screens/Desktop/UserManagement";
 import { FAQScreen } from "./screens/Mobile/FAQ";
+import { getUserCookie } from "./utils/userCookie";
+import StaffProfile from "./screens/Desktop/Perfil";
 
 export type Screen =
   | "login"
@@ -42,7 +44,8 @@ export type Screen =
   | "faq"
   | "staff-user-management"
   | "staff-question-bank"
-  | "notification";
+  | "notification"
+  | "staff-profile";
 
 export type UserType = "user" | "staff";
 
@@ -67,6 +70,7 @@ function AppContent() {
     "staff-form-responses-by-form": "/staff/forms/responses/by-form",
     "staff-question-bank": "/staff/questions",
     "staff-user-management": "/staff/users",
+    "staff-profile": "/staff/profile",
     notification: "/notifications",
   };
   const reverseRouteMap: Record<string, Screen> = Object.fromEntries(
@@ -346,6 +350,31 @@ function AppContent() {
               />
               <div className="flex-1">
                 <StaffUserManagement />
+              </div>
+            </div>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/staff/profile"
+        element={
+          <ProtectedRoute
+            isAuthenticated={isAuthenticated}
+            userType={userType}
+            requireStaff
+          >
+            <div className="min-h-screen bg-gray-50 flex">
+              <StaffNav
+                currentScreen={currentScreen}
+                onNavigate={navigateTo}
+                onLogout={handleLogout}
+              />
+              <div className="flex-1">
+                <StaffProfile
+                  name={getUserCookie()?.name}
+                  email={getUserCookie()?.email}
+                  initials={getUserCookie()?.name}
+                />
               </div>
             </div>
           </ProtectedRoute>

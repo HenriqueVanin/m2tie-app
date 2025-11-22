@@ -8,7 +8,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
-    <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-gray-900 dark:text-white text-2xl font-bold">
@@ -37,7 +37,7 @@ export function PageHeaderWithSearch({
   searchComponent,
 }: PageHeaderWithSearchProps) {
   return (
-    <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <div className="p-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-gray-900 dark:text-white text-2xl font-bold">

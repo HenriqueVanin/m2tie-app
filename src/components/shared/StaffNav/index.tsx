@@ -8,6 +8,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { getUserCookie } from "../../../utils/userCookie";
+import { User } from "lucide-react";
 import { canAccessScreen, type UserRole } from "../../../utils/permissions";
 import type { Screen } from "../../../App";
 import { NavItem } from "./NavItem";
@@ -68,9 +69,28 @@ export function StaffNav({
 
   return (
     <aside className="w-72 bg-white border-r border-gray-200 flex flex-col shadow-lg">
-      <div className="p-6 bg-[#003087]">
-        <h2 className="text-white">{name ? name.split(" ")[0] : "Painel"}</h2>
-        <p className="text-blue-200 text-sm mt-1">Painel de Administração</p>
+      <div className="p-6 bg-[#003087] flex items-center justify-between">
+        <div>
+          <h2 className="text-white">{name ? name.split(" ")[0] : "Painel"}</h2>
+          <p className="text-blue-200 text-sm mt-1">Painel de Administração</p>
+        </div>
+        <button
+          onClick={() => onNavigate("staff-profile")}
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+            currentScreen === "staff-profile"
+              ? "bg-blue-200"
+              : "bg-white hover:bg-blue-100"
+          }`}
+          aria-label="Abrir perfil"
+        >
+          <User
+            className={`w-4 h-4 ${
+              currentScreen === "staff-profile"
+                ? "text-white"
+                : "text-[#003087]"
+            }`}
+          />
+        </button>
       </div>
 
       <nav className="flex-1 p-4 space-y-2">

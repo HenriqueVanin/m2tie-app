@@ -159,6 +159,14 @@ export function useFormWizard(): UseFormWizardReturn {
   };
 
   const prevStep = () => {
+    if (currentStep === 0 && availableForms.length > 1) {
+      setShowFormList(true);
+      setForm(null);
+      setSelectedFormIndex(null);
+      setAnswers({});
+      setCurrentStep(0);
+      return;
+    }
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }

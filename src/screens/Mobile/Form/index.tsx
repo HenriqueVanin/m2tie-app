@@ -14,7 +14,7 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { RadioGroup, RadioGroupItem } from "../../../components/ui/radio-group";
 import { Checkbox } from "../../../components/ui/checkbox";
-import { Calendar as CalendarComponent } from "../../../components/ui/calendar";
+import { SimpleDatePicker } from "../../../components/ui/simple-date-picker";
 import {
   Select,
   SelectContent,
@@ -208,8 +208,8 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
   if (showFormList && availableForms.length > 0) {
     return (
       <UserBackgroundLayout>
-        <div className="p-6 bg-gradient-to-br from-indigo-500 mt-2 rounded-md to-indigo-600 text-white shadow-lg">
-          <div className="flex items-center gap-4">
+        <div className="p-6 bg-gradient-to-br from-indigo-500 mt-2 rounded-md to-indigo-600 text-white shadow-lg mx-4">
+          <div className="flex items-center gap-4 ">
             <button
               type="button"
               onClick={() => onNavigate("home")}
@@ -720,22 +720,22 @@ function QuestionRenderer({
             <Label className="text-sm font-medium text-gray-700">
               Selecione a data
             </Label>
-            <CalendarComponent
-              mode="single"
-              selected={value}
-              onSelect={onChange}
-              className="p-3 border rounded-lg"
+            <SimpleDatePicker
+              value={value}
+              onChange={onChange}
+              className="p-3 rounded-lg"
             />
             {value && (
               <div className="mt-3 p-3 bg-indigo-50 rounded-xl">
-                <p className="text-sm text-indigo-600 text-center">
-                  Data selecionada:{" "}
-                  <span className="font-semibold">
-                    {new Date(value + "T00:00:00").toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                <p className="text-sm text-center">
+                  <span className="font-semibold text-base">
+                    {value
+                      ? new Date(value).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })
+                      : ""}
                   </span>
                 </p>
               </div>
