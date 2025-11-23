@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Check,
@@ -8,7 +7,6 @@ import {
   FileText,
   Calendar,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
@@ -64,7 +62,17 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
     setShowFormList,
     setAnswers,
     setCurrentStep,
+    draftStatus,
+    draftSavedAt,
   } = useFormWizard();
+
+  // Helpers to work with FormQuestion.questionId which may be either a string (id)
+  // or a populated QuestionDetails object depending on the API response
+  const getQuestionId = (q: FormQuestion) =>
+    typeof q.questionId === "string" ? q.questionId : q.questionId._id;
+
+  const getQuestionDetails = (q: FormQuestion) =>
+    typeof q.questionId === "string" ? null : q.questionId;
 
   // Loading state
   if (loading) {
@@ -369,9 +377,9 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
               currentQuestion && (
                 <QuestionRenderer
                   question={currentQuestion}
-                  value={answers[currentQuestion.questionId._id]}
+                  value={answers[getQuestionId(currentQuestion)]}
                   onChange={(value) =>
-                    handleAnswerChange(currentQuestion.questionId._id, value)
+                    handleAnswerChange(getQuestionId(currentQuestion), value)
                   }
                 />
               )
@@ -379,6 +387,24 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
           </div>
         </div>
         <div className="p-6 space-y-3 pb-30">
+          {/* Draft status indicator */}
+          {/** draftStatus: "idle" | "saving" | "saved" | "error" **/}
+          {typeof (draftStatus as any) !== "undefined" && (
+            <div className="text-center mb-2">
+              {draftStatus === "saving" && (
+                <p className="text-sm text-gray-500">Salvando rascunho...</p>
+              )}
+              {draftStatus === "saved" && draftSavedAt && (
+                <p className="text-sm text-gray-500">
+                  Rascunho salvo às{" "}
+                  {new Date(draftSavedAt).toLocaleTimeString()}
+                </p>
+              )}
+              {draftStatus === "error" && (
+                <p className="text-sm text-red-500">Erro ao salvar rascunho</p>
+              )}
+            </div>
+          )}
           <Button
             onClick={nextStep}
             disabled={submitting}
@@ -444,7 +470,8 @@ function ReviewStep({ form, answers, onEditQuestion }: ReviewStepProps) {
   const formatAnswer = (question: FormQuestion, answer: any): string => {
     if (!answer) return "Não respondida";
 
-    const questionDetails = question.questionId;
+    const questionDetails =
+      typeof question.questionId === "string" ? null : question.questionId;
 
     // Array (checkbox)
     if (Array.isArray(answer)) {
@@ -453,15 +480,19 @@ function ReviewStep({ form, answers, onEditQuestion }: ReviewStepProps) {
     }
 
     // Options (multiple_choice, dropdown, scale)
-    if (questionDetails.options && questionDetails.options.length > 0) {
+    if (
+      questionDetails &&
+      questionDetails.options &&
+      questionDetails.options.length > 0
+    ) {
       const option = questionDetails.options.find(
-        (opt) => opt.value === answer || opt.label === answer
+        (opt: any) => opt.value === answer || opt.label === answer
       );
-      return option ? option.label : answer.toString();
+      return option ? option.label : String(answer);
     }
 
     // Text, date, etc.
-    return answer.toString();
+    return String(answer);
   };
 
   return (
@@ -477,9 +508,15 @@ function ReviewStep({ form, answers, onEditQuestion }: ReviewStepProps) {
 
       <div className="space-y-4">
         {form.questions.map((question, index) => {
-          const questionId = question.questionId._id;
+          const questionId =
+            typeof question.questionId === "string"
+              ? question.questionId
+              : question.questionId._id;
           const answer = answers[questionId];
-          const questionDetails = question.questionId;
+          const questionDetails =
+            typeof question.questionId === "string"
+              ? null
+              : question.questionId;
 
           return (
             <div
@@ -493,7 +530,7 @@ function ReviewStep({ form, answers, onEditQuestion }: ReviewStepProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                    {questionDetails.title}
+                    {questionDetails ? questionDetails.title : "Pergunta"}
                     {question.required && (
                       <span className="text-red-600 ml-1">*</span>
                     )}
@@ -534,8 +571,15 @@ function QuestionRenderer({
   value,
   onChange,
 }: QuestionRendererProps) {
-  const questionDetails = question.questionId;
-  const type = questionDetails.type;
+  const questionDetails =
+    typeof question.questionId === "string" ? null : question.questionId;
+  const type = questionDetails?.type ?? "text";
+
+  if (!questionDetails) {
+    return (
+      <div className="p-6 text-center text-gray-600">Carregando questão...</div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -633,7 +677,7 @@ function QuestionRenderer({
           </Select>
         )}
 
-        {type === "scale" && questionDetails.options && (
+        {type === "scale" && (
           <div className="space-y-6">
             <div className="flex items-center justify-between text-xs font-semibold text-gray-500 uppercase tracking-wide px-2">
               <span className="flex items-center gap-2">
@@ -654,62 +698,161 @@ function QuestionRenderer({
               <div
                 className="relative grid gap-3"
                 style={{
-                  gridTemplateColumns: `repeat(${questionDetails.options.length}, minmax(0, 1fr))`,
+                  gridTemplateColumns: `repeat(var(--scale-steps, 11), minmax(0, 1fr))`,
                 }}
               >
-                {questionDetails.options.map((option: any, index: number) => {
-                  const isSelected = value === (option.value || option.label);
-                  const totalOptions = questionDetails.options?.length || 0;
-                  const percentage =
-                    totalOptions > 1 ? (index / (totalOptions - 1)) * 100 : 0;
-
-                  // Determina a cor baseada na posição
-                  let colorClass = "from-red-500 to-red-600";
-                  if (percentage > 66) {
-                    colorClass = "from-green-500 to-green-600";
-                  } else if (percentage > 33) {
-                    colorClass = "from-yellow-500 to-yellow-600";
+                {(() => {
+                  // Prefer numeric min/max if provided
+                  const min = questionDetails?.min;
+                  const max = questionDetails?.max;
+                  if (
+                    typeof min === "number" &&
+                    typeof max === "number" &&
+                    max >= min
+                  ) {
+                    const steps = max - min + 1;
+                    return Array.from({ length: steps }).map((_, i) => {
+                      const valueForIndex = min + i;
+                      const percentage =
+                        steps > 1 ? (i / (steps - 1)) * 100 : 0;
+                      let colorClass = "from-red-500 to-red-600";
+                      if (percentage > 66)
+                        colorClass = "from-green-500 to-green-600";
+                      else if (percentage > 33)
+                        colorClass = "from-yellow-500 to-yellow-600";
+                      const isSelected =
+                        value === valueForIndex ||
+                        value === String(valueForIndex);
+                      return (
+                        <div
+                          key={valueForIndex}
+                          className="flex flex-col items-center gap-2"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => onChange(valueForIndex)}
+                            className={`relative w-full aspect-square flex items-center justify-center text-xl font-bold rounded-2xl transition-all duration-300 ${
+                              isSelected
+                                ? `bg-gradient-to-br ${colorClass} text-white shadow-2xl transform scale-110`
+                                : "bg-white border-3 border-gray-200 text-gray-700 hover:border-gray-400 hover:shadow-lg hover:scale-105"
+                            }`}
+                          >
+                            <span className={isSelected ? "animate-pulse" : ""}>
+                              {valueForIndex}
+                            </span>
+                            {isSelected && (
+                              <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <Check className="w-4 h-4 text-green-600" />
+                              </div>
+                            )}
+                          </button>
+                          <span
+                            className={`text-xs font-medium transition-colors ${
+                              isSelected ? "text-gray-900" : "text-gray-400"
+                            }`}
+                          >
+                            {valueForIndex}
+                          </span>
+                        </div>
+                      );
+                    });
                   }
 
-                  return (
-                    <div
-                      key={index}
-                      className="flex flex-col items-center gap-2"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => onChange(option.value || option.label)}
-                        className={`relative w-full aspect-square flex items-center justify-center text-xl font-bold rounded-2xl transition-all duration-300 ${
-                          isSelected
-                            ? `bg-gradient-to-br ${colorClass} text-white shadow-2xl transform scale-110 ring-4 ring-offset-2 ring-${
-                                percentage > 66
-                                  ? "green"
-                                  : percentage > 33
-                                  ? "yellow"
-                                  : "red"
-                              }-300`
-                            : "bg-white border-3 border-gray-200 text-gray-700 hover:border-gray-400 hover:shadow-lg hover:scale-105"
-                        }`}
-                      >
-                        <span className={isSelected ? "animate-pulse" : ""}>
-                          {option.label}
+                  // Else fallback to options array if present
+                  const opts = questionDetails?.options || [];
+                  if (opts.length > 0) {
+                    const totalOptions = opts.length;
+                    return opts.map((option: any, index: number) => {
+                      const label =
+                        option?.label ?? option?.value ?? String(option);
+                      const optValue = option?.value ?? label ?? String(index);
+                      const percentage =
+                        totalOptions > 1
+                          ? (index / (totalOptions - 1)) * 100
+                          : 0;
+                      let colorClass = "from-red-500 to-red-600";
+                      if (percentage > 66)
+                        colorClass = "from-green-500 to-green-600";
+                      else if (percentage > 33)
+                        colorClass = "from-yellow-500 to-yellow-600";
+                      const isSelected = value === optValue || value === label;
+                      return (
+                        <div
+                          key={index}
+                          className="flex flex-col items-center gap-2"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => onChange(optValue)}
+                            className={`relative w-full aspect-square flex items-center justify-center text-xl font-bold rounded-2xl transition-all duration-300 ${
+                              isSelected
+                                ? `bg-gradient-to-br ${colorClass} text-white shadow-2xl transform scale-110`
+                                : "bg-white border-3 border-gray-200 text-gray-700 hover:border-gray-400 hover:shadow-lg hover:scale-105"
+                            }`}
+                          >
+                            <span className={isSelected ? "animate-pulse" : ""}>
+                              {label}
+                            </span>
+                            {isSelected && (
+                              <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <Check className="w-4 h-4 text-green-600" />
+                              </div>
+                            )}
+                          </button>
+                          <span
+                            className={`text-xs font-medium transition-colors ${
+                              isSelected ? "text-gray-900" : "text-gray-400"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </div>
+                      );
+                    });
+                  }
+
+                  // Default numeric 0..10
+                  const defaultSteps = 11;
+                  return Array.from({ length: defaultSteps }).map((_, i) => {
+                    const percentage =
+                      defaultSteps > 1 ? (i / (defaultSteps - 1)) * 100 : 0;
+                    let colorClass = "from-red-500 to-red-600";
+                    if (percentage > 66)
+                      colorClass = "from-green-500 to-green-600";
+                    else if (percentage > 33)
+                      colorClass = "from-yellow-500 to-yellow-600";
+                    const isSelected = value === i || value === String(i);
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onChange(i)}
+                          className={`relative w-full aspect-square flex items-center justify-center text-xl font-bold rounded-2xl transition-all duration-300 ${
+                            isSelected
+                              ? `bg-gradient-to-br ${colorClass} text-white shadow-2xl transform scale-110`
+                              : "bg-white border-3 border-gray-200 text-gray-700 hover:border-gray-400 hover:shadow-lg hover:scale-105"
+                          }`}
+                        >
+                          <span className={isSelected ? "animate-pulse" : ""}>
+                            {i}
+                          </span>
+                          {isSelected && (
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
+                              <Check className="w-4 h-4 text-green-600" />
+                            </div>
+                          )}
+                        </button>
+                        <span
+                          className={`text-xs font-medium transition-colors ${
+                            isSelected ? "text-gray-900" : "text-gray-400"
+                          }`}
+                        >
+                          {i}
                         </span>
-                        {isSelected && (
-                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-lg">
-                            <Check className="w-4 h-4 text-green-600" />
-                          </div>
-                        )}
-                      </button>
-                      <span
-                        className={`text-xs font-medium transition-colors ${
-                          isSelected ? "text-gray-900" : "text-gray-400"
-                        }`}
-                      >
-                        {option.label}
-                      </span>
-                    </div>
-                  );
-                })}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           </div>

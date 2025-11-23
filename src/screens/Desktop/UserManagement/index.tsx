@@ -135,32 +135,6 @@ export function StaffUserManagement() {
         </Button>
       </PageHeaderWithSearch>
 
-      {/* Tabs */}
-      <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <Tabs
-          value={activeTab}
-          onValueChange={(v: string) => setActiveTab(v as UserTab)}
-        >
-          <TabsList>
-            <TabsTrigger value="all">Todos ({users.length})</TabsTrigger>
-            <TabsTrigger value="student">
-              Estudantes ({users.filter((u) => u.role === "student").length})
-            </TabsTrigger>
-            <TabsTrigger value="teacher_respondent">
-              Prof. Respondentes (
-              {users.filter((u) => u.role === "teacher_respondent").length})
-            </TabsTrigger>
-            <TabsTrigger value="teacher_analyst">
-              Prof. Pesquisadors (
-              {users.filter((u) => u.role === "teacher_analyst").length})
-            </TabsTrigger>
-            <TabsTrigger value="admin">
-              Administradores ({users.filter((u) => u.role === "admin").length})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading ? (

@@ -4,7 +4,8 @@ import api from "./api";
 // Types
 export interface Answer {
   questionId: string;
-  answer: string | string[] | number;
+  // Accept common answer shapes: single string, multiple choices, numeric scales, dates or null
+  answer: string | string[] | number | Date | null;
 }
 
 export interface SubmitResponseRequest {
@@ -18,6 +19,11 @@ export interface ResponseData {
     _id: string;
     title: string;
     description?: string;
+    // form type from schema ('form' | 'diary')
+    type: "form" | "diary";
+    // convenience flag consumers may use
+    isDiary?: boolean;
+    createdAt?: string;
   };
   userId: {
     _id?: string; // pode não existir quando usuário foi deletado
@@ -34,8 +40,12 @@ export interface ResponseData {
       title: string;
       type: string;
       options?: string[];
+      // optional metadata for scale/text questions
+      min?: number;
+      max?: number;
+      required?: boolean;
     };
-    answer: string | string[] | number;
+    answer: string | string[] | number | Date | null;
     _id: string;
   }[];
   submittedAt: string;
@@ -46,6 +56,17 @@ export interface ApiResponse<T> {
   msg?: string;
   message?: string;
   data?: T;
+}
+
+export interface DraftData {
+  _id: string;
+  formId: string | { _id: string; title?: string; type?: "form" | "diary" };
+  userId: string | { _id?: string; name?: string; email?: string };
+  answers: { questionId: string; answer: any }[];
+  isDraft: boolean;
+  // server-provided timestamp when draft was last modified
+  lastModified?: string;
+  updatedAt?: string;
 }
 
 export interface Respondent {
@@ -82,6 +103,49 @@ export const submitResponse = async (
     return response.data;
   } catch (error: any) {
     return { error: extractError(error, "Erro ao enviar resposta") };
+  }
+};
+
+/**
+ * Salva ou atualiza um rascunho (POST /responses/draft)
+ */
+export const saveDraft = async (
+  formId: string,
+  answers: Answer[] = []
+): Promise<ApiResponse<DraftData>> => {
+  try {
+    const response = await api.post("/responses/draft", { formId, answers });
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao salvar rascunho") };
+  }
+};
+
+/**
+ * Recupera rascunho do usuário para um formulário (GET /responses/draft/:formId)
+ */
+export const getDraft = async (
+  formId: string
+): Promise<ApiResponse<DraftData | null>> => {
+  try {
+    const response = await api.get(`/responses/draft/${formId}`);
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao recuperar rascunho") };
+  }
+};
+
+/**
+ * Deleta (soft-delete) o rascunho do usuário para um formulário (DELETE /responses/draft/:formId)
+ */
+export const deleteDraft = async (
+  formId: string
+): Promise<ApiResponse<null>> => {
+  try {
+    const response = await api.delete(`/responses/draft/${formId}`);
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao deletar rascunho") };
   }
 };
 

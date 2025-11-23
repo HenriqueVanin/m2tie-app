@@ -133,27 +133,6 @@ export function StaffFormResponses() {
           Exportar
         </Button>
       </PageHeaderWithSearch>
-
-      {/* Stats */}
-      <div className="px-6 py-4 bg-gray-50 border-b-2 border-gray-200">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <p className="text-sm text-gray-500">Total de Respostas</p>
-            <p className="text-gray-800">{responses.length}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <p className="text-sm text-gray-500">Formulários Únicos</p>
-            <p className="text-gray-800">{uniqueForms.length}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-            <p className="text-sm text-gray-500">Usuários Únicos</p>
-            <p className="text-gray-800">
-              {new Set(responses.map((r) => r.userEmail)).size}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Table */}
       <div className="flex-1 overflow-auto">
         {loading ? (

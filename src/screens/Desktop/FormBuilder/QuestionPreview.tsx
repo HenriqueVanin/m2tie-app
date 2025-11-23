@@ -6,7 +6,8 @@ interface Question {
   title: string;
   description?: string;
   required: boolean;
-  options?: any[];
+  // options can be simple strings or objects like { label, value, _id }
+  options?: Array<string | { label?: string; value?: string; _id?: string }>;
 }
 
 function QuestionPreview({ question }: { question: Question }) {
@@ -18,21 +19,32 @@ function QuestionPreview({ question }: { question: Question }) {
     case "dropdown":
       return (
         <div className="mt-2 space-y-2">
-          {question.options?.map((option, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2 text-sm text-gray-600"
-            >
-              <div className="w-4 h-4 border-2 border-gray-300 rounded" />
-              {option}
-            </div>
-          ))}
+          {question.options?.map((option, i) => {
+            const label =
+              typeof option === "string"
+                ? option
+                : option?.label ?? option?.value ?? String(option);
+            const key =
+              typeof option === "object" && option?._id
+                ? option._id
+                : `${i}-${label}`;
+            return (
+              <div
+                key={key}
+                className="flex items-center gap-2 text-sm text-gray-600"
+              >
+                <div className="w-4 h-4 border-2 border-gray-300 rounded" />
+                <span>{label}</span>
+              </div>
+            );
+          })}
         </div>
       );
     case "scale":
+      const steps = question.options?.length ?? 11;
       return (
         <div className="mt-2 flex gap-2">
-          {Array.from({ length: 11 }, (_, i) => (
+          {Array.from({ length: steps }, (_, i) => (
             <div
               key={i}
               className="w-8 h-8 border-2 border-gray-300 rounded flex items-center justify-center text-xs"

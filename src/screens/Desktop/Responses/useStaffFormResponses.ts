@@ -64,13 +64,27 @@ export function useStaffFormResponses() {
             userName: r.userId.anonymous ? "Usuário Anônimo" : r.userId.name,
             userEmail: r.userId.anonymous ? "N/A" : r.userId.email,
             submittedAt: r.submittedAt,
-            answers: r.answers.map((a) => ({
-              questionId: a.questionId._id,
-              questionTitle: a.questionId.title,
-              questionType: a.questionId.type,
-              questionOptions: a.questionId.options,
-              answer: a.answer,
-            })),
+            answers: r.answers.map((a) => {
+              const q = a.questionId as any;
+              const qid = typeof q === "string" ? q : q?._id;
+              let answer: string | number | string[];
+              if (a.answer === null || a.answer === undefined) {
+                answer = "";
+              } else if (a.answer instanceof Date) {
+                answer = a.answer.toISOString();
+              } else {
+                answer = a.answer as string | number | string[];
+              }
+              return {
+                questionId: String(qid),
+                questionTitle: typeof q?.title === "string" ? q.title : "",
+                questionType: typeof q?.type === "string" ? q.type : "",
+                questionOptions: Array.isArray(q?.options)
+                  ? q.options
+                  : undefined,
+                answer,
+              };
+            }),
           })
         );
         setResponses(mappedResponses);

@@ -5,7 +5,14 @@ import {
   Form,
   FormQuestion,
 } from "../../../services/formService";
-import { submitResponse } from "../../../services/responseService";
+import {
+  submitResponse,
+  saveDraft,
+  getDraft,
+  deleteDraft,
+} from "../../../services/responseService";
+import { canRespondToDiary } from "../../../services/responseService";
+import { useNavigate } from "react-router-dom";
 
 export interface UseFormWizardReturn {
   availableForms: Form[];
@@ -42,6 +49,8 @@ export interface UseFormWizardReturn {
   setShowFormList: (v: boolean) => void;
   setAnswers: (a: Record<string, any>) => void;
   setCurrentStep: (s: number) => void;
+  draftStatus?: "idle" | "saving" | "saved" | "error";
+  draftSavedAt?: string | null;
 }
 
 export function useFormWizard(): UseFormWizardReturn {
@@ -59,10 +68,57 @@ export function useFormWizard(): UseFormWizardReturn {
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [showFormList, setShowFormList] = useState(false);
   const [hasVisitedReview, setHasVisitedReview] = useState(false);
-
+  const [draftStatus, setDraftStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const navigate = useNavigate();
   useEffect(() => {
     fetchActiveForms();
   }, []);
+
+  // Load draft when a form is selected/opened
+  useEffect(() => {
+    let mounted = true;
+    const loadDraft = async () => {
+      if (!form) return;
+      try {
+        const res = await getDraft(form._id);
+        if (res && !res.error && res.data && mounted) {
+          const draft = res.data;
+          // Convert draft.answers (array) into answers object
+          const draftAnswers: Record<string, any> = {};
+          if (Array.isArray(draft.answers)) {
+            for (const a of draft.answers) {
+              // questionId may be populated object or id string
+              const qid =
+                typeof a.questionId === "string"
+                  ? a.questionId
+                  : a.questionId &&
+                    typeof a.questionId === "object" &&
+                    "_id" in a.questionId
+                  ? (a.questionId as { _id: string })._id
+                  : null;
+              if (qid) draftAnswers[qid] = a.answer;
+            }
+          }
+          // Merge draft answers into current answers, prefer draft values
+          if (Object.keys(draftAnswers).length > 0) {
+            setAnswers((prev) => ({ ...prev, ...draftAnswers }));
+          }
+        }
+      } catch (e: any) {
+        // Silently ignore draft load errors for now
+        console.warn("Erro ao carregar rascunho:", e?.message || e);
+      }
+    };
+
+    loadDraft();
+
+    return () => {
+      mounted = false;
+    };
+  }, [form]);
 
   useEffect(() => {
     if (isReviewStep) setHasVisitedReview(true);
@@ -125,11 +181,29 @@ export function useFormWizard(): UseFormWizardReturn {
   };
 
   const selectForm = (index: number) => {
-    setForm(availableForms[index]);
-    setSelectedFormIndex(index);
-    setShowFormList(false);
-    setAnswers({});
-    setCurrentStep(0);
+    const candidate = availableForms[index];
+    // If the form is a diary, verify the user can respond today
+    (async () => {
+      try {
+        if (candidate && (candidate.type === "diary" || candidate.isDiary)) {
+          const res = await canRespondToDiary(candidate._id);
+          if (res && !res.error && res.data && res.data.canRespond === false) {
+            toast.error(
+              "Você já respondeu ao diário hoje. Tente novamente amanhã."
+            );
+            return;
+          }
+        }
+        setForm(candidate);
+        setSelectedFormIndex(index);
+        setShowFormList(false);
+        setAnswers({});
+        setCurrentStep(0);
+      } catch (e: any) {
+        // If diary check fails, block selection and notify
+        toast.error(e?.message || "Não foi possível abrir o formulário");
+      }
+    })();
   };
 
   const handleAnswerChange = (questionId: string, value: any) => {
@@ -148,7 +222,10 @@ export function useFormWizard(): UseFormWizardReturn {
 
     const currentQuestion = form.questions?.[currentStep];
     if (currentQuestion) {
-      const questionId = currentQuestion.questionId._id;
+      const questionId =
+        typeof currentQuestion.questionId === "string"
+          ? currentQuestion.questionId
+          : currentQuestion.questionId._id;
       if (currentQuestion.required && !answers[questionId]) {
         toast.error("Esta questão é obrigatória");
         return;
@@ -159,13 +236,16 @@ export function useFormWizard(): UseFormWizardReturn {
   };
 
   const prevStep = () => {
-    if (currentStep === 0 && availableForms.length > 1) {
-      setShowFormList(true);
-      setForm(null);
-      setSelectedFormIndex(null);
-      setAnswers({});
-      setCurrentStep(0);
-      return;
+    if (currentStep === 0) {
+      if (availableForms.length <= 1) navigate("/home");
+      if (availableForms.length > 1) {
+        setShowFormList(true);
+        setForm(null);
+        setSelectedFormIndex(null);
+        setAnswers({});
+        setCurrentStep(0);
+        return;
+      }
     }
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
@@ -229,6 +309,12 @@ export function useFormWizard(): UseFormWizardReturn {
         (_, idx) => idx !== selectedFormIndex
       );
       setAvailableForms(updatedForms);
+      // Remove any saved draft for this form after successful submission
+      try {
+        await deleteDraft(form._id);
+      } catch (e) {
+        // ignore delete errors
+      }
       setSubmissionSuccess(true);
     } catch (e: any) {
       toast.error(e?.message || "Erro ao enviar formulário");
@@ -236,6 +322,37 @@ export function useFormWizard(): UseFormWizardReturn {
       setSubmitting(false);
     }
   };
+
+  // Autosave drafts (debounced) when answers change
+  useEffect(() => {
+    if (!form) return;
+    // Do not save during submit
+    if (submitting) return;
+
+    const handler = setTimeout(async () => {
+      try {
+        const formattedAnswers = Object.entries(answers).map(
+          ([questionId, answer]) => ({ questionId, answer })
+        );
+        // Only save if there is at least one answer
+        if (formattedAnswers.length > 0) {
+          setDraftStatus("saving");
+          const res = await saveDraft(form._id, formattedAnswers);
+          if (res && !res.error) {
+            setDraftStatus("saved");
+            setDraftSavedAt(new Date().toISOString());
+          } else {
+            setDraftStatus("error");
+          }
+        }
+      } catch (e: any) {
+        console.warn("Erro ao salvar rascunho:", e?.message || e);
+        setDraftStatus("error");
+      }
+    }, 800);
+
+    return () => clearTimeout(handler);
+  }, [answers, form, submitting]);
 
   return {
     availableForms,
@@ -268,6 +385,8 @@ export function useFormWizard(): UseFormWizardReturn {
     setShowFormList,
     setAnswers,
     setCurrentStep,
+    draftStatus,
+    draftSavedAt,
   };
 }
 

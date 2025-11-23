@@ -2,8 +2,9 @@ import * as React from "react";
 import { cn } from "./utils";
 
 interface SimpleDatePickerProps {
-  value?: Date;
-  onChange?: (date: Date) => void;
+  // Accept Date, ISO string, or timestamp
+  value?: Date | string | number | null;
+  onChange?: (date: Date | null) => void;
   className?: string;
 }
 
@@ -36,22 +37,43 @@ export function SimpleDatePicker({
   className,
 }: SimpleDatePickerProps) {
   const today = new Date();
+
+  // parse incoming value safely into a Date (if possible)
+  const parsedValue: Date | null = React.useMemo(() => {
+    if (value === undefined || value === null) return null;
+    if (value instanceof Date) {
+      return isNaN(value.getTime()) ? null : value;
+    }
+    try {
+      const d = new Date(value as any);
+      return isNaN(d.getTime()) ? null : d;
+    } catch (e) {
+      return null;
+    }
+  }, [value]);
+
   // internal state used only in uncontrolled mode
   const [internalYear, setInternalYear] = React.useState(
-    value?.getFullYear() || today.getFullYear()
+    parsedValue ? parsedValue.getFullYear() : today.getFullYear()
   );
   const [internalMonth, setInternalMonth] = React.useState(
-    value?.getMonth() || today.getMonth()
+    parsedValue ? parsedValue.getMonth() : today.getMonth()
   );
   const [internalDay, setInternalDay] = React.useState(
-    value?.getDate() || today.getDate()
+    parsedValue ? parsedValue.getDate() : today.getDate()
   );
 
-  const isControlled = value !== undefined && value !== null;
+  const isControlled = parsedValue !== null;
 
-  const displayYear = isControlled ? value!.getFullYear() : internalYear;
-  const displayMonth = isControlled ? value!.getMonth() : internalMonth;
-  const displayDay = isControlled ? value!.getDate() : internalDay;
+  const displayYear = isControlled
+    ? (parsedValue as Date).getFullYear()
+    : internalYear;
+  const displayMonth = isControlled
+    ? (parsedValue as Date).getMonth()
+    : internalMonth;
+  const displayDay = isControlled
+    ? (parsedValue as Date).getDate()
+    : internalDay;
 
   const daysInMonth = getDaysInMonth(displayYear, displayMonth);
   const firstDayOfWeek = new Date(displayYear, displayMonth, 1).getDay();

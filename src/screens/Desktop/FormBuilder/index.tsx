@@ -782,6 +782,7 @@ function QuestionSettings({
               <Input
                 id="question-scaleMin"
                 type="number"
+                min={0}
                 value={question.scaleMin ?? 0}
                 onChange={(e) =>
                   onUpdate({ scaleMin: parseInt(e.target.value, 10) })
@@ -795,6 +796,7 @@ function QuestionSettings({
                 id="question-scaleMax"
                 type="number"
                 value={question.scaleMax ?? 10}
+                min={0}
                 onChange={(e) =>
                   onUpdate({ scaleMax: parseInt(e.target.value, 10) })
                 }

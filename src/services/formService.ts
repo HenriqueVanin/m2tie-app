@@ -16,16 +16,20 @@ export interface QuestionDetails {
     minLength?: number;
     maxLength?: number;
   };
+  // optional numeric bounds for scale-type questions
+  min?: number;
+  max?: number;
   createdBy: string;
   createdAt: string;
   __v?: number;
 }
 
 export interface FormQuestion {
-  _id: string;
-  questionId: QuestionDetails;
-  order: number;
-  required: boolean;
+  _id?: string;
+  // either an ObjectId string or a populated QuestionDetails
+  questionId: string | QuestionDetails;
+  order?: number;
+  required?: boolean;
 }
 
 export interface UserBasic {
@@ -39,13 +43,19 @@ export interface UserBasic {
 }
 
 export interface Form {
-  formTitle: ReactNode;
+  // UI legacy label (optional)
+  formTitle?: ReactNode;
   _id: string;
   title: string;
-  description: string;
+  description?: string;
+  // form type according to schema
+  type?: "form" | "diary";
+  isDiary?: boolean;
   questions: FormQuestion[];
-  assignedUsers: UserBasic[];
+  // assignedUsers may be populated or just IDs
+  assignedUsers: string[] | UserBasic[];
   isActive: boolean;
+  deleted?: boolean;
   createdBy: UserBasic | string;
   createdAt?: string;
   updatedAt?: string;
@@ -64,7 +74,9 @@ export interface CreateFormPayload {
     order?: number;
     required?: boolean;
   }>;
-  assignedUsers: string[];
+  assignedUsers?: string[];
+  // optional: 'form' | 'diary'
+  type?: "form" | "diary";
   isActive?: boolean;
 }
 
@@ -77,6 +89,7 @@ export interface UpdateFormPayload {
     required?: boolean;
   }>;
   assignedUsers?: string[];
+  type?: "form" | "diary";
   isActive?: boolean;
 }
 

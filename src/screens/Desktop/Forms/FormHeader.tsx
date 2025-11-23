@@ -34,7 +34,6 @@ export default function FormHeader({
   onView,
   onEdit,
   onDelete,
-  onToggle,
 }: Props) {
   return (
     <>
@@ -89,7 +88,9 @@ export default function FormHeader({
           <Button
             variant="outline"
             size="sm"
-            onClick={(e) => onView(form.id, e)}
+            onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
+              onView(form.id, e)
+            }
             className="gap-2"
           >
             <Eye className="w-4 h-4" />
@@ -100,7 +101,9 @@ export default function FormHeader({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={(e) => onEdit(form.id, e)}
+                onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
+                  onEdit(form.id, e)
+                }
                 className="gap-2"
               >
                 <Edit className="w-4 h-4" />
@@ -109,7 +112,9 @@ export default function FormHeader({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={(e) => onDelete(form.id, e)}
+                onClick={(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) =>
+                  onDelete(form.id, e)
+                }
                 className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
               >
                 <Trash2 className="w-4 h-4" />
