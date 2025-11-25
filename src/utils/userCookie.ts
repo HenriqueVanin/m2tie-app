@@ -3,12 +3,18 @@ import { User } from "../services/userService";
 const COOKIE_NAME = "app_user";
 
 export function setUserCookie(user: User) {
+  const id = (user as any)._id ?? (user as any).id ?? "";
   const value = encodeURIComponent(
     JSON.stringify({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
+      _id: id,
+      id,
+      name: user.name ?? "",
+      email: user.email ?? "",
+      role: (user as any).role ?? "",
+      // Use null explicitly so JSON preserves keys when absent
+      city: (user as any).city ?? null,
+      state: (user as any).state ?? null,
+      institution: (user as any).institution ?? null,
     })
   );
   // Cookie simples, expira em 1 dia
@@ -24,7 +30,17 @@ export function getUserCookie(): User | null {
   try {
     const decoded = decodeURIComponent(match[2]);
     const parsed = JSON.parse(decoded);
-    return parsed;
+    // Normalize shape: ensure _id exists and return a compatible object
+    const normalized: any = {
+      _id: parsed._id ?? parsed.id ?? "",
+      name: parsed.name ?? "",
+      email: parsed.email ?? "",
+      role: parsed.role ?? "",
+      city: parsed.city ?? null,
+      state: parsed.state ?? null,
+      institution: parsed.institution ?? null,
+    };
+    return normalized;
   } catch {
     return null;
   }

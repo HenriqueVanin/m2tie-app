@@ -6,20 +6,22 @@ import {
 } from "../../../services/responseService";
 import { getUserCookie } from "../../../utils/userCookie";
 
-interface FormResponse {
+export interface FormAnswer {
+  questionId: string;
+  questionTitle: string;
+  questionType: string;
+  questionOptions?: string[];
+  answer: string | string[] | number;
+}
+
+export interface FormResponse {
   id: string;
   formTitle: string;
   formDescription?: string;
   userName: string;
   userEmail: string;
   submittedAt: string;
-  answers: {
-    questionId: string;
-    questionTitle: string;
-    questionType: string;
-    questionOptions?: string[];
-    answer: string | string[] | number;
-  }[];
+  answers: FormAnswer[];
 }
 
 export function useStaffFormResponses() {

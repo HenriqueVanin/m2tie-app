@@ -111,30 +111,6 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
       <main aria-labelledby="home-heading">
         <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
           <div className="pb-4 space-y-6">
-            {/* Stats */}
-            {/* <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
-              <p className="text-emerald-600 text-xl font-bold text-[24px]">
-                18
-              </p>
-              <p className="text-xs text-gray-500 mt-1 font-bold">
-                Formulários
-              </p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
-              <p className="text-emerald-600 text-xl font-bold text-[24px]">
-                15
-              </p>
-              <p className="text-xs text-gray-500 mt-1 font-bold">Completos</p>
-            </div>
-            <div className="text-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
-              <p className="text-emerald-600 text-xl font-bold text-[24px]">
-                3
-              </p>
-              <p className="text-xs text-gray-500 mt-1 font-bold">Pendentes</p>
-            </div>
-          </div> */}
-
             <NotificationCard
               icon={<FileText className="w-5 h-5 text-white" aria-hidden />}
               title="Novo formulário disponível"
@@ -143,7 +119,6 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
               onButtonClick={() => onNavigate("form")}
               buttonColor="emerald"
             />
-            {/* Última Anotação do Diário */}
             <NotificationCard
               icon={<BookOpen className="w-5 h-5 text-white" aria-hidden />}
               title="Última anotação do diário"
@@ -172,7 +147,6 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
                 lastDiaryEntry ? "Ver diário completo →" : "Começar a escrever"
               }
               onButtonClick={() => onNavigate("diary")}
-              // Provide clearer label for screen readers on the CTA
               buttonAriaLabel={
                 lastDiaryEntry
                   ? "Ver diário completo"
@@ -180,26 +154,6 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
               }
               buttonColor="emerald"
             />
-            {/* Notificações */}
-            {/* {notifications.map((notification) => (
-            <NotificationCard
-              key={notification.id}
-              icon={
-                notification.icon === "info" ? (
-                  <Info className="w-5 h-5 text-white" />
-                ) : notification.icon === "alert" ? (
-                  <AlertCircle className="w-5 h-5 text-white" />
-                ) : (
-                  <CheckCircle className="w-5 h-5 text-white" />
-                )
-              }
-              title={notification.title}
-              subtitle={notification.message}
-              buttonText="Ver mais"
-              onButtonClick={() => onNavigate("notification")}
-              buttonColor={notification.color}
-            />
-          ))} */}
           </div>
         </div>
       </main>

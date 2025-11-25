@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getUserCookie } from "../../../utils/userCookie";
 import { hasPermission, type UserRole } from "../../../utils/permissions";
 import {
@@ -6,20 +6,10 @@ import {
   deleteUser as deleteUserAPI,
   type User as APIUser,
 } from "../../../services/userService";
+import type { User } from "../../../services/userService";
+import { updateUser } from "../../../services/userService";
+import { authService } from "../../../services/authService";
 import { toast } from "sonner";
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: "admin" | "teacher_analyst" | "teacher_respondent" | "student";
-  anonymous?: boolean;
-  city?: string;
-  state?: string;
-  institution?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
 
 export type UserTab =
   | "all"
@@ -54,60 +44,69 @@ export function useStaffUserManagement() {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await getAllUsers();
-      setUsers(data as any);
+      setUsers(data as User[]);
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar usuários");
       console.error("Error fetching users:", e);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) => {
+        const matchesSearch =
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesTab =
-      activeTab === "all" ||
-      (activeTab === "student" && user.role === "student") ||
-      (activeTab === "teacher_respondent" &&
-        user.role === "teacher_respondent") ||
-      (activeTab === "teacher_analyst" && user.role === "teacher_analyst") ||
-      (activeTab === "admin" && user.role === "admin");
+        const matchesTab =
+          activeTab === "all" ||
+          (activeTab === "student" && user.role === "student") ||
+          (activeTab === "teacher_respondent" &&
+            user.role === "teacher_respondent") ||
+          (activeTab === "teacher_analyst" &&
+            user.role === "teacher_analyst") ||
+          (activeTab === "admin" && user.role === "admin");
 
-    const matchesRoleFilter = roleFilter === "all" || user.role === roleFilter;
+        const matchesRoleFilter =
+          roleFilter === "all" || user.role === roleFilter;
 
-    const matchesInstitutionFilter =
-      institutionFilter === "all" ||
-      (user.institution || "") === institutionFilter;
+        const matchesInstitutionFilter =
+          institutionFilter === "all" ||
+          (user.institution || "") === institutionFilter;
 
-    return (
-      matchesSearch &&
-      matchesTab &&
-      matchesRoleFilter &&
-      matchesInstitutionFilter
-    );
-  });
+        return (
+          matchesSearch &&
+          matchesTab &&
+          matchesRoleFilter &&
+          matchesInstitutionFilter
+        );
+      }),
+    [users, searchTerm, activeTab, roleFilter, institutionFilter]
+  );
 
-  const handleDeleteUser = async (id: string) => {
-    const user = users.find((u) => u._id === id);
-    if (!user) return;
-    setUserToDelete(user);
-    setDeleteDialogOpen(true);
-  };
+  const handleDeleteUser = useCallback(
+    (id: string) => {
+      const user = users.find((u) => u._id === id);
+      if (!user) return;
+      setUserToDelete(user);
+      setDeleteDialogOpen(true);
+    },
+    [users]
+  );
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
     if (!userToDelete) return;
     setDeleting(true);
     try {
       await deleteUserAPI(userToDelete._id);
-      setUsers(users.filter((u) => u._id !== userToDelete._id));
+      setUsers((prev) => prev.filter((u) => u._id !== userToDelete._id));
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     } catch (e: any) {
@@ -115,7 +114,52 @@ export function useStaffUserManagement() {
     } finally {
       setDeleting(false);
     }
-  };
+  }, [userToDelete]);
+
+  const handleSaveUser = useCallback(
+    async (user: User, password?: string, confirmPassword?: string) => {
+      try {
+        if (editingUser) {
+          await updateUser({
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            anonymous: user.anonymous,
+            city: user.city,
+            state: user.state,
+            institution: user.institution,
+          });
+          setUsers((prev) => prev.map((u) => (u._id === user._id ? user : u)));
+        } else {
+          if (!password || !confirmPassword) {
+            toast.error("Senha é obrigatória para criar usuário");
+            return;
+          }
+
+          await authService.register({
+            name: user.name,
+            email: user.email,
+            password,
+            confirmPassword,
+            role: user.role,
+            anonymous: user.anonymous || false,
+            city: user.city || "",
+            state: user.state || "",
+            institution: user.institution || "",
+          });
+
+          toast.success("Usuário criado com sucesso!");
+        }
+        setShowAddModal(false);
+        setEditingUser(null);
+        fetchUsers();
+      } catch (e: any) {
+        toast.error(e?.message || "Erro ao salvar usuário");
+      }
+    },
+    [editingUser, fetchUsers]
+  );
 
   return {
     users,
@@ -147,6 +191,7 @@ export function useStaffUserManagement() {
     filteredUsers,
     handleDeleteUser,
     handleDeleteConfirm,
+    handleSaveUser,
   } as const;
 }
 

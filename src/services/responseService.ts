@@ -107,6 +107,21 @@ export const submitResponse = async (
 };
 
 /**
+ * Submete uma resposta de diário (rota específica para diários)
+ * POST /responses/diary
+ */
+export const submitDiaryResponse = async (
+  data: SubmitResponseRequest
+): Promise<ApiResponse<ResponseData>> => {
+  try {
+    const response = await api.post("/responses/diary", data);
+    return response.data;
+  } catch (error: any) {
+    return { error: extractError(error, "Erro ao enviar resposta do diário") };
+  }
+};
+
+/**
  * Salva ou atualiza um rascunho (POST /responses/draft)
  */
 export const saveDraft = async (

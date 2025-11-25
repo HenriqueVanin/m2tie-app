@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { getUserFromToken } from "../../../utils/auth";
 import { getUserById } from "../../../services/userService";
 import { getUserInitials } from "../../../utils/userCookie";
+import { getUserCookie, setUserCookie } from "../../../utils/userCookie";
 
 export function useProfileScreen() {
   const [name, setName] = useState("");
@@ -18,6 +19,38 @@ export function useProfileScreen() {
 
   useEffect(() => {
     async function loadUserData() {
+      // Try cookie first
+      const cookie = getUserCookie();
+      if (cookie) {
+        setName(cookie.name || "Usuário");
+        setEmail(cookie.email || "");
+        setInstitution((cookie as any).institution ?? "");
+        setCity((cookie as any).city ?? "");
+        setState((cookie as any).state ?? "");
+        // If cookie lacks important profile fields, try to enrich from API
+        const missingImportant = !cookie.city || !cookie.institution;
+        if (missingImportant) {
+          const tokenData = getUserFromToken();
+          if (tokenData && tokenData.userId) {
+            try {
+              const fresh = await getUserById(tokenData.userId);
+              // Update state if we got values
+              if (fresh.institution) setInstitution(fresh.institution);
+              if (fresh.city) setCity(fresh.city);
+              if (fresh.state) setState(fresh.state || "");
+              // persist enriched cookie
+              try {
+                setUserCookie(fresh as any);
+              } catch {}
+            } catch {
+              // ignore enrichment failure
+            }
+          }
+        }
+        setLoading(false);
+        return;
+      }
+
       const tokenData = getUserFromToken();
       if (tokenData && tokenData.userId) {
         try {
@@ -27,6 +60,10 @@ export function useProfileScreen() {
           setInstitution(userData.institution || "");
           setCity(userData.city || "");
           setState(userData.state || "");
+          // persist to cookie for faster load next time
+          try {
+            setUserCookie(userData as any);
+          } catch {}
         } catch (error) {
           console.error("Erro ao carregar dados do usuário:", error);
           setName(tokenData.name || "Usuário");
@@ -40,6 +77,21 @@ export function useProfileScreen() {
     }
     loadUserData();
   }, []);
+
+  // Persist profile changes to cookie
+  useEffect(() => {
+    try {
+      setUserCookie({
+        _id: undefined as any,
+        name,
+        email,
+        role: "",
+        city,
+        state,
+        institution,
+      } as any);
+    } catch {}
+  }, [name, email, institution, city, state]);
 
   async function handleForgotPassword() {
     setForgotLoading(true);

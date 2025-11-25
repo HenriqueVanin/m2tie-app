@@ -1,7 +1,14 @@
 import type { Screen } from "../../../App";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ScreenHeader } from "../../../components/ui/screen-header";
 import { UserBackgroundLayout } from "../../../layout/UserBackgroundLayout";
+import { getActiveForm } from "../../../services/formService";
+import { submitDiaryResponse } from "../../../services/responseService";
+import { toast } from "sonner";
+import DiaryHeader from "./components/DiaryHeader";
+import DayPicker from "./components/DayPicker";
+import DiaryEditor from "./components/DiaryEditor";
+import EntryFooter from "./components/EntryFooter";
 
 interface DiaryScreenProps {
   onNavigate: (screen: Screen) => void;
@@ -16,12 +23,20 @@ export function DiaryScreen({ onNavigate, onLogout }: DiaryScreenProps) {
     new Date().toISOString().slice(0, 10)
   );
   const [entries, setEntries] = useState<Record<string, string>>({});
+  const [responsesByDate, setResponsesByDate] = useState<
+    Record<string, { responseId?: string; submittedAt?: string; text: string }>
+  >({});
+  const [diaryFormId, setDiaryFormId] = useState<string | null>(null);
+  const [diaryQuestionId, setDiaryQuestionId] = useState<string | null>(null);
+  const saveTimer = useRef<number | null>(null);
 
   // Carrega entradas do localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem("diaryEntries");
       if (raw) setEntries(JSON.parse(raw));
+      const rawResp = localStorage.getItem("diaryResponses");
+      if (rawResp) setResponsesByDate(JSON.parse(rawResp));
     } catch {}
   }, []);
 
@@ -32,8 +47,92 @@ export function DiaryScreen({ onNavigate, onLogout }: DiaryScreenProps) {
     } catch {}
   }, [entries]);
 
+  // persist responses mapping locally
+  useEffect(() => {
+    try {
+      localStorage.setItem("diaryResponses", JSON.stringify(responsesByDate));
+    } catch {}
+  }, [responsesByDate]);
+
+  // find diary form and primary question id on mount
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await getActiveForm();
+        if (!mounted || !res || res.error || !res.data) return;
+        const forms = Array.isArray(res.data) ? res.data : [res.data];
+        const diary = forms.find((f) => f && (f.type === "diary" || f.isDiary));
+        if (!diary) return;
+        setDiaryFormId(diary._id);
+        const firstQ = diary.questions?.[0];
+        if (firstQ) {
+          const qid =
+            typeof firstQ.questionId === "string"
+              ? firstQ.questionId
+              : (firstQ.questionId as any)?._id;
+          if (qid) setDiaryQuestionId(qid);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // clear debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimer.current) {
+        window.clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+    };
+  }, []);
+
   function updateEntry(text: string) {
     setEntries((prev) => ({ ...prev, [selectedDate]: text }));
+
+    // if not today, do not attempt to submit
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (selectedDate !== todayStr) return;
+
+    // debounce submit as a real response (not draft)
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        if (!diaryFormId || !diaryQuestionId) return;
+        const payload = {
+          formId: diaryFormId,
+          answers: [{ questionId: diaryQuestionId, answer: text }],
+        };
+        const res = await submitDiaryResponse(payload);
+        if (res && res.error) {
+          toast.error(res.error);
+          return;
+        }
+        // use returned response info if present
+        const responseData = res?.data;
+        const submittedAt =
+          responseData?.submittedAt || new Date().toISOString();
+        const responseId = responseData?._id;
+        setResponsesByDate((prev) => ({
+          ...prev,
+          [selectedDate]: { responseId, submittedAt, text },
+        }));
+        toast.success("Entrada do diário salva");
+      } catch (e: any) {
+        toast.error(e?.message || "Erro ao salvar entrada do diário");
+      }
+    }, 800);
+
+    saveTimer.current = timer as unknown as number;
   }
 
   function formatDayLabel(dateStr: string) {
@@ -58,42 +157,20 @@ export function DiaryScreen({ onNavigate, onLogout }: DiaryScreenProps) {
 
   const today = new Date();
   const days = buildRange(today, 7); // 7 dias (3 antes, hoje, 3 depois)
-  const currentText = entries[selectedDate] || "";
+  const currentText =
+    entries[selectedDate] ?? responsesByDate[selectedDate]?.text ?? "";
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
     <UserBackgroundLayout>
-      <ScreenHeader
-        title="Diário"
-        subtitle="Registre suas anotações diárias"
-        onLogout={onLogout}
-      />
+      <DiaryHeader onLogout={onLogout} />
       <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4 pb-20 flex flex-col">
         {/* Cabeçalho de dias */}
-        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1">
-          {days.map((d) => {
-            const isToday = d === new Date().toISOString().slice(0, 10);
-            const isSelected = d === selectedDate;
-            return (
-              <button
-                key={d}
-                onClick={() => setSelectedDate(d)}
-                className={[
-                  "px-4 py-3 rounded-2xl border text-sm flex flex-col items-center min-w-[90px]",
-                  isSelected
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
-                    : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100",
-                ].join(" ")}
-              >
-                <span className="font-medium">{formatDayLabel(d)}</span>
-                {isToday && (
-                  <span className="mt-1 text-[10px] tracking-wide uppercase font-semibold opacity-80">
-                    Hoje
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <DayPicker
+          days={days}
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+        />
         {/* Editor */}
         <div className="flex flex-col flex-1 min-h-0 pb-20 gap-3">
           <div className="flex items-center justify-between">
@@ -107,15 +184,13 @@ export function DiaryScreen({ onNavigate, onLogout }: DiaryScreenProps) {
               )}
             </span>
           </div>
-          <textarea
+          <DiaryEditor
             value={currentText}
-            onChange={(e) => updateEntry(e.target.value)}
+            isEditable={selectedDate === todayStr}
+            onChange={updateEntry}
             placeholder="Escreva suas reflexões, tarefas concluídas, impedimentos..."
-            className="flex-1 w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
           />
-          <div className="flex justify-end text-xs text-gray-500">
-            <span>{currentText.length} caracteres</span>
-          </div>
+          <EntryFooter charCount={currentText.length} />
         </div>
       </div>
     </UserBackgroundLayout>

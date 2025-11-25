@@ -11,6 +11,7 @@ import {
   getDraft,
   deleteDraft,
 } from "../../../services/responseService";
+import { submitDiaryResponse } from "../../../services/responseService";
 import { canRespondToDiary } from "../../../services/responseService";
 import { useNavigate } from "react-router-dom";
 
@@ -40,6 +41,8 @@ export interface UseFormWizardReturn {
     frm: Form | null,
     ans: Record<string, any>
   ) => boolean;
+  getQuestionId: (q: FormQuestion) => string;
+  getQuestionDetails: (q: FormQuestion) => any | null;
   handleSubmit: () => Promise<void>;
   // Expose some setters for UI interactions that the component may use
   setSubmissionSuccess: (v: boolean) => void;
@@ -129,6 +132,14 @@ export function useFormWizard(): UseFormWizardReturn {
   const currentQuestion = isReviewStep
     ? null
     : form?.questions?.[currentStep] || null;
+
+  // Helpers to work with FormQuestion.questionId which may be either a string (id)
+  // or a populated QuestionDetails object depending on the API response
+  const getQuestionId = (q: FormQuestion) =>
+    typeof q.questionId === "string" ? q.questionId : q.questionId._id;
+
+  const getQuestionDetails = (q: FormQuestion) =>
+    typeof q.questionId === "string" ? null : q.questionId;
 
   const fetchActiveForms = async () => {
     try {
@@ -274,10 +285,14 @@ export function useFormWizard(): UseFormWizardReturn {
         })
       );
 
-      const response = await submitResponse({
-        formId: form._id,
-        answers: formattedAnswers,
-      });
+      // Use diary-specific endpoint when appropriate
+      const isDiary = form.type === "diary" || (form as any).isDiary === true;
+      const response = isDiary
+        ? await submitDiaryResponse({
+            formId: form._id,
+            answers: formattedAnswers,
+          })
+        : await submitResponse({ formId: form._id, answers: formattedAnswers });
 
       if (response.error) {
         if (
@@ -377,6 +392,8 @@ export function useFormWizard(): UseFormWizardReturn {
     prevStep,
     goToQuestion,
     areRequiredQuestionsAnswered,
+    getQuestionId,
+    getQuestionDetails,
     handleSubmit,
     setSubmissionSuccess,
     setAvailableForms,

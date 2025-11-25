@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import ReactECharts from "echarts-for-react";
+import { useRef } from "react";
 import {
   BarChart3,
   Download,
@@ -21,7 +22,6 @@ import { PageHeaderWithSearch } from "../../../components/ui/page-header";
 import useStaffDashboardViewer from "./useStaffDashboardViewer";
 import type { FullAnalysisResponse } from "../../../services/dashboardService";
 import { StatsCard } from "./StatsCard";
-import { QuestionChart } from "./QuestionChart";
 import OverviewCards from "./OverviewCards";
 import ChartsGrid from "./ChartsGrid";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
@@ -68,18 +68,30 @@ export function StaffDashboardViewer() {
           </Select>
         }
       >
-        <Button
-          onClick={handleExportData}
-          disabled={!selectedFormId || loading}
-          className="gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-2xl disabled:opacity-50"
-        >
-          <Download className="w-5 h-5" />
-          Exportar Dados
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleExportData}
+            disabled={!selectedFormId || loading}
+            className="gap-2 h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-2xl disabled:opacity-50"
+          >
+            <Download className="w-5 h-5" />
+            Exportar Dados
+          </Button>
+
+          <Button
+            // onClick={() => exportPdf()}
+            disabled={!selectedFormId || loading}
+            variant="ghost"
+            className="gap-2 h-12 border border-gray-200 rounded-2xl"
+          >
+            <FileText className="w-5 h-5" />
+            Exportar PDF
+          </Button>
+        </div>
       </PageHeaderWithSearch>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
+      <div id="staff-dashboard-root" className="flex-1 overflow-auto p-6">
         {error && <ErrorAlert message={error} />}
 
         {loading && <LoadingPlaceholder />}
