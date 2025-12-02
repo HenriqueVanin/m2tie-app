@@ -27,6 +27,7 @@ import { AboutScreen } from "./screens/Mobile/About";
 import { StaffUserManagement } from "./screens/Desktop/UserManagement";
 import { FAQScreen } from "./screens/Mobile/FAQ";
 import { getUserCookie } from "./utils/userCookie";
+import { Toaster } from "./components/ui/sonner";
 import StaffProfile from "./screens/Desktop/Perfil";
 
 export type Screen =
@@ -404,6 +405,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppContent />
+      <Toaster />
     </BrowserRouter>
   );
 }

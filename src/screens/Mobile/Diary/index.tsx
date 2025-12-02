@@ -188,7 +188,7 @@ export function DiaryScreen({ onNavigate, onLogout }: DiaryScreenProps) {
             value={currentText}
             isEditable={selectedDate === todayStr}
             onChange={updateEntry}
-            placeholder="Escreva suas reflexões, tarefas concluídas, impedimentos..."
+            placeholder="Escreva suas reflexões..."
           />
           <EntryFooter charCount={currentText.length} />
         </div>

@@ -127,6 +127,37 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
           </Select>
         )}
 
+        {type === "scale" && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              {(questionDetails.options && questionDetails.options.length
+                ? questionDetails.options
+                : Array.from({ length: 5 }, (_, i) => ({
+                    label: String(i + 1),
+                    value: String(i + 1),
+                  }))
+              ).map((opt: any, idx: number) => {
+                const val = opt.value || opt.label || String(idx + 1);
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onChange(val)}
+                    className={`w-10 h-10 rounded-lg border ${
+                      value == val ? "bg-indigo-600 text-white" : "bg-white"
+                    }`}
+                  >
+                    {opt.label || val}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-sm text-gray-600">
+              Selecione um valor na escala
+            </p>
+          </div>
+        )}
+
         {type === "date" && (
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">

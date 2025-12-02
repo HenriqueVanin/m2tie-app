@@ -107,11 +107,7 @@ function FormBuilderScreen() {
         setFormDescription={setFormDescription}
         addQuestion={addQuestion as any}
         QUESTION_TYPES={QUESTION_TYPES as any}
-      >
-        {selectedQuestion && selectedQuestionData ? (
-          <div className="w-full h-full" />
-        ) : null}
-      </SidebarPanel>
+      />
 
       {showExistingQuestionsModal && (
         <ExistingQuestionsModal

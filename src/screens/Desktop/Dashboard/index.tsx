@@ -24,6 +24,7 @@ import type { FullAnalysisResponse } from "../../../services/dashboardService";
 import { StatsCard } from "./StatsCard";
 import OverviewCards from "./OverviewCards";
 import ChartsGrid from "./ChartsGrid";
+import { useEchartsExport } from "./useEchartsExport";
 import { LoadingPlaceholder } from "./LoadingPlaceholder";
 import { ErrorAlert } from "./ErrorAlert";
 import { EmptyState } from "./EmptyState";
@@ -43,6 +44,8 @@ export function StaffDashboardViewer() {
     error,
     handleExportData,
   } = useStaffDashboardViewer();
+
+  const { registerChart } = useEchartsExport();
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
@@ -99,7 +102,10 @@ export function StaffDashboardViewer() {
         {!loading && !error && dashboardData && (
           <div className="space-y-6">
             <OverviewCards dashboardData={dashboardData} />
-            <ChartsGrid questionsAnalysis={dashboardData.questionsAnalysis} />
+            <ChartsGrid
+              questionsAnalysis={dashboardData.questionsAnalysis}
+              registerChart={registerChart}
+            />
           </div>
         )}
 

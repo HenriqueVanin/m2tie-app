@@ -60,10 +60,9 @@ export function AboutScreen({ onNavigate, onLogout }: AboutScreenProps) {
               </div>
               <p className="text-gray-600">
                 Plataforma educacional desenvolvida para atender estudantes de
-                diferentes universidades como UNIFESP, USP, UNESP, UNICAMP e
-                UFABC. Nossa solução permite que a equipe de administração
-                gerencie formulários e acompanhe respostas de forma
-                centralizada.
+                diferentes universidades como UTFPR, USP, UNICAMP, UFBA. Nossa
+                solução permite que a equipe de administração gerencie
+                formulários e acompanhe respostas de forma centralizada.
               </p>
             </section>
 
@@ -81,7 +80,7 @@ export function AboutScreen({ onNavigate, onLogout }: AboutScreenProps) {
                 className="grid grid-cols-2 gap-3 list-none m-0 p-0"
                 aria-label="Lista de instituições atendidas"
               >
-                {["UNIFESP", "USP", "UNESP", "UNICAMP", "UFABC"].map((uni) => (
+                {["UTFPR", "USP", "UNICAMP", "UFBA"].map((uni) => (
                   <li
                     key={uni}
                     className="p-3 bg-gray-50 border border-gray-200 rounded-xl text-center"
