@@ -3,6 +3,7 @@ import { getUserFromToken } from "../../../utils/auth";
 import { getUserById } from "../../../services/userService";
 import { getUserInitials } from "../../../utils/userCookie";
 import { getUserCookie, setUserCookie } from "../../../utils/userCookie";
+import { authService } from "../../../services/authService";
 
 export function useProfileScreen() {
   const [name, setName] = useState("");
@@ -16,6 +17,8 @@ export function useProfileScreen() {
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotStatus, setForgotStatus] = useState<string | null>(null);
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     async function loadUserData() {
@@ -97,14 +100,32 @@ export function useProfileScreen() {
     setForgotLoading(true);
     setForgotStatus(null);
     try {
-      setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token") || params.get("resetToken") || "";
+      const trimmedEmail = (forgotEmail || email || "").trim();
+
+      // If we have a reset token and passwords, perform reset; otherwise request forgot email.
+      if (token && newPassword && confirmPassword) {
+        const res = await authService.resetPassword({
+          token,
+          data: { password: newPassword, confirmPassword },
+        });
+        setForgotStatus(res.msg || "Senha redefinida com sucesso.");
+      } else {
+        if (!trimmedEmail) {
+          setForgotStatus("Informe seu e-mail para recuperar a senha.");
+          setForgotLoading(false);
+          return;
+        }
+        const res = await authService.forgotPassword({ email: trimmedEmail });
         setForgotStatus(
-          "Se o email estiver cadastrado, você receberá instruções."
+          res.msg ||
+            "Email enviado (se existir). Verifique sua caixa de entrada."
         );
-        setForgotLoading(false);
-      }, 1500);
+      }
     } catch (e: any) {
-      setForgotStatus("Erro ao enviar solicitação. Tente novamente.");
+      setForgotStatus(e?.message || "Erro ao processar solicitação.");
+    } finally {
       setForgotLoading(false);
     }
   }
@@ -132,6 +153,10 @@ export function useProfileScreen() {
     setForgotStatus,
     forgotLoading,
     setForgotLoading,
+    newPassword,
+    setNewPassword,
+    confirmPassword,
+    setConfirmPassword,
     handleForgotPassword,
     initials,
     location,

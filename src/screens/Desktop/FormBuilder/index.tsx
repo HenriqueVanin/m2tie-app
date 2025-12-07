@@ -45,9 +45,11 @@ function FormBuilderScreen() {
     filteredQuestions,
     addQuestion,
     moveQuestion,
-    deleteQuestion,
     saveForm,
     selectedQuestionData,
+    updateQuestion,
+    saveQuestion,
+    deleteQuestion,
     canManage,
   } = hook;
 
@@ -99,6 +101,17 @@ function FormBuilderScreen() {
 
       <SidebarPanel
         selectedQuestion={selectedQuestion}
+        question={selectedQuestionData || undefined}
+        onQuestionChange={(patch) =>
+          selectedQuestion ? updateQuestion(selectedQuestion, patch) : undefined
+        }
+        onSaveQuestion={() =>
+          selectedQuestionData ? saveQuestion(selectedQuestionData) : undefined
+        }
+        onCloseEditor={() => setSelectedQuestion(null)}
+        onDeleteQuestion={() =>
+          selectedQuestion ? deleteQuestion(selectedQuestion) : undefined
+        }
         formTitle={formTitle}
         formDescription={formDescription}
         isLoadingQuestions={isLoadingQuestions}

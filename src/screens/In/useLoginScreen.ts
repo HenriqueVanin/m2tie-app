@@ -65,10 +65,20 @@ export default function useLoginScreen(onLogin: (type: UserType) => void) {
   };
 
   const handleForgotPassword = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const trimmed = (forgotEmail || "").trim();
+    if (!trimmed) {
+      setForgotStatus("Informe seu e-mail para recuperar a senha.");
+      return;
+    }
+    if (!emailRegex.test(trimmed)) {
+      setForgotStatus("Formato de e-mail inválido.");
+      return;
+    }
     setForgotLoading(true);
     setForgotStatus(null);
     try {
-      const res = await authService.forgotPassword({ email: forgotEmail });
+      const res = await authService.forgotPassword({ email: trimmed });
       setForgotStatus(
         (res as any).msg ||
           "Email enviado (se existir). Verifique sua caixa de entrada."

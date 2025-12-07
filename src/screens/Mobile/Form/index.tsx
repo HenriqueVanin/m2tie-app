@@ -266,7 +266,7 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
             onNext={nextStep}
             onBack={() => {
               // Se houver mais de um formulário disponível, voltar para tela intermediária
-              if (availableForms.length > 1) {
+              if (availableForms.length > 1 && currentStep === 0) {
                 setForm(null);
                 setSelectedFormIndex(null);
                 setShowFormList(true);

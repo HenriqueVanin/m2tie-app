@@ -1558,6 +1558,10 @@
     background-color: var(--color-emerald-700);
   }
 
+  .bg-indigo-600 {
+    background-color: var(--color-indigo-600);
+  }
+
   .bg-yellow-100 {
     background-color: var(--color-yellow-100);
   }

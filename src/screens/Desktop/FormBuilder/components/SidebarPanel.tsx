@@ -7,6 +7,11 @@ import { Button } from "../../../../components/ui/button";
 
 interface Props {
   selectedQuestion: string | null;
+  question?: any;
+  onQuestionChange?: (patch: Partial<any>) => void;
+  onSaveQuestion?: () => void;
+  onCloseEditor?: () => void;
+  onDeleteQuestion?: () => void;
   formTitle: string;
   formDescription?: string;
   isLoadingQuestions: boolean;
@@ -20,6 +25,11 @@ interface Props {
 
 export function SidebarPanel({
   selectedQuestion,
+  question,
+  onQuestionChange,
+  onSaveQuestion,
+  onCloseEditor,
+  onDeleteQuestion,
   formTitle,
   formDescription,
   isLoadingQuestions,
@@ -30,10 +40,201 @@ export function SidebarPanel({
   QUESTION_TYPES,
   children,
 }: Props) {
-  if (selectedQuestion) {
+  if (selectedQuestion && question) {
     return (
-      <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-        {children}
+      <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200">
+          <h3 className="mb-2">Editar Questão</h3>
+          <p className="text-xs text-gray-500">ID: {selectedQuestion}</p>
+        </div>
+        <div className="flex-1 overflow-auto p-4 space-y-4">
+          <div>
+            <Label htmlFor="title">Título da Questão</Label>
+            <Input
+              id="title"
+              placeholder="Digite o título da questão"
+              autoComplete="off"
+              value={question.title || ""}
+              onChange={(e) =>
+                onQuestionChange && onQuestionChange({ title: e.target.value })
+              }
+              className="h-12 rounded-2xl"
+            />
+          </div>
+          <div>
+            <Label htmlFor="description">Descrição (opcional)</Label>
+            <Textarea
+              id="description"
+              placeholder="Adicione instruções ou detalhes sobre a questão"
+              value={question.description || ""}
+              onChange={(e) =>
+                onQuestionChange &&
+                onQuestionChange({ description: e.target.value })
+              }
+              className="rounded-2xl"
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label htmlFor="type">Tipo de Questão</Label>
+            <select
+              id="type"
+              className="h-12 rounded-2xl border border-gray-200 w-full px-3"
+              value={question.type}
+              onChange={(e) =>
+                onQuestionChange && onQuestionChange({ type: e.target.value })
+              }
+            >
+              <option value="text">Texto</option>
+              <option value="multiple_choice">Múltipla Escolha</option>
+              <option value="checkbox">Caixas de Seleção</option>
+              <option value="dropdown">Lista Suspensa</option>
+              <option value="scale">Escala Linear</option>
+              <option value="date">Data</option>
+            </select>
+          </div>
+          {(question.type === "multiple_choice" ||
+            question.type === "checkbox" ||
+            question.type === "dropdown") && (
+            <div>
+              <Label htmlFor="options">Opções (uma por linha)</Label>
+              <Textarea
+                id="options"
+                placeholder="Digite cada opção em uma nova linha"
+                value={(question.options || []).join("\n")}
+                onChange={(e) =>
+                  onQuestionChange &&
+                  onQuestionChange({
+                    options: e.target.value.split(/\r?\n/).filter(Boolean),
+                  })
+                }
+                className="min-h-32 rounded-2xl"
+              />
+            </div>
+          )}
+          {question.type === "text" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="minLength">Mín. Caracteres</Label>
+                <Input
+                  id="minLength"
+                  type="number"
+                  min={0}
+                  value={question.minLength ?? ""}
+                  autoComplete="off"
+                  onChange={(e) =>
+                    onQuestionChange &&
+                    onQuestionChange({
+                      minLength: e.target.value
+                        ? parseInt(e.target.value, 10)
+                        : undefined,
+                    })
+                  }
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxLength">Máx. Caracteres</Label>
+                <Input
+                  id="maxLength"
+                  type="number"
+                  min={0}
+                  value={question.maxLength ?? ""}
+                  autoComplete="off"
+                  onChange={(e) =>
+                    onQuestionChange &&
+                    onQuestionChange({
+                      maxLength: e.target.value
+                        ? parseInt(e.target.value, 10)
+                        : undefined,
+                    })
+                  }
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+            </div>
+          )}
+          {question.type === "scale" && (
+            <div className="grid grid-cols-3 gap-4 items-end">
+              <div>
+                <Label htmlFor="scaleMin">Valor Inicial</Label>
+                <Input
+                  id="scaleMin"
+                  type="number"
+                  value={question.scaleMin ?? 0}
+                  autoComplete="off"
+                  onChange={(e) =>
+                    onQuestionChange &&
+                    onQuestionChange({ scaleMin: parseInt(e.target.value, 10) })
+                  }
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+              <div>
+                <Label htmlFor="scaleMax">Valor Final</Label>
+                <Input
+                  id="scaleMax"
+                  type="number"
+                  value={question.scaleMax ?? 10}
+                  autoComplete="off"
+                  onChange={(e) =>
+                    onQuestionChange &&
+                    onQuestionChange({ scaleMax: parseInt(e.target.value, 10) })
+                  }
+                  className="h-12 rounded-2xl"
+                />
+              </div>
+              <div className="text-sm text-gray-600">
+                {question.scaleMin < question.scaleMax
+                  ? `${
+                      (question.scaleMax ?? 0) - (question.scaleMin ?? 0) + 1
+                    } pontos`
+                  : "Intervalo inválido"}
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="required"
+              checked={!!question.required}
+              onChange={(e) =>
+                onQuestionChange &&
+                onQuestionChange({ required: e.target.checked })
+              }
+              className="w-4 h-4 text-blue-600 rounded"
+            />
+            <Label htmlFor="required" className="cursor-pointer">
+              Questão obrigatória
+            </Label>
+          </div>
+        </div>
+        <div className="p-4 border-t border-gray-200 flex gap-2">
+          <Button
+            variant="outline"
+            className="rounded-2xl"
+            onClick={onCloseEditor}
+          >
+            Fechar
+          </Button>
+          <Button
+            variant="destructive"
+            className="rounded-2xl"
+            onClick={onDeleteQuestion}
+          >
+            Excluir
+          </Button>
+          <Button
+            onClick={onSaveQuestion}
+            disabled={
+              question.type === "scale" &&
+              (question.scaleMin ?? 0) >= (question.scaleMax ?? 0)
+            }
+            className="ml-auto bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
+          >
+            Salvar alterações
+          </Button>
+        </div>
       </div>
     );
   }

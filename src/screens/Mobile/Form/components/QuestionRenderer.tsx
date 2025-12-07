@@ -144,7 +144,7 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
                     type="button"
                     onClick={() => onChange(val)}
                     className={`w-10 h-10 rounded-lg border ${
-                      value == val ? "bg-indigo-600 text-white" : "bg-white"
+                      value == val ? "bg-emerald-600 text-white" : "bg-white"
                     }`}
                   >
                     {opt.label || val}
@@ -157,7 +157,6 @@ export default function QuestionRenderer({ question, value, onChange }: Props) {
             </p>
           </div>
         )}
-
         {type === "date" && (
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">

@@ -6,6 +6,7 @@ import StaffInfo from "./StaffInfo";
 import StaffActions from "./StaffActions";
 import { ForgotPasswordModal } from "../../../components/shared/ForgotPasswordModal";
 import { PageHeader } from "../../../components/ui/page-header";
+import useProfileScreen from "../../Mobile/Profile/useProfileScreen";
 
 interface Props {
   name?: string;
@@ -24,19 +25,24 @@ export default function StaffProfile({
   initials,
   onLogout,
 }: Props) {
-  const [showForgot, setShowForgot] = React.useState(false);
-  const [forgotEmail, setForgotEmail] = React.useState(email || "");
-  const [forgotStatus, setForgotStatus] = React.useState<string | null>(null);
-  const [forgotLoading, setForgotLoading] = React.useState(false);
+  const {
+    showForgot,
+    setShowForgot,
+    forgotEmail,
+    setForgotEmail,
+    forgotStatus,
+    setForgotStatus,
+    forgotLoading,
+    setForgotLoading,
+    handleForgotPassword,
+  } = useProfileScreen();
 
-  const handleForgotPassword = async () => {
-    // Placeholder: integrate with forgot password logic
-    setForgotLoading(true);
-    setTimeout(() => {
-      setForgotLoading(false);
-      setForgotStatus("Enviado");
-    }, 800);
-  };
+  React.useEffect(() => {
+    // Prefill email in modal from prop when available
+    if (email && !forgotEmail) {
+      setForgotEmail(email);
+    }
+  }, [email]);
 
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
