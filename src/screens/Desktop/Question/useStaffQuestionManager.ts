@@ -89,7 +89,7 @@ function buildOptions(optionsText: string): QuestionOption[] | undefined {
   if (!lines.length) return undefined;
   return lines.map((l) => ({
     label: l,
-    value: l.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+    value: l,
   }));
 }
 
