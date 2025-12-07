@@ -16,12 +16,15 @@ export function SearchBar({
 }: SearchBarProps) {
   return (
     <div className={`relative ${className}`}>
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <Search
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+        aria-hidden
+      />
       <Input
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-12 h-10 border-gray-200 bg-white rounded-2xl"
+        className="pl-12 h-10 border-gray-200 bg-white rounded-2xl hover:border-gray-300 focus:border-blue-600"
       />
     </div>
   );
