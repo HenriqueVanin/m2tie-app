@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getUserFromToken } from "../../../utils/auth";
-import { getUserById } from "../../../services/userService";
+import { getUserById, updateUser } from "../../../services/userService";
 import { getUserInitials } from "../../../utils/userCookie";
 import { getUserCookie, setUserCookie } from "../../../utils/userCookie";
 import { authService } from "../../../services/authService";
@@ -12,6 +12,11 @@ export function useProfileScreen() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [loading, setLoading] = useState(true);
+  const [anonymous, setAnonymous] = useState<boolean>(false);
+
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [privacyStatus, setPrivacyStatus] = useState<string | null>(null);
+  const [privacyLoading, setPrivacyLoading] = useState(false);
 
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -30,6 +35,7 @@ export function useProfileScreen() {
         setInstitution((cookie as any).institution ?? "");
         setCity((cookie as any).city ?? "");
         setState((cookie as any).state ?? "");
+        setAnonymous(Boolean((cookie as any).anonymous));
         // If cookie lacks important profile fields, try to enrich from API
         const missingImportant = !cookie.city || !cookie.institution;
         if (missingImportant) {
@@ -41,6 +47,7 @@ export function useProfileScreen() {
               if (fresh.institution) setInstitution(fresh.institution);
               if (fresh.city) setCity(fresh.city);
               if (fresh.state) setState(fresh.state || "");
+              setAnonymous(Boolean(fresh.anonymous));
               // persist enriched cookie
               try {
                 setUserCookie(fresh as any);
@@ -63,6 +70,7 @@ export function useProfileScreen() {
           setInstitution(userData.institution || "");
           setCity(userData.city || "");
           setState(userData.state || "");
+          setAnonymous(Boolean(userData.anonymous));
           // persist to cookie for faster load next time
           try {
             setUserCookie(userData as any);
@@ -92,9 +100,10 @@ export function useProfileScreen() {
         city,
         state,
         institution,
+        anonymous,
       } as any);
     } catch {}
-  }, [name, email, institution, city, state]);
+  }, [name, email, institution, city, state, anonymous]);
 
   async function handleForgotPassword() {
     setForgotLoading(true);
@@ -133,6 +142,28 @@ export function useProfileScreen() {
   const initials = getUserInitials(name);
   const location = [city, state].filter(Boolean).join(" - ") || "Não informado";
 
+  async function handleUpdatePrivacy() {
+    setPrivacyLoading(true);
+    setPrivacyStatus(null);
+    try {
+      const tokenData = getUserFromToken();
+      if (!tokenData?.userId) {
+        setPrivacyStatus("Usuário não identificado.");
+        return;
+      }
+      const updated = await updateUser({ id: tokenData.userId, anonymous });
+      try {
+        setUserCookie(updated as any);
+      } catch {}
+      setPrivacyStatus("Privacidade atualizada com sucesso.");
+      setShowPrivacy(false);
+    } catch (e: any) {
+      setPrivacyStatus(e?.message || "Erro ao atualizar privacidade.");
+    } finally {
+      setPrivacyLoading(false);
+    }
+  }
+
   return {
     name,
     setName,
@@ -160,6 +191,15 @@ export function useProfileScreen() {
     handleForgotPassword,
     initials,
     location,
+    anonymous,
+    setAnonymous,
+    showPrivacy,
+    setShowPrivacy,
+    privacyStatus,
+    setPrivacyStatus,
+    privacyLoading,
+    setPrivacyLoading,
+    handleUpdatePrivacy,
   } as const;
 }
 

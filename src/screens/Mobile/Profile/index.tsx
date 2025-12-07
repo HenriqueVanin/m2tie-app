@@ -38,6 +38,15 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
     handleForgotPassword,
     initials,
     location,
+    anonymous,
+    setAnonymous,
+    showPrivacy,
+    setShowPrivacy,
+    privacyStatus,
+    setPrivacyStatus,
+    privacyLoading,
+    setPrivacyLoading,
+    handleUpdatePrivacy,
   } = useProfileScreen();
   return (
     <UserBackgroundLayout>
@@ -74,6 +83,15 @@ export function ProfileScreen({ onNavigate, onLogout }: ProfileScreenProps) {
             setForgotLoading={setForgotLoading}
             handleForgotPassword={handleForgotPassword}
             onNavigateToFAQ={() => onNavigate("faq")}
+            anonymous={anonymous}
+            setAnonymous={setAnonymous}
+            showPrivacy={showPrivacy}
+            setShowPrivacy={setShowPrivacy}
+            privacyStatus={privacyStatus}
+            setPrivacyStatus={setPrivacyStatus}
+            privacyLoading={privacyLoading}
+            setPrivacyLoading={setPrivacyLoading}
+            handleUpdatePrivacy={handleUpdatePrivacy}
           />
         </section>
       </main>
