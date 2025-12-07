@@ -140,7 +140,6 @@ export function FormWizardScreen({ onNavigate }: FormWizardScreenProps) {
               Você já respondeu todos os formulários ativos disponíveis.
             </p>
           </div>
-
           <Button
             type="button"
             onClick={() => onNavigate("home")}

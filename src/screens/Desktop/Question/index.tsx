@@ -2,7 +2,8 @@ import React from "react";
 import { Plus, Edit, Trash2, ShieldAlert } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { ErrorState } from "../../../components/ui/error-state";
-import { SearchBar } from "../../../components/ui/search-bar";
+import SearchBar from "../../../components/shared/SearchBar";
+import FilterSelect from "../../../components/shared/FilterSelect";
 import { PageHeaderWithSearch } from "../../../components/ui/page-header";
 import { Input } from "../../../components/ui/input";
 import {
@@ -93,34 +94,34 @@ export function StaffQuestionManager() {
               placeholder="Buscar questões por título ou categoria..."
               value={searchTerm}
               onChange={setSearchTerm}
-              className="flex-1"
+              className="flex-1 min-w-[240px]"
             />
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
-                <SelectValue placeholder="Tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="text">Texto</SelectItem>
-                <SelectItem value="multiple_choice">
-                  Múltipla Escolha
-                </SelectItem>
-                <SelectItem value="checkbox">Caixas de Seleção</SelectItem>
-                <SelectItem value="dropdown">Lista Suspensa</SelectItem>
-                <SelectItem value="scale">Escala Linear</SelectItem>
-                <SelectItem value="date">Data</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterRequired} onValueChange={setFilterRequired}>
-              <SelectTrigger className="w-48 h-12 rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white">
-                <SelectValue placeholder="Obrigatória" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas</SelectItem>
-                <SelectItem value="required">Obrigatórias</SelectItem>
-                <SelectItem value="optional">Opcionais</SelectItem>
-              </SelectContent>
-            </Select>
+            <FilterSelect
+              value={filterType}
+              onChange={setFilterType as any}
+              label="Tipo"
+              options={[
+                { value: "all", label: "Todos os tipos" },
+                { value: "text", label: "Texto" },
+                { value: "multiple_choice", label: "Múltipla Escolha" },
+                { value: "checkbox", label: "Caixas de Seleção" },
+                { value: "dropdown", label: "Lista Suspensa" },
+                { value: "scale", label: "Escala Linear" },
+                { value: "date", label: "Data" },
+              ]}
+              className="w-48"
+            />
+            <FilterSelect
+              value={filterRequired}
+              onChange={setFilterRequired as any}
+              label="Obrigatória"
+              options={[
+                { value: "all", label: "Todas" },
+                { value: "required", label: "Obrigatórias" },
+                { value: "optional", label: "Opcionais" },
+              ]}
+              className="w-48"
+            />
           </div>
         }
       >

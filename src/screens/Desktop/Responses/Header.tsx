@@ -1,5 +1,6 @@
 import React from "react";
-import { SearchBar } from "../../../components/ui/search-bar";
+import SearchBar from "../../../components/shared/SearchBar";
+import FilterSelect from "../../../components/shared/FilterSelect";
 import { PageHeaderWithSearch } from "../../../components/ui/page-header";
 import {
   Select,
@@ -44,34 +45,28 @@ export function Header(props: Props) {
             placeholder="Buscar por nome, email ou formulário..."
             value={searchTerm}
             onChange={setSearchTerm}
-            className="flex-1"
+            className="flex-1 min-w-[240px]"
           />
-          <Select value={filterForm} onValueChange={setFilterForm}>
-            <SelectTrigger className="w-64 h-12 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-2xl">
-              <SelectValue placeholder="Formulário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os formulários</SelectItem>
-              {uniqueForms.map((form) => (
-                <SelectItem key={form} value={form}>
-                  {form}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterUser} onValueChange={setFilterUser}>
-            <SelectTrigger className="w-64 h-12 border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white rounded-2xl">
-              <SelectValue placeholder="Usuário" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os usuários</SelectItem>
-              {uniqueUsers.map((user) => (
-                <SelectItem key={user} value={user}>
-                  {user}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterSelect
+            value={filterForm}
+            onChange={setFilterForm}
+            label="Formulário"
+            options={[
+              { value: "all", label: "Todos os formulários" },
+              ...uniqueForms.map((form) => ({ value: form, label: form })),
+            ]}
+            className="w-64"
+          />
+          <FilterSelect
+            value={filterUser}
+            onChange={setFilterUser}
+            label="Usuário"
+            options={[
+              { value: "all", label: "Todos os usuários" },
+              ...uniqueUsers.map((user) => ({ value: user, label: user })),
+            ]}
+            className="w-64"
+          />
         </div>
       }
     >

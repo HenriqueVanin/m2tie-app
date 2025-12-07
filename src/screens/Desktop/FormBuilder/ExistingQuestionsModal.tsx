@@ -59,6 +59,7 @@ export default function ExistingQuestionsModal({
             value={searchQuery}
             onChange={setSearchQuery}
             placeholder="Buscar questões..."
+            className="min-w-[240px]"
           />
         </div>
 

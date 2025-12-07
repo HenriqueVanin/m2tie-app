@@ -11,8 +11,7 @@ import {
   getDraft,
   deleteDraft,
 } from "../../../services/responseService";
-import { submitDiaryResponse } from "../../../services/responseService";
-import { canRespondToDiary } from "../../../services/responseService";
+// Diary-related endpoints are intentionally unused here; diary forms are excluded from this screen.
 import { useNavigate } from "react-router-dom";
 
 export interface UseFormWizardReturn {
@@ -166,7 +165,12 @@ export function useFormWizard(): UseFormWizardReturn {
         ? response.data
         : [response.data];
 
-      const unrespondedActiveForms = rawForms.filter(
+      // Exclude diary-type forms entirely from this screen
+      const nonDiaryForms = rawForms.filter(
+        (f) => f && f.type !== "diary" && (f as any).isDiary !== true
+      );
+
+      const unrespondedActiveForms = nonDiaryForms.filter(
         (f) => f && f.isActive === true && f.hasResponded !== true
       );
 
@@ -193,28 +197,12 @@ export function useFormWizard(): UseFormWizardReturn {
 
   const selectForm = (index: number) => {
     const candidate = availableForms[index];
-    // If the form is a diary, verify the user can respond today
-    (async () => {
-      try {
-        if (candidate && (candidate.type === "diary" || candidate.isDiary)) {
-          const res = await canRespondToDiary(candidate._id);
-          if (res && !res.error && res.data && res.data.canRespond === false) {
-            toast.error(
-              "Você já respondeu ao diário hoje. Tente novamente amanhã."
-            );
-            return;
-          }
-        }
-        setForm(candidate);
-        setSelectedFormIndex(index);
-        setShowFormList(false);
-        setAnswers({});
-        setCurrentStep(0);
-      } catch (e: any) {
-        // If diary check fails, block selection and notify
-        toast.error(e?.message || "Não foi possível abrir o formulário");
-      }
-    })();
+    // Diary forms are excluded from availableForms, so no special handling is needed
+    setForm(candidate);
+    setSelectedFormIndex(index);
+    setShowFormList(false);
+    setAnswers({});
+    setCurrentStep(0);
   };
 
   const handleAnswerChange = (questionId: string, value: any) => {
@@ -285,14 +273,11 @@ export function useFormWizard(): UseFormWizardReturn {
         })
       );
 
-      // Use diary-specific endpoint when appropriate
-      const isDiary = form.type === "diary" || (form as any).isDiary === true;
-      const response = isDiary
-        ? await submitDiaryResponse({
-            formId: form._id,
-            answers: formattedAnswers,
-          })
-        : await submitResponse({ formId: form._id, answers: formattedAnswers });
+      // Diary forms are excluded from this screen; submit via standard endpoint
+      const response = await submitResponse({
+        formId: form._id,
+        answers: formattedAnswers,
+      });
 
       if (response.error) {
         if (

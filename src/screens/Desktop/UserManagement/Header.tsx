@@ -1,6 +1,7 @@
 import React from "react";
 import type { UserTab } from "./useStaffUserManagement";
-import { SearchBar } from "../../../components/ui/search-bar";
+import SearchBar from "../../../components/shared/SearchBar";
+import FilterSelect from "../../../components/shared/FilterSelect";
 import { PageHeaderWithSearch } from "../../../components/ui/page-header";
 import { Button } from "../../../components/ui/button";
 import { Plus } from "lucide-react";
@@ -31,42 +32,38 @@ export function Header({
       title="Gerenciar Usuários"
       description="Cadastre e gerencie os usuários da plataforma"
       searchComponent={
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <SearchBar
             placeholder="Buscar por nome ou email..."
             value={searchTerm}
             onChange={setSearchTerm}
+            className="flex-1"
           />
 
-          <select
+          <FilterSelect
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value as UserTab | "all")}
-            className="h-10 px-3 border rounded-md bg-white"
-          >
-            <option value="all">Todos os cargos</option>
-            <option value="student">Estudante</option>
-            <option value="teacher_respondent">Professor</option>
-            <option value="teacher_analyst">Pesquisador</option>
-            <option value="admin">Administrador</option>
-          </select>
+            onChange={(v) => setRoleFilter(v as UserTab | "all")}
+            label="Cargo"
+            options={[
+              { value: "all", label: "Todos os cargos" },
+              { value: "student", label: "Estudante" },
+              { value: "teacher_respondent", label: "Professor" },
+              { value: "teacher_analyst", label: "Pesquisador" },
+              { value: "admin", label: "Administrador" },
+            ]}
+          />
 
-          <select
+          <FilterSelect
             value={institutionFilter}
-            onChange={(e) => setInstitutionFilter(e.target.value)}
-            className="h-10 px-3 border rounded-md bg-white"
-          >
-            <option value="all">Todas as instituições</option>
-            {[...new Set(users.map((u) => u.institution).filter(Boolean))].map(
-              (inst) => {
-                const s = String(inst);
-                return (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                );
-              }
-            )}
-          </select>
+            onChange={(v) => setInstitutionFilter(v)}
+            label="Instituição"
+            options={[
+              { value: "all", label: "Todas as instituições" },
+              ...[
+                ...new Set(users.map((u) => u.institution).filter(Boolean)),
+              ].map((inst) => ({ value: String(inst), label: String(inst) })),
+            ]}
+          />
         </div>
       }
     >
