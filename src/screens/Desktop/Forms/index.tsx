@@ -9,6 +9,7 @@ import FormHeader from "./FormHeader";
 import ViewFormModal from "./ViewFormModal";
 import AddUsersModal from "./AddUsersModal";
 import RespondentsTable from "./RespondentsTable";
+import { DeleteConfirmationDialog } from "../../../components/ui/delete-confirmation-dialog";
 
 export function StaffFormResponsesByForm() {
   const navigate = useNavigate();
@@ -193,6 +194,20 @@ export function StaffFormResponsesByForm() {
         onAddUsers={handleAddUsers}
         searchTerm={userSearchTerm}
         onSearchChange={setUserSearchTerm}
+      />
+
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleting}
+        description={
+          <>
+            Tem certeza que deseja excluir o formulário{" "}
+            <strong>{formToDelete?.title}</strong>?
+          </>
+        }
+        countdownSeconds={3}
       />
     </div>
   );

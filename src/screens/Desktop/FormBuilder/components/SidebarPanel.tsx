@@ -97,19 +97,57 @@ export function SidebarPanel({
             question.type === "checkbox" ||
             question.type === "dropdown") && (
             <div>
-              <Label htmlFor="options">Opções (uma por linha)</Label>
-              <Textarea
-                id="options"
-                placeholder="Digite cada opção em uma nova linha"
-                value={(question.options || []).join("\n")}
-                onChange={(e) =>
-                  onQuestionChange &&
-                  onQuestionChange({
-                    options: e.target.value.split(/\r?\n/).filter(Boolean),
-                  })
-                }
-                className="min-h-32 rounded-2xl"
-              />
+              <Label>Opções</Label>
+              <div className="space-y-2 mt-2">
+                {(Array.isArray(question.options) ? question.options : []).map((opt: string, idx: number) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Input
+                      value={opt}
+                      placeholder={`Opção ${idx + 1}`}
+                      onChange={(e) => {
+                        const next = (Array.isArray(question.options) ? question.options.slice() : []);
+                        next[idx] = e.target.value;
+                        onQuestionChange && onQuestionChange({ options: next });
+                      }}
+                      className="h-10 rounded-xl flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl"
+                      onClick={() => {
+                        const next = (Array.isArray(question.options) ? question.options.slice() : []);
+                        next.splice(idx, 1);
+                        onQuestionChange && onQuestionChange({ options: next });
+                      }}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500">
+                    {(Array.isArray(question.options) ? question.options.filter(Boolean).length : 0)} opções
+                    {question.type === "dropdown" && (Array.isArray(question.options) ? question.options.filter(Boolean).length : 0) < 2 && (
+                      <span className="text-red-600 ml-2">(mínimo de 2 para lista)</span>
+                    )}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl"
+                    onClick={() => {
+                      const next = (Array.isArray(question.options) ? question.options.slice() : []);
+                      next.push("");
+                      onQuestionChange && onQuestionChange({ options: next });
+                    }}
+                  >
+                    Adicionar opção
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
           {question.type === "text" && (
@@ -229,6 +267,7 @@ export function SidebarPanel({
             disabled={
               question.type === "scale" &&
               (question.scaleMin ?? 0) >= (question.scaleMax ?? 0)
+              || (question.type === "dropdown" && (!Array.isArray(question.options) || question.options.filter(Boolean).length < 2))
             }
             className="ml-auto bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
           >
