@@ -149,7 +149,7 @@ export default function useStaffFormBuilder(
         question.type === "dropdown"
           ? question.options?.map((label, i) => ({
               label,
-              value: label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+              value: label,
             }))
           : question.type === "scale"
           ? question.options?.map((label) => ({ label, value: label }))
@@ -173,7 +173,7 @@ export default function useStaffFormBuilder(
         question.type === "dropdown"
           ? question.options?.map((label, i) => ({
               label,
-              value: label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+              value: label,
             }))
           : question.type === "scale"
           ? question.options?.map((label) => ({ label, value: label }))
