@@ -38,9 +38,7 @@ export default function RespondentRow({
         </p>
       </td>
       <td className="px-6 py-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {user.anonymous ? "N/A" : user.email}
-        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
       </td>
       <td className="px-6 py-4">
         <Badge className={getRoleColor(user.role)}>

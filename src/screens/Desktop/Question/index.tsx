@@ -84,7 +84,7 @@ export function StaffQuestionManager() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       <PageHeaderWithSearch
         title="Banco de Questões"
         description="Gerencie todas as questões disponíveis"
@@ -136,7 +136,7 @@ export function StaffQuestionManager() {
         )}
       </PageHeaderWithSearch>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto min-h-0">
         {loading ? (
           <div
             className="text-center py-12 text-gray-500"
@@ -211,7 +211,8 @@ export function StaffQuestionManager() {
                   return (
                     <tr
                       key={q._id}
-                      className="border-b border-gray-200 hover:bg-gray-50"
+                      onClick={() => handleEdit(q)}
+                      className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
                     >
                       <th scope="row" className="px-6 py-4 text-left align-top">
                         <div className="flex items-center gap-3">
@@ -291,7 +292,10 @@ export function StaffQuestionManager() {
                       </td>
                       <td className="px-6 py-4">
                         {!isAnalyst ? (
-                          <div className="flex gap-2">
+                          <div
+                            className="flex gap-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <Button
                               onClick={() => handleEdit(q)}
                               variant="outline"
