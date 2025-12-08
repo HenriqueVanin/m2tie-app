@@ -134,9 +134,12 @@ export function useStaffFormResponsesByForm(
 
       return {
         respondents: usersWithResponse,
-        respondedCount: (response as any).totalRespondents,
-        respondedUserIds: (response as any).respondents
-          .filter((r: any) => r._id)
+        // Count only respondents with valid _id
+        respondedCount: ((response as any).respondents || []).filter(
+          (r: any) => r && r._id
+        ).length,
+        respondedUserIds: ((response as any).respondents || [])
+          .filter((r: any) => r && r._id)
           .map((r: any) => r._id as string),
         totalStudents: assignedUsers.length,
       };
@@ -194,17 +197,19 @@ export function useStaffFormResponsesByForm(
           formsList = Array.isArray(apiForms.data) ? apiForms.data : [];
         }
 
-        const mapped: FormWithStudents[] = formsList.map((f: any) => ({
-          id: f._id || f.id || "unknown",
-          title: f.title || "Sem título",
-          description: f.description || "",
-          isActive: f.isActive || false,
-          totalStudents: 0,
-          respondedCount: 0,
-          respondedUserIds: [],
-          respondents: [],
-          assignedUserIds: f.assignedUsers?.map((u: any) => u._id || u) || [],
-        }));
+        const mapped: FormWithStudents[] = formsList
+          .filter((f: any) => f?.type !== "diary")
+          .map((f: any) => ({
+            id: f._id || f.id || "unknown",
+            title: f.title || "Sem título",
+            description: f.description || "",
+            isActive: f.isActive || false,
+            totalStudents: 0,
+            respondedCount: 0,
+            respondedUserIds: [],
+            respondents: [],
+            assignedUserIds: f.assignedUsers?.map((u: any) => u._id || u) || [],
+          }));
 
         setForms(mapped);
 

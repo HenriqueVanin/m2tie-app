@@ -104,17 +104,6 @@ export function QuestionSettings({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="question-description">Descrição (opcional)</Label>
-          <Textarea
-            id="question-description"
-            value={question.description || ""}
-            onChange={(e) => onUpdate({ description: e.target.value })}
-            placeholder="Adicione uma descrição ou instrução..."
-            className="border-2"
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="question-type">Tipo de Pergunta</Label>
           <Select
             value={question.type}

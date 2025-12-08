@@ -349,19 +349,7 @@ export function StaffQuestionManager() {
                 className="h-12 rounded-2xl"
               />
             </div>
-            <div>
-              <Label htmlFor="description">Descrição (opcional)</Label>
-              <Textarea
-                id="description"
-                placeholder="Adicione instruções ou detalhes sobre a questão"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="rounded-2xl"
-                rows={3}
-              />
-            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="type">Tipo de Questão</Label>
@@ -452,12 +440,15 @@ export function StaffQuestionManager() {
                   <Input
                     id="scaleMin"
                     type="number"
-                    value={formData.scaleMin}
+                    value={formData.scaleMin ?? ""}
                     autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        scaleMin: parseInt(e.target.value, 10),
+                        scaleMin:
+                          e.target.value === ""
+                            ? Number.NaN
+                            : parseInt(e.target.value, 10),
                       })
                     }
                     className="h-12 rounded-2xl"
@@ -468,20 +459,29 @@ export function StaffQuestionManager() {
                   <Input
                     id="scaleMax"
                     type="number"
-                    value={formData.scaleMax}
+                    value={formData.scaleMax ?? ""}
                     autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        scaleMax: parseInt(e.target.value, 10),
+                        scaleMax:
+                          e.target.value === ""
+                            ? Number.NaN
+                            : parseInt(e.target.value, 10),
                       })
                     }
                     className="h-12 rounded-2xl"
                   />
                 </div>
                 <div className="text-sm text-gray-600">
-                  {formData.scaleMin < formData.scaleMax
-                    ? `${formData.scaleMax - formData.scaleMin + 1} pontos`
+                  {Number.isFinite(formData.scaleMin) &&
+                  Number.isFinite(formData.scaleMax) &&
+                  (formData.scaleMin as number) < (formData.scaleMax as number)
+                    ? `${
+                        (formData.scaleMax as number) -
+                        (formData.scaleMin as number) +
+                        1
+                      } pontos`
                     : "Intervalo inválido"}
                 </div>
               </div>
@@ -514,7 +514,10 @@ export function StaffQuestionManager() {
               disabled={
                 !formData.title ||
                 (formData.type === "scale" &&
-                  formData.scaleMin >= formData.scaleMax)
+                  (!Number.isFinite(formData.scaleMin) ||
+                    !Number.isFinite(formData.scaleMax) ||
+                    (formData.scaleMin as number) >=
+                      (formData.scaleMax as number)))
               }
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
             >
@@ -523,7 +526,6 @@ export function StaffQuestionManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl rounded-3xl">
           <DialogHeader>
@@ -543,19 +545,7 @@ export function StaffQuestionManager() {
                 className="h-12 rounded-2xl"
               />
             </div>
-            <div>
-              <Label htmlFor="edit-description">Descrição (opcional)</Label>
-              <Textarea
-                id="edit-description"
-                placeholder="Adicione instruções ou detalhes sobre a questão"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                className="rounded-2xl"
-                rows={3}
-              />
-            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="edit-type">Tipo de Questão</Label>
@@ -646,12 +636,15 @@ export function StaffQuestionManager() {
                   <Input
                     id="edit-scaleMin"
                     type="number"
-                    value={formData.scaleMin}
+                    value={formData.scaleMin ?? ""}
                     autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        scaleMin: parseInt(e.target.value, 10),
+                        scaleMin:
+                          e.target.value === ""
+                            ? Number.NaN
+                            : parseInt(e.target.value, 10),
                       })
                     }
                     className="h-12 rounded-2xl"
@@ -662,20 +655,29 @@ export function StaffQuestionManager() {
                   <Input
                     id="edit-scaleMax"
                     type="number"
-                    value={formData.scaleMax}
+                    value={formData.scaleMax ?? ""}
                     autoComplete="off"
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        scaleMax: parseInt(e.target.value, 10),
+                        scaleMax:
+                          e.target.value === ""
+                            ? Number.NaN
+                            : parseInt(e.target.value, 10),
                       })
                     }
                     className="h-12 rounded-2xl"
                   />
                 </div>
                 <div className="text-sm text-gray-600">
-                  {formData.scaleMin < formData.scaleMax
-                    ? `${formData.scaleMax - formData.scaleMin + 1} pontos`
+                  {Number.isFinite(formData.scaleMin) &&
+                  Number.isFinite(formData.scaleMax) &&
+                  (formData.scaleMin as number) < (formData.scaleMax as number)
+                    ? `${
+                        (formData.scaleMax as number) -
+                        (formData.scaleMin as number) +
+                        1
+                      } pontos`
                     : "Intervalo inválido"}
                 </div>
               </div>
@@ -708,7 +710,10 @@ export function StaffQuestionManager() {
               disabled={
                 !formData.title ||
                 (formData.type === "scale" &&
-                  formData.scaleMin >= formData.scaleMax)
+                  (!Number.isFinite(formData.scaleMin) ||
+                    !Number.isFinite(formData.scaleMax) ||
+                    (formData.scaleMin as number) >=
+                      (formData.scaleMax as number)))
               }
               className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
             >

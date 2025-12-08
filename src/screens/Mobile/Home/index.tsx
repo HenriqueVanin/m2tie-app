@@ -12,7 +12,7 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
-  const { userName, lastDiaryEntry } = useHomeScreen();
+  const { userName, lastDiaryEntry, hasActiveForm } = useHomeScreen();
   const notifications = [
     {
       id: 1,
@@ -109,16 +109,18 @@ export function HomeScreen({ onNavigate, onLogout }: HomeScreenProps) {
         onLogout={onLogout}
       />
       <main aria-labelledby="home-heading">
-        <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4  pb-20">
+        <div className="relative z-10 flex-1 bg-white p-6 space-y-6 rounded-[32px] mx-[10px] my-[0px] mb-4">
           <div className="pb-4 space-y-6">
-            <NotificationCard
-              icon={<FileText className="w-5 h-5 text-white" aria-hidden />}
-              title="Novo formulário disponível"
-              subtitle="Você tem um novo formulário para preencher."
-              buttonText="Responder formulário"
-              onButtonClick={() => onNavigate("form")}
-              buttonColor="emerald"
-            />
+            {hasActiveForm && (
+              <NotificationCard
+                icon={<FileText className="w-5 h-5 text-white" aria-hidden />}
+                title="Novo formulário disponível"
+                subtitle="Você tem um novo formulário para preencher."
+                buttonText="Responder formulário"
+                onButtonClick={() => onNavigate("form")}
+                buttonColor="emerald"
+              />
+            )}
             <NotificationCard
               icon={<BookOpen className="w-5 h-5 text-white" aria-hidden />}
               title="Última anotação do diário"

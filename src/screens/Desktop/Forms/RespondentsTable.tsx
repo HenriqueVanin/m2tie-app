@@ -40,11 +40,15 @@ export default function RespondentsTable({
               <th className="text-left px-6 py-3 w-12">
                 <input
                   type="checkbox"
-                  checked={
-                    form.respondents.length > 0 &&
-                    (selectedUsers[form.id]?.size || 0) ===
-                      form.respondents.length
-                  }
+                  checked={(() => {
+                    const selectableCount = form.respondents.filter(
+                      (u: any) => u._id
+                    ).length;
+                    const currentSize = selectedUsers[form.id]?.size || 0;
+                    return (
+                      selectableCount > 0 && currentSize === selectableCount
+                    );
+                  })()}
                   onChange={() => toggleSelectAll(form.id)}
                   className="w-4 h-4 rounded border-gray-300"
                 />
@@ -76,26 +80,45 @@ export default function RespondentsTable({
                   formId={form.id}
                   user={user}
                   isAnalyst={isAnalyst}
-                  selected={!!selectedUsers[form.id]?.has(user._id || "")}
+                  selected={
+                    !!(user._id && selectedUsers[form.id]?.has(user._id))
+                  }
                   onToggleSelect={toggleUserSelection}
                   formatDate={formatDate}
                 />
               ))}
 
               {!isAnalyst && (
-                <tr className="border-t-2 border-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
-                  <td colSpan={6} className="px-6 py-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenAddUserModal(form.id)}
-                      className="w-full gap-2 border-dashed border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      Adicionar Usuários
-                    </Button>
-                  </td>
-                </tr>
+                <>
+                  <tr>
+                    <td colSpan={6} className="px-6 py-3">
+                      {(selectedUsers[form.id]?.size || 0) > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveSelectedUsers(form.id)}
+                          className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+                        >
+                          <UserMinus className="w-4 h-4" />
+                          Remover usuários selecionados
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                  <tr className="border-t-2 border-gray-300 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <td colSpan={6} className="px-6 py-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenAddUserModal(form.id)}
+                        className="w-full gap-2 border-dashed border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Adicionar Usuários
+                      </Button>
+                    </td>
+                  </tr>
+                </>
               )}
             </>
           ) : (

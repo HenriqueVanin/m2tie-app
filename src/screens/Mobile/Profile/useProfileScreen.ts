@@ -89,14 +89,14 @@ export function useProfileScreen() {
     loadUserData();
   }, []);
 
-  // Persist profile changes to cookie
+  // Persist profile changes to cookie without altering identity or permissions
   useEffect(() => {
     try {
+      const existing = (getUserCookie() as any) || {};
       setUserCookie({
-        _id: undefined as any,
+        ...existing,
         name,
         email,
-        role: "",
         city,
         state,
         institution,

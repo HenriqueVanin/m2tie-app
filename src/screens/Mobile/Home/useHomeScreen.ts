@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUserCookie } from "../../../utils/userCookie";
+import { getActiveForm } from "../../../services/formService";
 
 export function useHomeScreen() {
   const [userName, setUserName] = useState("");
@@ -7,6 +8,7 @@ export function useHomeScreen() {
     date: string;
     text: string;
   } | null>(null);
+  const [hasActiveForm, setHasActiveForm] = useState(false);
 
   useEffect(() => {
     const user = getUserCookie();
@@ -32,11 +34,28 @@ export function useHomeScreen() {
       // eslint-disable-next-line no-console
       console.error("Erro ao carregar última anotação do diário:", error);
     }
+
+    // Verificar se há formulário ativo disponível para o usuário
+    (async () => {
+      try {
+        const res = await getActiveForm();
+        console.log(res);
+        setHasActiveForm(
+          Array.isArray(res.data) &&
+            res.data.filter(
+              (form: any) => form.type !== "diary" && form.hasResponded !== true
+            ).length > 0
+        );
+      } catch (e) {
+        setHasActiveForm(false);
+      }
+    })();
   }, []);
 
   return {
     userName,
     lastDiaryEntry,
+    hasActiveForm,
   } as const;
 }
 

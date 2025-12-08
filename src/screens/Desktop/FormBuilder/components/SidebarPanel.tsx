@@ -61,20 +61,7 @@ export function SidebarPanel({
               className="h-12 rounded-2xl"
             />
           </div>
-          <div>
-            <Label htmlFor="description">Descrição (opcional)</Label>
-            <Textarea
-              id="description"
-              placeholder="Adicione instruções ou detalhes sobre a questão"
-              value={question.description || ""}
-              onChange={(e) =>
-                onQuestionChange &&
-                onQuestionChange({ description: e.target.value })
-              }
-              className="rounded-2xl"
-              rows={3}
-            />
-          </div>
+
           <div>
             <Label htmlFor="type">Tipo de Questão</Label>
             <select
@@ -99,39 +86,55 @@ export function SidebarPanel({
             <div>
               <Label>Opções</Label>
               <div className="space-y-2 mt-2">
-                {(Array.isArray(question.options) ? question.options : []).map((opt: string, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <Input
-                      value={opt}
-                      placeholder={`Opção ${idx + 1}`}
-                      onChange={(e) => {
-                        const next = (Array.isArray(question.options) ? question.options.slice() : []);
-                        next[idx] = e.target.value;
-                        onQuestionChange && onQuestionChange({ options: next });
-                      }}
-                      className="h-10 rounded-xl flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="rounded-xl"
-                      onClick={() => {
-                        const next = (Array.isArray(question.options) ? question.options.slice() : []);
-                        next.splice(idx, 1);
-                        onQuestionChange && onQuestionChange({ options: next });
-                      }}
-                    >
-                      Remover
-                    </Button>
-                  </div>
-                ))}
+                {(Array.isArray(question.options) ? question.options : []).map(
+                  (opt: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input
+                        value={opt}
+                        placeholder={`Opção ${idx + 1}`}
+                        onChange={(e) => {
+                          const next = Array.isArray(question.options)
+                            ? question.options.slice()
+                            : [];
+                          next[idx] = e.target.value;
+                          onQuestionChange &&
+                            onQuestionChange({ options: next });
+                        }}
+                        className="h-10 rounded-xl flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="rounded-xl"
+                        onClick={() => {
+                          const next = Array.isArray(question.options)
+                            ? question.options.slice()
+                            : [];
+                          next.splice(idx, 1);
+                          onQuestionChange &&
+                            onQuestionChange({ options: next });
+                        }}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  )
+                )}
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-gray-500">
-                    {(Array.isArray(question.options) ? question.options.filter(Boolean).length : 0)} opções
-                    {question.type === "dropdown" && (Array.isArray(question.options) ? question.options.filter(Boolean).length : 0) < 2 && (
-                      <span className="text-red-600 ml-2">(mínimo de 2 para lista)</span>
-                    )}
+                    {Array.isArray(question.options)
+                      ? question.options.filter(Boolean).length
+                      : 0}{" "}
+                    opções
+                    {question.type === "dropdown" &&
+                      (Array.isArray(question.options)
+                        ? question.options.filter(Boolean).length
+                        : 0) < 2 && (
+                        <span className="text-red-600 ml-2">
+                          (mínimo de 2 para lista)
+                        </span>
+                      )}
                   </p>
                   <Button
                     type="button"
@@ -139,7 +142,9 @@ export function SidebarPanel({
                     size="sm"
                     className="rounded-xl"
                     onClick={() => {
-                      const next = (Array.isArray(question.options) ? question.options.slice() : []);
+                      const next = Array.isArray(question.options)
+                        ? question.options.slice()
+                        : [];
                       next.push("");
                       onQuestionChange && onQuestionChange({ options: next });
                     }}
@@ -199,11 +204,16 @@ export function SidebarPanel({
                 <Input
                   id="scaleMin"
                   type="number"
-                  value={question.scaleMin ?? 0}
+                  value={question.scaleMin ?? ""}
                   autoComplete="off"
                   onChange={(e) =>
                     onQuestionChange &&
-                    onQuestionChange({ scaleMin: parseInt(e.target.value, 10) })
+                    onQuestionChange({
+                      scaleMin:
+                        e.target.value === ""
+                          ? undefined
+                          : parseInt(e.target.value, 10),
+                    })
                   }
                   className="h-12 rounded-2xl"
                 />
@@ -213,19 +223,28 @@ export function SidebarPanel({
                 <Input
                   id="scaleMax"
                   type="number"
-                  value={question.scaleMax ?? 10}
+                  value={question.scaleMax ?? ""}
                   autoComplete="off"
                   onChange={(e) =>
                     onQuestionChange &&
-                    onQuestionChange({ scaleMax: parseInt(e.target.value, 10) })
+                    onQuestionChange({
+                      scaleMax:
+                        e.target.value === ""
+                          ? undefined
+                          : parseInt(e.target.value, 10),
+                    })
                   }
                   className="h-12 rounded-2xl"
                 />
               </div>
               <div className="text-sm text-gray-600">
-                {question.scaleMin < question.scaleMax
+                {Number.isFinite(question.scaleMin) &&
+                Number.isFinite(question.scaleMax) &&
+                (question.scaleMin as number) < (question.scaleMax as number)
                   ? `${
-                      (question.scaleMax ?? 0) - (question.scaleMin ?? 0) + 1
+                      (question.scaleMax as number) -
+                      (question.scaleMin as number) +
+                      1
                     } pontos`
                   : "Intervalo inválido"}
               </div>
@@ -265,9 +284,14 @@ export function SidebarPanel({
           <Button
             onClick={onSaveQuestion}
             disabled={
-              question.type === "scale" &&
-              (question.scaleMin ?? 0) >= (question.scaleMax ?? 0)
-              || (question.type === "dropdown" && (!Array.isArray(question.options) || question.options.filter(Boolean).length < 2))
+              (question.type === "scale" &&
+                (!Number.isFinite(question.scaleMin) ||
+                  !Number.isFinite(question.scaleMax) ||
+                  (question.scaleMin as number) >=
+                    (question.scaleMax as number))) ||
+              (question.type === "dropdown" &&
+                (!Array.isArray(question.options) ||
+                  question.options.filter(Boolean).length < 2))
             }
             className="ml-auto bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl"
           >

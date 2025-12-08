@@ -28,6 +28,8 @@ export default function RespondentRow({
             type="checkbox"
             checked={selected}
             onChange={() => onToggleSelect(formId, user._id || "")}
+            disabled={!user._id}
+            title={!user._id ? "Usuário sem ID válido" : undefined}
             className="w-4 h-4 rounded border-gray-300"
           />
         </td>
