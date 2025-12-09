@@ -132,6 +132,12 @@ function AppContent() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    // Limpa todos os cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+    });
     setIsAuthenticated(false);
     setUserType("user");
     navigate(routeMap.login, { replace: true });

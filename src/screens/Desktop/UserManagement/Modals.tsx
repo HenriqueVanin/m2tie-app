@@ -147,6 +147,13 @@ export function UserModal({ user, onClose, onSave }: UserModalProps) {
                     placeholder="Confirme a senha"
                   />
                 </div>
+                {password &&
+                  confirmPassword &&
+                  password !== confirmPassword && (
+                    <span className="text-red-600 text-sm">
+                      As senhas devem ser iguais.
+                    </span>
+                  )}
               </div>
             )}
 
