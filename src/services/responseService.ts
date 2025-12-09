@@ -114,7 +114,8 @@ export const submitDiaryResponse = async (
   data: SubmitResponseRequest
 ): Promise<ApiResponse<ResponseData>> => {
   try {
-    const response = await api.post("/responses/diary", data);
+    // Backend handles diary logic based on form.type inside POST /responses
+    const response = await api.post("/responses", data);
     return response.data;
   } catch (error: any) {
     return { error: extractError(error, "Erro ao enviar resposta do diário") };

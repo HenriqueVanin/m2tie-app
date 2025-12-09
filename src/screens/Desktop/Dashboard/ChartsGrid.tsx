@@ -48,15 +48,6 @@ export function ChartsGrid({ questionsAnalysis, registerChart }: Props) {
               type: "category",
               data: scaleData.map(([v]) => v),
               name: "Escala",
-              nameLocation: "center",
-              nameGap: 30,
-              axisLabel: {
-                rotate: 0,
-                margin: 16,
-                overflow: "truncate",
-                formatter: (value: string) =>
-                  value.length > 12 ? value.substring(0, 12) + "..." : value,
-              },
             },
             yAxis: { type: "value", name: "Quantidade" },
             series: [
@@ -79,7 +70,7 @@ export function ChartsGrid({ questionsAnalysis, registerChart }: Props) {
           option = {
             ...baseOption,
             tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)" },
-            legend: { orient: "horizontal", left: "left" },
+            legend: { show: false },
             series: [
               {
                 name: "Respostas",
@@ -107,18 +98,12 @@ export function ChartsGrid({ questionsAnalysis, registerChart }: Props) {
           );
           option = {
             ...baseOption,
-            xAxis: {
-              type: "value",
-              name: "Quantidade",
-              nameLocation: "center",
-              nameGap: 30,
-            },
+            xAxis: { type: "value", name: "Quantidade" },
             yAxis: {
               type: "category",
               data: checkboxData.map(([o]) => o),
               axisLabel: {
                 interval: 0,
-                margin: 16,
                 formatter: (s: string) =>
                   s.length > 20 ? s.substring(0, 20) + "..." : s,
               },
